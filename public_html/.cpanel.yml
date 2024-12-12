@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/visachek/public_html/
+    - /bin/cp -R dist/* $DEPLOYPATH
+    - export APIPATH=/home/visachek/api/
+    - /bin/cp -R server/* $APIPATH
+    - /bin/cp server/.env $APIPATH
+    - cd $APIPATH && npm install --production
+    - cd $APIPATH && node scripts/setup-db.js
