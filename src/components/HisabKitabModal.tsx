@@ -58,6 +58,7 @@ export default function HisabKitabModal({ isOpen, onClose, application }: HisabK
   }
 
   const totalAmount = visaApplicationFee + translationFee + deliveryCharge || application.amount || 0;
+  console.log('applicaiotn nameis ', application)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -65,7 +66,7 @@ export default function HisabKitabModal({ isOpen, onClose, application }: HisabK
         {/* Header - Centered */}
         <div className="text-center mb-6">
           <h2 className="text-xl font-semibold">HisabKitab (Financial Summary)</h2>
-          <p className="text-lg font-medium text-gray-800 mt-2">{application.clientName}</p>
+          <p className="text-lg font-medium text-gray-800 mt-2">{application.clientName || application?.clientId?.name}</p>
           {application.type && (
             <div className="flex justify-center gap-2 mt-2">
               <span className="text-sm bg-brand-yellow/10 text-brand-black px-3 py-1 rounded-full">

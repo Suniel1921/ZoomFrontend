@@ -584,6 +584,7 @@ export default function AddApplicationModal({
           <div className="space-y-4">
             <h3 className="font-medium border-b pb-2">Document Handling</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
               {/* Visa Application Handled By */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Visa Application Handled By</label>

@@ -179,7 +179,7 @@ export default function OngoingTasks() {
                 return (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{task.clientName}</div>
+                      <div className="text-sm font-medium text-gray-900">{task.clientName || task?.clientId?.name || 'Unknown'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-brand-yellow/10 text-brand-black">
@@ -210,7 +210,7 @@ export default function OngoingTasks() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        task.status === 'Completed' || task.status === 'Delivered' || task.status === 'Approved'
+                        task.status === 'Completed' || task.status === 'Delivered' || task.status === 'Approved' 
                           ? 'bg-green-100 text-green-800'
                           : task.status === 'Cancelled'
                           ? 'bg-red-100 text-red-800'

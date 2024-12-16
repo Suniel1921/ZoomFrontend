@@ -1,45 +1,31 @@
+
+// *****************NEW CODE****************
+// VALIDAITON REMOVED FOR TESTING PURPOSE
+
 // import { useEffect, useState } from 'react';
 // import { useForm } from 'react-hook-form';
-// import { zodResolver } from '@hookform/resolvers/zod';
-// import { z } from 'zod';
 // import { X } from 'lucide-react';
 // import Button from '../../components/Button';
 // import Input from '../../components/Input';
 // import SearchableSelect from '../../components/SearchableSelect';
-// import { useStore } from '../../store';
 // import { useAdminStore } from '../../store/adminStore';
 // import DatePicker from 'react-datepicker';
 // import "react-datepicker/dist/react-datepicker.css";
 // import { SERVICE_TYPES } from '../../constants/serviceTypes';
 // import axios from 'axios';
-
-// const serviceSchema = z.object({
-//   clientId: z.string().min(1, 'Client is required'),
-//   serviceTypes: z.array(z.enum(SERVICE_TYPES)).min(1, 'At least one service type is required'),
-//   otherServiceDetails: z.string().optional(),
-//   contactChannel: z.enum(['Viber', 'Facebook', 'WhatsApp', 'Friend', 'Office Visit']),
-//   deadline: z.date(),
-//   amount: z.number().min(0, 'Amount must be positive'),
-//   paidAmount: z.number().min(0, 'Paid amount must be positive'),
-//   discount: z.number().min(0, 'Discount must be positive'),
-//   paymentMethod: z.enum(['Bank Furicomy', 'Counter Cash', 'Credit Card', 'Paypay', 'Line Pay']).optional(),
-//   handledBy: z.string().min(1, 'Handler is required'),
-//   jobStatus: z.enum(['Details Pending', 'Under Process', 'Completed']),
-//   remarks: z.string().optional(),
-// });
-
-// type ServiceFormData = z.infer<typeof serviceSchema>;
+// import toast from 'react-hot-toast';
 
 // interface AddServiceModalProps {
 //   isOpen: boolean;
 //   onClose: () => void;
+//   fetchServices : ()=> void;
 // }
 
 // export default function AddServiceModal({
 //   isOpen,
 //   onClose,
+//   fetchServices
 // }: AddServiceModalProps) {
-//   // const { clients, addOtherService } = useStore();
 //   const { admins } = useAdminStore();
 
 //   const {
@@ -48,9 +34,7 @@
 //     watch,
 //     setValue,
 //     reset,
-//     formState: { errors },
-//   } = useForm<ServiceFormData>({
-//     resolver: zodResolver(serviceSchema),
+//   } = useForm({
 //     defaultValues: {
 //       serviceTypes: [],
 //       amount: 0,
@@ -60,7 +44,8 @@
 //       deadline: new Date(),
 //     },
 //   });
-//   const handlers = admins.filter(admin => admin.role !== 'super_admin');
+
+
 
 //   const amount = watch('amount') || 0;
 //   const paidAmount = watch('paidAmount') || 0;
@@ -69,11 +54,33 @@
 //   const selectedTypes = watch('serviceTypes') || [];
 
 //   const [clients, setClients] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(false);
 
 
 //   const clientId = watch('clientId');
 //   const selectedClient = clients.find(c => c._id === clientId);
+//   const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+
+
+
   
+//    // Fetch the handlers (admins) from the API
+//    useEffect(() => {
+//     const fetchHandlers = async () => {
+//       try {
+//         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`);
+//         setHandlers(response.data.admins); 
+//       } catch (error:any) {
+//         console.error('Failed to fetch handlers:', error);
+//         toast.error(error.response.data.message);
+//       }
+//     };
+
+//     fetchHandlers();
+//   }, []);
+
+
+
 //   useEffect(() => {
 //     if (isOpen) {
 //       axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
@@ -92,25 +99,51 @@
 //     }
 //   }, [isOpen]);
 
+//   if (!isOpen) return null;
 
 
-//   const onSubmit = (data: ServiceFormData) => {
-//     const client = clients.find(c => c.id === data.clientId);
-//     if (client) {
-//       addOtherService({
-//         ...data,
-//         clientName: client.name,
-//         mobileNo: client.phone,
-//         dueAmount,
-//         paymentStatus: dueAmount > 0 ? 'Due' : 'Paid',
-//         deadline: data.deadline.toISOString(),
-//       });
-//       reset();
-//       onClose();
+
+
+//   const onSubmit = async (data: any) => {
+//     setLoading(true); // Disable button when submitting
+//     const client = clients.find((c) => c._id === data.clientId);
+    
+//     if (!client) {
+//       console.error('Client not found.');
+//       setLoading(false); // Re-enable button if client not found
+//       return;
+//     }
+  
+//     const addOtherService = {
+//       ...data,
+//       clientName: client.name,
+//       mobileNo: client.phone,
+//       dueAmount,
+//       paymentStatus: dueAmount > 0 ? 'Due' : 'Paid',
+//       deadline: data.deadline?.toISOString(),
+//     };
+  
+//     try {
+//       console.log('Sending POST request:', addOtherService);
+//       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/otherServices/createOtherServices`, addOtherService);
+      
+//       if (response.data.success) {
+//         toast.success(response.data.message);
+//         reset();
+//         onClose();
+//         fetchServices();
+//       }
+//     } catch (error: any) {
+//       if (error.response) {
+//         toast.error(error.response.data.message);
+//       }
+//     } finally {
+//       setLoading(false); // Re-enable button after request is finished
 //     }
 //   };
+  
 
-//   if (!isOpen) return null;
+
 
 //   return (
 //     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -127,23 +160,21 @@
 //             <div className="col-span-2">
 //               <label className="block text-sm font-medium text-gray-700">Client</label>
 //               <SearchableSelect
-//                   options={clients.map(client => ({
-//                     value: client._id,
-//                     label: client.name
-//                   }))}
-//                   value={watch('clientId')}
-//                   onChange={(value) => {
-//                     setValue('clientId', value);
-//                     const client = clients.find(c => c._id === value);
-//                     if (client) {
-//                       // console.log('client is',client)
-//                       setValue('mobileNo', client.phone);
-//                     }
-//                   }}
-//                   placeholder="Select client"
-//                   className="mt-1"
-//                   error={errors.clientId?.message}
-//                 />
+//                 options={clients.map(client => ({
+//                   value: client._id,
+//                   label: client.name
+//                 }))}
+//                 value={watch('clientId')}
+//                 onChange={(value) => {
+//                   setValue('clientId', value);
+//                   const client = clients.find(c => c._id === value);
+//                   if (client) {
+//                     setValue('mobileNo', client.phone);
+//                   }
+//                 }}
+//                 placeholder="Select client"
+//                 className="mt-1"
+//               />
 //             </div>
 
 //             <div>
@@ -184,9 +215,6 @@
 //                   </label>
 //                 ))}
 //               </div>
-//               {errors.serviceTypes && (
-//                 <p className="mt-1 text-sm text-red-600">{errors.serviceTypes.message as string}</p>
-//               )}
 //             </div>
 
 //             {selectedTypes.includes('Other') && (
@@ -212,27 +240,31 @@
 //               />
 //             </div>
 
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700">Handled By</label>
-//               <select
-//                 {...register('handledBy')}
-//                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
-//               >
-//                 <option value="">Select handler</option>
-//                 {handlers.map((admin) => (
-//                   <option key={admin.id} value={admin.name}>
-//                     {admin.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
+
+//              {/*Handled By */}
+//             {/* Handled By */}
+// <div>
+//   <label className="block text-sm font-medium text-gray-700">Handled By</label>
+//   <select
+//     {...register('handledBy')}
+//     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+//   >
+//     <option value="">Select handler</option>
+//     {handlers.map((handler) => (
+//       <option key={handler.id} value={handler.name}>
+//         {handler.name}
+//       </option>
+//     ))}
+//   </select>
+// </div>
+
+
 
 //             <div>
 //               <label className="block text-sm font-medium text-gray-700">Amount (¥)</label>
 //               <Input
 //                 type="number"
-//                 min="0"
-//                 {...register('amount', { valueAsNumber: true })}
+//                 {...register('amount')}
 //                 className="mt-1"
 //               />
 //             </div>
@@ -241,8 +273,7 @@
 //               <label className="block text-sm font-medium text-gray-700">Paid Amount (¥)</label>
 //               <Input
 //                 type="number"
-//                 min="0"
-//                 {...register('paidAmount', { valueAsNumber: true })}
+//                 {...register('paidAmount')}
 //                 className="mt-1"
 //               />
 //             </div>
@@ -251,11 +282,11 @@
 //               <label className="block text-sm font-medium text-gray-700">Discount (¥)</label>
 //               <Input
 //                 type="number"
-//                 min="0"
-//                 {...register('discount', { valueAsNumber: true })}
+//                 {...register('discount')}
 //                 className="mt-1"
 //               />
 //             </div>
+
 
 //             <div>
 //               <label className="block text-sm font-medium text-gray-700">Due Amount (¥)</label>
@@ -330,16 +361,6 @@
 
 
 
-
-
-
-
-
-// *****************NEW CODE****************
-// VALIDAITON REMOVED FOR TESTING PURPOSE
-
-
-
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
@@ -356,13 +377,13 @@ import toast from 'react-hot-toast';
 interface AddServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  fetchServices : ()=> void;
+  fetchServices: () => void;
 }
 
 export default function AddServiceModal({
   isOpen,
   onClose,
-  fetchServices
+  fetchServices,
 }: AddServiceModalProps) {
   const { admins } = useAdminStore();
 
@@ -383,24 +404,40 @@ export default function AddServiceModal({
     },
   });
 
-  const handlers = admins.filter(admin => admin.role !== 'super_admin');
-
   const amount = watch('amount') || 0;
   const paidAmount = watch('paidAmount') || 0;
   const discount = watch('discount') || 0;
-  const dueAmount = amount - (paidAmount + discount);
+  const dueAmount = parseFloat(amount) - (parseFloat(paidAmount) + parseFloat(discount)); // Ensuring numeric calculation
   const selectedTypes = watch('serviceTypes') || [];
 
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-
   const clientId = watch('clientId');
-  const selectedClient = clients.find(c => c._id === clientId);
+  const selectedClient = clients.find((c) => c._id === clientId);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+
+  // Fetch the handlers (admins) from the API
+  useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
+        );
+        setHandlers(response.data.admins);
+      } catch (error: any) {
+        console.error('Failed to fetch handlers:', error);
+        toast.error(error.response.data.message);
+      }
+    };
+
+    fetchHandlers();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
-      axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
+      axios
+        .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
           if (Array.isArray(response.data)) {
             setClients(response.data);
@@ -418,19 +455,16 @@ export default function AddServiceModal({
 
   if (!isOpen) return null;
 
-
-
-
   const onSubmit = async (data: any) => {
     setLoading(true); // Disable button when submitting
     const client = clients.find((c) => c._id === data.clientId);
-    
+
     if (!client) {
       console.error('Client not found.');
       setLoading(false); // Re-enable button if client not found
       return;
     }
-  
+
     const addOtherService = {
       ...data,
       clientName: client.name,
@@ -439,11 +473,14 @@ export default function AddServiceModal({
       paymentStatus: dueAmount > 0 ? 'Due' : 'Paid',
       deadline: data.deadline?.toISOString(),
     };
-  
+
     try {
       console.log('Sending POST request:', addOtherService);
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/otherServices/createOtherServices`, addOtherService);
-      
+      const response = await axios.post(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/otherServices/createOtherServices`,
+        addOtherService
+      );
+
       if (response.data.success) {
         toast.success(response.data.message);
         reset();
@@ -458,9 +495,6 @@ export default function AddServiceModal({
       setLoading(false); // Re-enable button after request is finished
     }
   };
-  
-
-
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -477,14 +511,14 @@ export default function AddServiceModal({
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700">Client</label>
               <SearchableSelect
-                options={clients.map(client => ({
+                options={clients.map((client) => ({
                   value: client._id,
-                  label: client.name
+                  label: client.name,
                 }))}
                 value={watch('clientId')}
                 onChange={(value) => {
                   setValue('clientId', value);
-                  const client = clients.find(c => c._id === value);
+                  const client = clients.find((c) => c._id === value);
                   if (client) {
                     setValue('mobileNo', client.phone);
                   }
@@ -496,10 +530,10 @@ export default function AddServiceModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
-              <Input 
+              <Input
                 value={selectedClient?.phone || ''}
-                className="mt-1 bg-gray-50" 
-                disabled 
+                className="mt-1 bg-gray-50"
+                disabled
               />
             </div>
 
@@ -536,9 +570,7 @@ export default function AddServiceModal({
 
             {selectedTypes.includes('Other') && (
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Service Details
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Service Details</label>
                 <Input
                   {...register('otherServiceDetails')}
                   placeholder="Please specify the service"
@@ -557,42 +589,40 @@ export default function AddServiceModal({
               />
             </div>
 
+            {/* Handled By */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Handled By</label>
+              <select
+                {...register('handledBy')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+              >
+                <option value="">Select handler</option>
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.name}>
+                    {handler.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">Amount (¥)</label>
-              <Input
-                type="number"
-                {...register('amount')}
-                className="mt-1"
-              />
+              <Input type="number" {...register('amount')} className="mt-1" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Paid Amount (¥)</label>
-              <Input
-                type="number"
-                {...register('paidAmount')}
-                className="mt-1"
-              />
+              <Input type="number" {...register('paidAmount')} className="mt-1" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Discount (¥)</label>
-              <Input
-                type="number"
-                {...register('discount')}
-                className="mt-1"
-              />
+              <Input type="number" {...register('discount')} className="mt-1" />
             </div>
-
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Due Amount (¥)</label>
-              <Input
-                type="number"
-                value={dueAmount}
-                className="mt-1 bg-gray-50"
-                disabled
-              />
+              <Input type="number" value={dueAmount} className="mt-1 bg-gray-50" disabled />
             </div>
 
             <div>
@@ -643,5 +673,3 @@ export default function AddServiceModal({
     </div>
   );
 }
-
-

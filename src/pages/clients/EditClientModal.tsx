@@ -333,6 +333,9 @@
 
 // **************NEW CODE**************
 
+
+
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -383,8 +386,10 @@ export default function EditClientModal({
     resolver: zodResolver(createClientSchema(client.category, true)),
     defaultValues: {
       ...client,
-      password: client.credentials?.password || '',
+      address: client.address || {},
+      credentials: client.credentials || { password: '' },
       modeOfContact: client.modeOfContact || [],
+      socialMedia: client.socialMedia || {},
     },
   });
 
@@ -530,7 +535,7 @@ export default function EditClientModal({
           {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700">Password</label>
-            <Input {...register('password')} type="password" className="mt-1" />
+            <Input {...register('password')} type="password" className="mt-1" disabled/>
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password.message as string}</p>
             )}
@@ -562,7 +567,7 @@ export default function EditClientModal({
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Postal Code</label>
                 <Input
-                  {...register('address.postalCode')}
+                  {...register('postalCode')}
                   onChange={(e) => {
                     register('address.postalCode').onChange(e);
                     handlePostalCodeChange();
@@ -580,7 +585,7 @@ export default function EditClientModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700">Prefecture</label>
                 <Input
-                  {...register('address.prefecture')}
+                  {...register('prefecture')}
                   className="mt-1"
                   disabled={false}
                 />
@@ -594,7 +599,7 @@ export default function EditClientModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700">City</label>
                 <Input
-                  {...register('address.city')}
+                  {...register('city')}
                   className="mt-1"
                   disabled={false}
                 />
@@ -606,7 +611,7 @@ export default function EditClientModal({
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Street</label>
                 <Input
-                  {...register('address.street')}
+                  {...register('street')}
                   className="mt-1"
                   disabled={false}
                 />
@@ -620,7 +625,7 @@ export default function EditClientModal({
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Building & Apartment</label>
                 <Input
-                  {...register('address.building')}
+                  {...register('building')}
                   placeholder="Building name, Floor, Unit number"
                   className="mt-1"
                 />
@@ -638,31 +643,31 @@ export default function EditClientModal({
                     type="checkbox"
                     checked={selectedModes.includes(mode)}
                     onChange={() => handleModeOfContactChange(mode)}
-                    className="rounded border-gray-300 text-brand-yellow focus:ring-brand-yellow"
+                    className="form-checkbox"
                   />
-                  <span className="text-sm text-gray-700">{mode}</span>
+                  {mode}
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Facebook Profile */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Facebook Profile</label>
-            <Input
-              {...register('socialMedia.facebook')}
-              placeholder="Facebook profile URL"
-              className="mt-1"
-            />
+          {/* Social Media */}
+          <div className="space-y-4">
+            <h3 className="font-medium">Social Media</h3>
+            <div className="space-y-2">
+              <Input {...register('socialMedia.facebook')} placeholder="Facebook URL" className="mt-1" />
+            </div>
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleClickUpdate} disabled={isSubmitting}>
-              {isSubmitting ? 'Updating...' : 'Update Changes'}
+          {/* Submit Button */}
+          <div className="mt-6">
+            <Button
+              onClick={handleClickUpdate}
+              disabled={isSubmitting}
+              loading={isSubmitting}
+              className="w-full"
+            >
+              Update Client
             </Button>
           </div>
         </div>
@@ -670,3 +675,5 @@ export default function EditClientModal({
     </div>
   );
 }
+
+

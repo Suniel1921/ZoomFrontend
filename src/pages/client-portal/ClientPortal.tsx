@@ -250,11 +250,11 @@ export default function ClientPortal() {
         </div>
       </footer>
 
-      <EditProfileModal
+      {/* <EditProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         client={client} // Send mock client data
-      />
+      /> */}
     </div>
   );
 }

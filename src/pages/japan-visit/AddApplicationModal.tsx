@@ -25,7 +25,6 @@ const applicationSchema = z.object({
   noOfApplicants: z.number().min(1),
   reasonForVisit: z.enum(['General Visit', 'Baby Care', 'Program Attendance', 'Other']),
   otherReason: z.string().optional(),
-
   // Financial Details
   amount: z.number().min(0),
   paidAmount: z.number().min(0),
@@ -48,8 +47,10 @@ interface AddApplicationModalProps {
   onClose: () => void;
 }
 export default function AddApplicationModal({ isOpen, onClose, fetchApplications }: AddApplicationModalProps) {
-  const { admins } = useAdminStore();
   const [clients, setClients] = useState<any[]>([]);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+
+  
 
   const {
     register,
@@ -73,11 +74,30 @@ export default function AddApplicationModal({ isOpen, onClose, fetchApplications
       paymentStatus: 'Due',
       modeOfDelivery: 'Office Pickup',
     },
+   
   });
 
   const clientId = watch('clientId');
   const selectedClient = clients.find(c => c._id === clientId);
 
+
+   // Fetch the handlers (admins) from the API
+   useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`);
+        setHandlers(response.data.admins); 
+      } catch (error:any) {
+        console.error('Failed to fetch handlers:', error);
+        toast.error(error.response.data.message);
+      }
+    };
+
+    fetchHandlers();
+  }, []);
+
+
+  //get all client
   useEffect(() => {
     if (isOpen) {
       axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
@@ -98,7 +118,7 @@ export default function AddApplicationModal({ isOpen, onClose, fetchApplications
 
   const handleApplicationCreation = async () => {
     const formData = watch();
-    console.log('Form Data:', formData); // Debugging the form data before sending to the server
+    // console.log('Form Data:', formData); // Debugging the form data before sending to the server
 
     try {
       const client = clients.find(c => c._id === formData.clientId);
@@ -180,6 +200,8 @@ export default function AddApplicationModal({ isOpen, onClose, fetchApplications
                 />
               </div>
 
+              {/* project start date */}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">Project Start Date</label>
                 <DatePicker
@@ -189,6 +211,28 @@ export default function AddApplicationModal({ isOpen, onClose, fetchApplications
                   dateFormat="yyyy-MM-dd"
                 />
               </div>
+
+
+               {/*Handled By */}
+               <div>
+                <label className="block text-sm font-medium text-gray-700">Handled By</label>
+                <select
+                  {...register('handledBy', { required: 'This field is required' })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+                >
+                  <option value="">Select handler</option>
+                  {handlers.map((handler) => (
+                    <option key={handler.id} value={handler.name}>
+                      {handler.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.handledBy && (
+                  <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
+                )}
+              </div>
+              
+              {/* deadline */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">Deadline</label>

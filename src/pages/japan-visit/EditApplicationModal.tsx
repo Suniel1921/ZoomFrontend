@@ -271,8 +271,8 @@ import Input from '../../components/Input';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import PaymentSection from './components/PaymentSection';
-import { toast } from 'react-hot-toast'; // Importing React Hot Toast
-import axios from 'axios';  // Importing Axios
+import { toast } from 'react-hot-toast'; 
+import axios from 'axios';  
 
 export default function EditApplicationModal({
   isOpen,
