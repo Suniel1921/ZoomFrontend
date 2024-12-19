@@ -385,5 +385,3 @@ export default function EditApplicationModal({
     </div>
   );
 }
-
-//Note:---> need to work on this component make sure add typescript and fix some buges like not auto updated while modal edit 

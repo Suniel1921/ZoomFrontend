@@ -484,6 +484,7 @@ interface ProcessFlowTabProps {
     epassports: Process[];
     japanVisit: Process[];
     otherServices: Process[];
+    graphicDesigns: Process[];
   };
 }
 
@@ -518,6 +519,7 @@ export default function ProcessFlowTab({ client, allData }: ProcessFlowTabProps)
       { name: 'ePassports', data: allData.epassports },
       { name: 'Japan Visit', data: allData.japanVisit },
       { name: 'Other Services', data: allData.otherServices },
+      { name: 'Graphic Designs', data: allData.graphicDesigns },
     ];
 
     const clientProcesses = allProcesses.map((category) => ({

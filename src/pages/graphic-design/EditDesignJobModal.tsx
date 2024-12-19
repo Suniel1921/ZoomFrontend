@@ -262,60 +262,64 @@ export default function EditDesignJobModal({
   const clientId = watch('clientId');
   const selectedClient = clients.find(c => c.id === clientId);
 
+  //get all clients list in drop down 
   useEffect(() => {
     if (isOpen) {
-      axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
+      axios
+        .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
-          if (Array.isArray(response.data)) {
-            setClients(response.data);
-          } else {
-            console.error('Expected an array, received:', response.data);
-            setClients([]);
-          }
+          const clientsData = response?.data?.clients;
+          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]); 
         })
         .catch((error) => {
-          console.error('Error fetching clients:', error);
-          setClients([]);
+          console.error("Error fetching clients:", error);
+          setClients([]); // Set clients to an empty array in case of error
         });
     }
   }, [isOpen]);
 
+
+
   const onSubmit = (data: any) => {
-    let clientName = '';
+    // Directly use the clientId from the form data
+    const clientId = data.clientId;
   
-    // Check if the client is selected
-    const client = clients.find(c => c._id === data.clientId);
-    if (client) {
-      clientName = client.name;
-    }
-  
-    // Ensure that deadline is defined and is a valid Date object
+    // Ensure that 'deadline' is valid, if provided
     let deadline;
     if (data.deadline) {
-      // If the deadline exists, ensure it is a valid Date object
       deadline = new Date(data.deadline);
       if (isNaN(deadline.getTime())) {
         console.error('Invalid deadline:', data.deadline);
         deadline = new Date(); // Fallback to current date if invalid
       }
     } else {
-      // If no deadline is provided, use the current date as a fallback
-      deadline = new Date();
+      deadline = new Date(); // Default to current date if no deadline
     }
   
-    // Update the job, even without a selected client
+    // Ensure that 'date' is valid, if provided
+    let date;
+    if (data.date) {
+      date = new Date(data.date);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', data.date);
+        date = new Date(); // Fallback to current date if invalid
+      }
+    } else {
+      date = new Date(); // Default to current date if no date
+    }
+  
+    // Send the update request to the backend
     axios.put(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/graphicDesign/updateGraphicDesign/${job._id}`,
       {
         ...data,
-        clientName: clientName || 'Default Client', // If no client selected, use a default value
-        date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(), // Ensure `date` is valid
-        deadline: deadline.toISOString(), // Now it is safe to call toISOString
+        date: date.toISOString(), // Ensure valid date format
+        deadline: deadline.toISOString(), // Ensure valid deadline format
       }
     )
     .then((response) => {
       console.log('Design job updated successfully', response.data);
       toast.success(response.data.message);
-      fetchGraphicDesignJobs();
+      fetchGraphicDesignJobs(); // Fetch updated graphic design jobs
       onClose();  // Close the modal after successful update
     })
     .catch((error: any) => {
@@ -324,6 +328,8 @@ export default function EditDesignJobModal({
       toast.error(errorMessage);
     });
   };
+  
+  
   
   
   
@@ -342,7 +348,7 @@ export default function EditDesignJobModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
+            {/* <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700">Client</label>
               <SearchableSelect
                 options={clients.map(client => ({
@@ -360,7 +366,7 @@ export default function EditDesignJobModal({
                 placeholder="Select client"
                 className="mt-1"
               />
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Business Name</label>

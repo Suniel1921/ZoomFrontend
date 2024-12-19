@@ -122,20 +122,21 @@
 
 
 
-import { useState } from 'react';
+
+
+
+
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
+import { useAuthGlobally } from '../../context/AuthContext';
 
 interface ServiceRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  service: {
-    id: string;
-    title: string;
-  };
   client: {
     id: string;
     name: string;
@@ -143,45 +144,66 @@ interface ServiceRequestModalProps {
   };
 }
 
+const services = [
+  'Visa Assistance',
+  'Travel and Tour',
+  'Document Translation',
+  'E-Passport',
+  'Japan Visa and Immigration',
+  'Graphic Design',
+  'Digital Marketing',
+  'Web Development',
+  'Search Engine Optimization',
+  'Photography',
+];
+
 export default function ServiceRequestModal({
   isOpen,
   onClose,
-  service,
   client,
 }: ServiceRequestModalProps) {
-  const [serviceName, setServiceName] = useState('');
-  const [clientName, setClientName] = useState('');
+  const [selectedService, setSelectedService] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [auth] = useAuthGlobally();
+
+  useEffect(() => {
+    if (isOpen) {
+      setPhoneNumber(auth?.user?.phone || ''); // Set phone number from auth.user.phone
+      setSelectedService(''); // Reset the service selection
+      setMessage(''); // Clear the message field
+      setError(''); // Clear any existing error messages
+    }
+  }, [isOpen, auth?.user?.phone]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!message.trim()) {
-      setError('Please provide a message with your request');
+    if (!message.trim() || !selectedService.trim() || !phoneNumber.trim()) {
+      setError('Please fill all the required fields.');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/createServiceRequest`, {
-        clientId: client.id,
-        clientName: clientName.trim(),
-        phoneNumber: phoneNumber.trim(),
-        serviceId: service.id,
-        serviceName: serviceName.trim(),
-        message: message.trim(),
-      });
+      await axios.post(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/createServiceRequest`,
+        {
+          clientId: client.id,
+          clientName: auth?.user?.fullName || '',
+          phoneNumber: phoneNumber.trim(),
+          serviceName: selectedService.trim(),
+          message: message.trim(),
+        }
+      );
 
       toast.success('Service request submitted successfully!');
-      setServiceName('');
-      setClientName('');
-      setPhoneNumber('');
       setMessage('');
+      setSelectedService('');
       onClose();
     } catch (err) {
       console.error('Failed to submit request:', err);
@@ -205,32 +227,36 @@ export default function ServiceRequestModal({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Service</label>
-            <Input
-              value={serviceName}
-              onChange={(e) => setServiceName(e.target.value)}
-              className="mt-1"
-              placeholder="Enter service name"
-            />
+            <label className="block text-sm font-medium text-gray-700">
+              Service <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={selectedService}
+              onChange={(e) => setSelectedService(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2"
+              required
+            >
+              <option value="">Select a service</option>
+              {services.map((service) => (
+                <option key={service} value={service}>
+                  {service}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Your Name</label>
-            <Input
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className="mt-1"
-              placeholder="Enter your name"
-            />
+            <Input value={auth?.user?.fullName || ''} className="mt-1" disabled />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Phone Number</label>
             <Input
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              value={phoneNumber}  // Show phone number from auth.user.phone
               className="mt-1"
               placeholder="Enter your phone number"
+              disabled  // Disable the input so it cannot be edited
             />
           </div>
 
@@ -242,7 +268,7 @@ export default function ServiceRequestModal({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2"
               placeholder="Please describe your requirements or questions..."
               required
             />
@@ -253,7 +279,12 @@ export default function ServiceRequestModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !message.trim()}>
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting || !message.trim() || !phoneNumber.trim() || !selectedService.trim()
+              }
+            >
               {isSubmitting ? 'Submitting...' : 'Submit Request'}
             </Button>
           </div>

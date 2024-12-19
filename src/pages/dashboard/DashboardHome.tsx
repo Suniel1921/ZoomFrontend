@@ -226,7 +226,7 @@ export default function DashboardHome() {
     const fetchClients = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`);
-        setClients(response.data || []); 
+        setClients(response.data.clients || []); 
       } catch (error) {
         console.error("Failed to fetch clients:", error);
         setClients([]); 

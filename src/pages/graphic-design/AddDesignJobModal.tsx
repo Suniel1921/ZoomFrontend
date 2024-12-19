@@ -50,20 +50,18 @@ export default function AddDesignJobModal({
   const clientId = watch('clientId');
   const selectedClient = clientsList.find(c => c._id === clientId);
 
-  useEffect(() => {
+   //get all client
+   useEffect(() => {
     if (isOpen) {
-      axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
+      axios
+        .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
-          if (Array.isArray(response.data)) {
-            setClientsList(response.data);
-          } else {
-            console.error('Expected an array, received:', response.data);
-            setClientsList([]);
-          }
+          const clientsData = response?.data?.clients;
+          setClientsList(Array.isArray(clientsData) ? clientsData : [clientsData]); // Always treat as array, even if single client
         })
         .catch((error) => {
-          console.error('Error fetching clients:', error);
-          setClientsList([]);
+          console.error("Error fetching clients:", error);
+          setClientsList([]); // Set clients to an empty array in case of error
         });
     }
   }, [isOpen]);

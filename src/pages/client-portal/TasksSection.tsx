@@ -342,6 +342,151 @@
 // **************NEW CODE*********************
 
 
+// import React, { useState, useEffect } from 'react';
+// import axios from 'axios';
+// import { format } from 'date-fns';
+// import { ChevronDown, ChevronUp } from 'lucide-react';
+// import { Timeline } from 'antd';
+// import { CheckCircle, Clock, XCircle } from 'lucide-react';
+// import { useAuthGlobally } from '../../context/AuthContext';
+
+// const TasksSection = () => {
+//   const [clientTasks, setClientTasks] = useState<any>({});
+//   const [loading, setLoading] = useState<boolean>(true);
+//   const [expandedTask, setExpandedTask] = useState<string | null>(null);
+//   const [error, setError] = useState<string>('');
+//   const [auth] = useAuthGlobally();
+//   console.log('client task is ', clientTasks)
+//   console.log("Auth User ID:", auth?.user?.id);
+
+//   // Fetch data from the API
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       try {
+//         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllModelDataByID/${auth.user.id}`);
+        
+
+//         setClientTasks(response.data.allData);  // Set the fetched data
+//         setLoading(false);
+//       } catch (err) {
+//         setError('Failed to fetch data');
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchData();
+//   }, [auth.user.id]);
+
+//   if (loading) return <div>Loading...</div>;
+//   if (error) return <div>{error}</div>;
+
+//   const renderStatus = (status: string) => {
+//     switch (status) {
+//       case 'completed':
+//         return { color: 'green', icon: <CheckCircle className="h-5 w-5 text-green-500" /> };
+//       case 'processing':
+//         return { color: 'yellow', icon: <Clock className="h-5 w-5 text-yellow-500" /> };
+//       default:
+//         return { color: 'gray', icon: <XCircle className="h-5 w-5 text-gray-400" /> };
+//     }
+//   };
+
+//   const renderTaskTimeline = (task: any) => {
+//     if (!task.step) return null;
+
+//     return (
+//       <Timeline className="ml-4">
+//         {Object.entries(task.step.stepNames || {}).map(([stepName, stepData]) => {
+//           const status = stepData.status || 'pending'; // Default to 'pending'
+//           const { color, icon } = renderStatus(status);
+
+//           return (
+//             <Timeline.Item 
+//               key={stepName} 
+//               color="gray"  // Set color to gray explicitly to remove blue
+//               dot={icon}
+//               style={{ backgroundColor: 'transparent', borderColor: 'transparent' }} // Override blue background and border color
+//             >
+//               <div className="flex items-center justify-between">
+//                 <h2>
+//                   {stepName}{" "}
+//                   {status === 'completed'
+//                     ? '(Completed)'
+//                     : status === 'processing'
+//                     ? '(Processing)'
+//                     : '(Pending)'}
+//                 </h2>
+//               </div>
+//             </Timeline.Item>
+//           );
+//         })}
+//       </Timeline>
+//     );
+//   };
+
+//   const renderTasks = (modelName: string, data: any[]) => {
+//     if (data.length === 0) return null;
+
+//     return (
+//       <div key={modelName}>
+//         <h3 className="font-medium text-gray-900">{modelName}</h3>
+//         <div className="space-y-4">
+//           {data.map((task: any) => (
+//             <div key={task._id} className="bg-gray-50 rounded-lg overflow-hidden">
+//               <div 
+//                 className="p-4 cursor-pointer hover:bg-gray-100"
+//                 onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
+//               >
+//                 <div className="flex justify-between items-start">
+//                   <div>
+//                     <h4 className="font-medium">{task.type || task.applicationType}</h4>
+//                     <p className="text-sm text-gray-500">
+//                       Deadline: {format(new Date(task.deadline), 'MMM d, yyyy')}
+//                     </p>
+//                   </div>
+//                   <div className="flex items-center gap-2">
+//                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${task.documentStatus || task.applicationStatus === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+//                       {task.documentStatus || task.applicationStatus}
+//                     </span>
+//                     {expandedTask === task._id ? (
+//                       <ChevronUp className="h-5 w-5 text-gray-400" />
+//                     ) : (
+//                       <ChevronDown className="h-5 w-5 text-gray-400" />
+//                     )}
+//                   </div>
+//                 </div>
+//               </div>
+//               {expandedTask === task._id && renderTaskTimeline(task)}
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     );
+//   };
+
+//   return (
+//     <div className="space-y-4">
+//       {Object.keys(clientTasks).map((modelName) => {
+//         const data = clientTasks[modelName]; // e.g., applicationModel, ePassportModel, etc.
+//         if (data && data.length > 0) {
+//           return renderTasks(modelName, data);
+//         }
+//         return null;
+//       })}
+//     </div>
+//   );
+// };
+
+// export default TasksSection;
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -356,6 +501,8 @@ const TasksSection = () => {
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
   const [auth] = useAuthGlobally();
+  console.log('client task is ', clientTasks);
+  console.log("Auth User ID:", auth?.user?.id);
 
   // Fetch data from the API
   useEffect(() => {
@@ -382,42 +529,43 @@ const TasksSection = () => {
         return { color: 'green', icon: <CheckCircle className="h-5 w-5 text-green-500" /> };
       case 'processing':
         return { color: 'yellow', icon: <Clock className="h-5 w-5 text-yellow-500" /> };
+      case 'inprocess': // New status
+        return { color: 'blue', icon: <Clock className="h-5 w-5 text-blue-500" /> };
       default:
         return { color: 'gray', icon: <XCircle className="h-5 w-5 text-gray-400" /> };
     }
   };
 
-  const renderTaskTimeline = (task: any) => {
-    if (!task.step) return null;
+  const renderStepTimeline = (steps) => {
+    return steps.map((step, index) => {
+      const status = step.status || 'pending'; // Default to 'pending'
+      const { color, icon } = renderStatus(status);
 
-    return (
-      <Timeline className="ml-4">
-        {Object.entries(task.step.stepNames || {}).map(([stepName, stepData]) => {
-          const status = stepData.status || 'pending'; // Default to 'pending'
-          const { color, icon } = renderStatus(status);
-
-          return (
-            <Timeline.Item 
-              key={stepName} 
-              color="gray"  // Set color to gray explicitly to remove blue
-              dot={icon}
-              style={{ backgroundColor: 'transparent', borderColor: 'transparent' }} // Override blue background and border color
-            >
-              <div className="flex items-center justify-between">
-                <h2>
-                  {stepName}{" "}
-                  {status === 'completed'
-                    ? '(Completed)'
-                    : status === 'processing'
-                    ? '(Processing)'
-                    : '(Pending)'}
-                </h2>
-              </div>
-            </Timeline.Item>
-          );
-        })}
-      </Timeline>
-    );
+      return (
+        <Timeline.Item key={index} color={color} dot={icon}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3>{step.name}</h3>
+              {/* Show updatedAt only if the status is completed */}
+              {status === 'completed' && step.updatedAt && (
+                <p className="text-xs text-gray-400">
+                  Updated: {format(new Date(step.updatedAt), 'MMM d, yyyy h:mm a')}
+                </p>
+              )}
+            </div>
+            <span>
+              {status === 'completed'
+                ? '(Completed)'
+                : status === 'processing'
+                ? '(Processing)'
+                : status === 'inprocess'
+                ? '(In Progress)'
+                : '(Pending)'}
+            </span>
+          </div>
+        </Timeline.Item>
+      );
+    });
   };
 
   const renderTasks = (modelName: string, data: any[]) => {
@@ -429,7 +577,7 @@ const TasksSection = () => {
         <div className="space-y-4">
           {data.map((task: any) => (
             <div key={task._id} className="bg-gray-50 rounded-lg overflow-hidden">
-              <div 
+              <div
                 className="p-4 cursor-pointer hover:bg-gray-100"
                 onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
               >
@@ -441,7 +589,15 @@ const TasksSection = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${task.documentStatus || task.applicationStatus === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        task.documentStatus === 'Completed' || task.applicationStatus === 'Completed'
+                          ? 'bg-green-100 text-green-700'
+                          : task.documentStatus === 'In Progress' || task.applicationStatus === 'In Progress'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
                       {task.documentStatus || task.applicationStatus}
                     </span>
                     {expandedTask === task._id ? (
@@ -452,7 +608,11 @@ const TasksSection = () => {
                   </div>
                 </div>
               </div>
-              {expandedTask === task._id && renderTaskTimeline(task)}
+              {expandedTask === task._id && (
+                <Timeline className="ml-4">
+                  {renderStepTimeline(task.steps || [])}
+                </Timeline>
+              )}
             </div>
           ))}
         </div>

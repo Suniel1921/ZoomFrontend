@@ -217,24 +217,23 @@ export default function GraphicDesignPage() {
   const [loading, setLoading] = useState(false);
 
   // Fetch graphic design jobs from the API
-  const fetchGraphicDesignJobs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/api/v1/graphicDesign/getAllGraphicDesign`);
-      if (!response.ok) throw new Error('Failed to fetch data');
-      const data = await response.json();
-      setGraphicDesignJobs(Array.isArray(data?.designJobs) ? data.designJobs : []);
-    } catch (error) {
-      console.error('Error fetching graphic design jobs:', error);
-      toast.error('Failed to load graphic design jobs. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchGraphicDesignJobs = () => {
+    axios
+      .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/graphicDesign/getAllGraphicDesign`)
+      .then((response) => {
+        // Ensure response data is an array
+        setGraphicDesignJobs(Array.isArray(response.data.designJobs) ? response.data.designJobs : []);
+      })
+      .catch((error) => {
+        console.error('Error fetching applications:', error);
+      });
+  };
 
   useEffect(() => {
     fetchGraphicDesignJobs();
-  }, [fetchGraphicDesignJobs]);
+  }, []);
+
+
 
   // Filter jobs based on search query
   const filteredJobs = graphicDesignJobs.filter((job) =>
@@ -297,6 +296,7 @@ export default function GraphicDesignPage() {
         />
       ),
     },
+
     {
       key: 'id',
       label: 'Actions',

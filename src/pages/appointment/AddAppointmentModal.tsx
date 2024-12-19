@@ -816,26 +816,22 @@ export default function AddAppointmentModal({
   const recurringFrequency = watch('recurringFrequency');
   const recurringEndDate = watch('recurringEndDate');
 
-  useEffect(() => {
+   //get all client
+   useEffect(() => {
     if (isOpen) {
-      axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
+      axios
+        .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
-          if (Array.isArray(response.data)) {
-            setClients(response.data);
-          } else {
-            console.error('Expected an array, received:', response.data);
-            setClients([]);
-          }
+          const clientsData = response?.data?.clients;
+          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]); // Always treat as array, even if single client
         })
         .catch((error) => {
-          console.error('Error fetching clients:', error);
-          setClients([]);
+          console.error("Error fetching clients:", error);
+          setClients([]); // Set clients to an empty array in case of error
         });
     }
-    return () => {
-      setClients([]); // Clean up on unmount
-    };
   }, [isOpen]);
+
 
   const onSubmit = async (data: AppointmentFormData) => {
     if (!data.clientId) {

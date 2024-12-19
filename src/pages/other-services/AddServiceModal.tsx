@@ -434,21 +434,18 @@ export default function AddServiceModal({
     fetchHandlers();
   }, []);
 
-  useEffect(() => {
+   //get all clients list in drop down 
+   useEffect(() => {
     if (isOpen) {
       axios
         .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
-          if (Array.isArray(response.data)) {
-            setClients(response.data);
-          } else {
-            console.error('Expected an array, received:', response.data);
-            setClients([]);
-          }
+          const clientsData = response?.data?.clients;
+          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]); 
         })
         .catch((error) => {
-          console.error('Error fetching clients:', error);
-          setClients([]);
+          console.error("Error fetching clients:", error);
+          setClients([]); // Set clients to an empty array in case of error
         });
     }
   }, [isOpen]);

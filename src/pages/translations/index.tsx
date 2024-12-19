@@ -22,19 +22,24 @@ export default function TranslationsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Fetch translations from API
-  const getAllTranslations = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/getAllDocumentTranslation`);
-      const data = await response.json();
-      setTranslations(data.translations || []);
-      setClients(data.clients || []); // Assuming the API also returns clients
-    } catch (error) {
-      console.error('Error fetching translations:', error);
-    }
+   // Fetch the Tanslation from API
+   const getAllTranslations = () => {
+    axios
+      .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/getAllDocumentTranslation`)
+      .then((response) => {
+        // Ensure response data is an array
+        const data = Array.isArray(response.data.translations) ? response.data.translations : [];
+        setTranslations(data); // Set to translations state, not clients
+      })
+      .catch((error) => {
+        console.error('Error fetching document Translation:', error);
+      });
   };
+  
   useEffect(() => {
-   getAllTranslations();
+    getAllTranslations();
   }, []);
+
 
   // Filter translations based on search query and status
   const filteredTranslations = translations.filter((trans) => {

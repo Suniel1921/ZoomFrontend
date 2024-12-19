@@ -283,6 +283,7 @@ export default function EditAppointmentModal({
     },
   });
 
+
   const onSubmit = async (data: any) => {
     const payload = {
       mode,
@@ -295,9 +296,12 @@ export default function EditAppointmentModal({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,  
         },
         body: JSON.stringify(payload),
       });
+     
+
 
       const result = await response.json();
       if (result.success) {
