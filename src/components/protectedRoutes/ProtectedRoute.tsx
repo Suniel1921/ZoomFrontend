@@ -10,6 +10,7 @@ const ProtectRoute = () => {
     const [auth, setAuth] = useAuthGlobally();
     const navigate = useNavigate();
 
+
     useEffect(() => {
         const authCheck = async () => {
             try {
@@ -30,8 +31,8 @@ const ProtectRoute = () => {
         }
     }, [auth?.token]);
 
-    return ok ? <Outlet/> : <Spinner /> 
-    // return ok ? <Outlet/> : toast.error('Please Login first')
+    // return ok ? <Outlet/> : <Spinner /> 
+    return ok ? <Outlet/> : navigate('/client-login')
 };
 
 export default ProtectRoute;
