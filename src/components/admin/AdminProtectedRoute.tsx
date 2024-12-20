@@ -86,37 +86,33 @@ const AdminRoute = () => {
 
   useEffect(() => {
     const authCheck = async () => {
-      if (!auth?.token) {
-        console.error('No token found, redirecting to login');
-        navigate('/client-login');
-        return;
-      }
-
-      // Set token for axios
-      axios.defaults.headers.common['Authorization'] = `Bearer ${auth.token}`;
-
-      // Check admin status
       try {
+        if (!auth?.token) {
+          // Redirect immediately if no token
+          navigate('/client-login', { replace: true });
+          return;
+        }
+
+        // Set token for axios
+        axios.defaults.headers.common['Authorization'] = `Bearer ${auth.token}`;
+
+        // Check admin status
         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/auth/admin`);
         if (response?.data?.ok) {
           setOk(true);
         } else {
-          console.error('Not an admin, redirecting');
-          navigate('/client-login');
+          // Redirect if not admin
+          navigate('/client-login', { replace: true });
         }
       } catch (error) {
         console.error('Error during admin check:', error);
-        navigate('/client-login');
+        navigate('/client-login', { replace: true });
       } finally {
         setLoading(false);
       }
     };
 
-    if (auth.token) {
-      authCheck(); // Trigger the auth check if token exists
-    } else {
-      setLoading(false); // Set loading to false when no token exists
-    }
+    authCheck();
   }, [auth?.token, navigate]);
 
   if (loading) {
@@ -127,13 +123,7 @@ const AdminRoute = () => {
     );
   }
 
-  if (!ok) {
-    // Redirect to login if not admin
-    navigate('/client-login');
-    return null; // Render nothing while redirecting
-  }
-
-  return <Outlet />;
+  return ok ? <Outlet /> : null;
 };
 
 export default AdminRoute;
