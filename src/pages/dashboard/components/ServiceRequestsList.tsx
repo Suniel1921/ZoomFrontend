@@ -201,7 +201,7 @@ export default function ServiceRequestsList({ itemsPerPage = 2 }: ServiceRequest
         <div className="space-y-4">
           {paginatedRequests.map((request) => {
             // Safely parse and format the date
-            const requestDate = new Date(request.requestedAt);
+            const requestDate = new Date(request.createdAt);
             const formattedDate = isValid(requestDate) ? format(requestDate, 'MMM d, yyyy h:mm a') : 'Invalid Date';
 
             return (
