@@ -112,7 +112,7 @@ export default function ClientPortal() {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Tasks Section */}
-          <div className="lg:col-span-2 bg-gray-50 rounded-lg shadow-sm p-4 sm:p-6">
+          <div className="lg:col-span-2 bg-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-6">
               <FileText className="h-6 w-6 text-gray-400" />
               <h2 className="text-xl font-semibold">Tasks at Zoom Creatives</h2>

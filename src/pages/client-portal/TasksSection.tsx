@@ -583,7 +583,7 @@ const TasksSection = () => {
             return (
               <div key={task._id} className="bg-white rounded-lg overflow-hidden">
                 <div
-                  className="p-4 cursor-pointer hover:bg-gray-100"
+                  className="p-4 cursor-pointer hover:bg-white"
                   onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
                 >
                   <div className="flex justify-between items-start">
