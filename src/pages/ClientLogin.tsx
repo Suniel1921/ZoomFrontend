@@ -234,59 +234,118 @@ export default function ClientLogin() {
 
 
 
-// **********OLD CODE***********
-// import { useState } from 'react';
+
+
+
+
+
+
+// *****************************************3d animation*****************************************
+
+// import { useState, useEffect } from 'react';
 // import { useNavigate, Link } from 'react-router-dom';
 // import { Lock, Eye, EyeOff } from 'lucide-react';
 // import Button from '../components/Button';
 // import Input from '../components/Input';
-// // import { useAuth } from '../App';
-// import { validateClientCredentials } from '../services/authService';
+// import axios from 'axios'; // Import axios for API calls
 // import CreateClientAccountModal from './components/CreateClientAccountModal';
+// import toast from 'react-hot-toast';
+// import { useAuthGlobally } from '../context/AuthContext';
 
 // export default function ClientLogin() {
 //   const navigate = useNavigate();
-//   // const { login } = useAuth();
 //   const [error, setError] = useState('');
 //   const [showPassword, setShowPassword] = useState(false);
 //   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
+//   const [auth, setAuth] = useAuthGlobally();
 //   const [formData, setFormData] = useState({
 //     email: '',
 //     password: '',
 //     remember: false,
 //   });
 
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+//   // Mouse move event handler for 3D effect
+//   useEffect(() => {
+//     const handleMouseMove = (e) => {
+//       const { clientX: x, clientY: y } = e;
+//       setMousePosition({ x, y });
+//     };
+
+//     // Attach the event listener
+//     document.addEventListener('mousemove', handleMouseMove);
+
+//     // Clean up event listener on unmount
+//     return () => {
+//       document.removeEventListener('mousemove', handleMouseMove);
+//     };
+//   }, []);
+
+//   const { x, y } = mousePosition;
+//   const centerX = window.innerWidth / 2;
+//   const centerY = window.innerHeight / 2;
+//   const deltaX = (x - centerX) / centerX;
+//   const deltaY = (y - centerY) / centerY;
+
+//   const transformStyle = {
+//     transform: `perspective(1000px) rotateX(${deltaY * 10}deg) rotateY(${deltaX * 10}deg)`,
+//     transition: 'transform 0.1s ease-out',
+//   };
+
+//   const handleChange = (e) => {
 //     const { name, value, type, checked } = e.target;
-//     setFormData(prev => ({
+//     setFormData((prev) => ({
 //       ...prev,
 //       [name]: type === 'checkbox' ? checked : value,
 //     }));
 //   };
 
-//   const handleSubmit = async (e: React.FormEvent) => {
+//   const handleSubmit = async (e) => {
 //     e.preventDefault();
 //     setError('');
 
-//     const client = validateClientCredentials(formData.email, formData.password);
-    
-//     if (client) {
-//       // login('client', formData.email);
-//       navigate('/client-portal');
-//     } else {
-//       setError('Invalid email or password');
+//     try {
+//       // Making API call using axios
+//       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/auth/login`, formData);
+
+//       // Check if login is successful
+//       if (response.data.success) {
+//         toast.success(response.data.message);
+//         setAuth({
+//           ...auth,
+//           user: response.data.user,
+//           role: response.data.user.role,
+//           token: response.data.token,
+//         });
+//         localStorage.setItem('token', JSON.stringify(response.data));
+//         axios.defaults.headers.common['Authorization'] = response.data.token;
+
+//         // Redirect based on role
+//         if (response?.data?.user?.role === 'admin') {
+//           navigate('/dashboard');
+//         } else if (response?.data?.user?.role === 'superadmin') {
+//           navigate('/dashboard');
+//         } else {
+//           navigate('/client-portal');
+//         }
+//       }
+//     } catch (error) {
+//       if (error.response) {
+//         toast.error(error.response.data.message);
+//       }
 //     }
 //   };
 
 //   return (
-//     <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-yellow/10 to-white">
+//     <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-yellow/10 to-white" style={transformStyle}>
 //       {/* Header */}
 //       <header className="bg-brand-black text-white">
 //         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
 //           <Link to="/" className="flex items-center">
 //             <span className="text-2xl font-bold text-brand-yellow">Zoom Creatives</span>
 //           </Link>
-//           <Button 
+//           <Button
 //             onClick={() => setIsCreateAccountModalOpen(true)}
 //             variant="outline"
 //             className="text-white border-white hover:bg-white hover:text-brand-black"
@@ -299,20 +358,13 @@ export default function ClientLogin() {
 //       {/* Main Content */}
 //       <div className="flex-grow flex flex-col justify-center py-12 sm:px-6 lg:px-8">
 //         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-//           <h1 className="text-4xl md:text-5xl font-bold text-brand-black mb-3">
-//             Welcome Back
-//           </h1>
-//           <h2 className="text-xl md:text-2xl text-brand-black/80 mb-16">
-//             Client's Hub
-//           </h2>
+//           <h1 className="text-4xl md:text-5xl font-bold text-brand-black mb-3">Zoom Creatives</h1>
 //         </div>
 
 //         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
 //           <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-brand-yellow/20">
 //             <div className="text-center mb-6">
-//               <h3 className="text-2xl font-bold text-brand-black">
-//                 Client Login
-//               </h3>
+//               <h3 className="text-2xl font-bold text-brand-black">Client Login</h3>
 //             </div>
 
 //             {error && (
@@ -323,9 +375,7 @@ export default function ClientLogin() {
 
 //             <form className="space-y-6" onSubmit={handleSubmit}>
 //               <div>
-//                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-//                   Email address
-//                 </label>
+//                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
 //                 <div className="mt-1">
 //                   <Input
 //                     id="email"
@@ -342,9 +392,7 @@ export default function ClientLogin() {
 //               </div>
 
 //               <div>
-//                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-//                   Password
-//                 </label>
+//                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
 //                 <div className="mt-1 relative">
 //                   <Input
 //                     id="password"
@@ -405,17 +453,6 @@ export default function ClientLogin() {
 //               </Button>
 //             </form>
 //           </div>
-
-//           {/* Admin Portal Link */}
-//           <div className="mt-8 text-center">
-//             <p className="text-gray-600">Are you an administrator?</p>
-//             <Link 
-//               to="/login" 
-//               className="mt-2 inline-block text-lg font-medium text-brand-black hover:text-brand-yellow"
-//             >
-//               Access Admin Portal →
-//             </Link>
-//           </div>
 //         </div>
 //       </div>
 
@@ -445,6 +482,3 @@ export default function ClientLogin() {
 //     </div>
 //   );
 // }
-
-
-

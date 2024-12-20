@@ -574,7 +574,7 @@ const TasksSection = () => {
 
     return (
       <div key={modelName}>
-        <h3 className="font-medium text-gray-900">{modelName}</h3>
+        {/* <h3 className="font-medium text-gray-900">{modelName}</h3> */}
         <div className="space-y-4">
           {data.map((task: any) => {
             const deadline = task.deadline ? new Date(task.deadline) : null;
