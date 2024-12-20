@@ -581,7 +581,7 @@ const TasksSection = () => {
             const formattedDeadline = deadline && isValid(deadline) ? format(deadline, 'MMM d, yyyy') : 'No Deadline';
 
             return (
-              <div key={task._id} className="bg-gray-50 rounded-lg overflow-hidden">
+              <div key={task._id} className="bg-white rounded-lg overflow-hidden">
                 <div
                   className="p-4 cursor-pointer hover:bg-gray-100"
                   onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
