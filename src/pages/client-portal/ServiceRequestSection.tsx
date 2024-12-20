@@ -266,21 +266,22 @@ export default function ServiceRequestSection({ client }: ServiceRequestSectionP
 
       {/* Floating Button for Mobile and Tablet only */}
       <div
-        className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 md:hidden"
+        className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 md:hidden"
+        // className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 md:hidden"
         style={{
           width: 'auto',
           height: '50px',
-          backgroundColor: '#FFC107',
+          backgroundColor: 'black',
           // backgroundColor: '#FEDC00',
-          borderRadius: '25px',
+          // borderRadius: '25px',
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
         }}
       >
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-full h-full px-4 text-white font-semibold flex items-center justify-center"
+          className="w-[400px] h-full px-4 text-white font-semibold flex items-center justify-center"
         >
-          Request Service
+          Request Services 
         </button>
       </div>
     </div>
