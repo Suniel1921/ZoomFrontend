@@ -485,6 +485,9 @@
 
 
 
+
+
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format, isValid } from 'date-fns';
@@ -551,7 +554,7 @@ const TasksSection = () => {
                 <p className="text-xs text-gray-400">Updated: {formattedUpdatedAt}</p>
               )}
             </div>
-            <span>
+            {/* <span>
               {status === 'completed'
                 ? '(Completed)'
                 : status === 'processing'
@@ -559,7 +562,7 @@ const TasksSection = () => {
                 : status === 'inprocess'
                 ? '(In Progress)'
                 : '(Pending)'}
-            </span>
+            </span> */}
           </div>
         </Timeline.Item>
       );

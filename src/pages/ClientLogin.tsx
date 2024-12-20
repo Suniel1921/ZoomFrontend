@@ -89,8 +89,8 @@ export default function ClientLogin() {
       {/* Main Content */}
       <div className="flex-grow flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-brand-black mb-3">Welcome Back</h1>
-          <h2 className="text-xl md:text-2xl text-brand-black/80 mb-16">Client's Hub</h2>
+          <h1 className="text-4xl md:text-5xl font-bold text-brand-black mb-3">Zoom Creatives</h1>
+          {/* <h2 className="text-xl md:text-2xl text-brand-black/80 mb-16">Client's Hub</h2> */}
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -187,7 +187,7 @@ export default function ClientLogin() {
           </div>
 
           {/* Admin Portal Link */}
-          <div className="mt-8 text-center">
+          {/* <div className="mt-8 text-center">
             <p className="text-gray-600">Are you an administrator?</p>
             <Link 
               to="/login" 
@@ -195,7 +195,7 @@ export default function ClientLogin() {
             >
               Access Admin Portal →
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
 
