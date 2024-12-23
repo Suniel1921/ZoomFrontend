@@ -131,6 +131,7 @@ import toast from 'react-hot-toast';
 
 interface AppointmentActionsProps {
   appointment: Appointment;
+  fetchAppointments: ()=> void;
   onEdit?: () => void;
   onReschedule?: () => void;
   onStatusChange?: (appointment: Appointment, status: 'Completed' | 'Cancelled') => void;
@@ -141,6 +142,7 @@ export default function AppointmentActions({
   appointment, 
   onEdit,
   onReschedule,
+  fetchAppointments,
   onStatusChange,
   showEdit = false,
 }: AppointmentActionsProps) {
@@ -159,6 +161,7 @@ export default function AppointmentActions({
           if (onStatusChange) onStatusChange(appointment, 'Completed');
           toast.success(response.data.message);
           setShowActions(false); // Hide the actions menu
+          fetchAppointments();
           
         }
       } catch (error:any) {
@@ -182,6 +185,7 @@ export default function AppointmentActions({
           if (onStatusChange) onStatusChange(appointment, 'Cancelled');
           setShowActions(false); // Hide the actions menu
           toast.success(response.data.message);
+          fetchAppointments();
         }
       } catch (error:any) {
         console.error('Error canceling appointment:', error);

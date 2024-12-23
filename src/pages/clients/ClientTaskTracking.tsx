@@ -499,7 +499,7 @@ export default function ClientTaskTracking({
               <div key={task._id} className="bg-gray-50 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium">{task.clientId.name || task.clientName}</p>
+                    {/* <p className="font-medium">{task.clientId.name || task.clientName}</p> */}
                     <p className="text-sm text-gray-500">
                       Deadline:{" "}
                       {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy") : "N/A"}

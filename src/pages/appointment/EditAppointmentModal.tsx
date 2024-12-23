@@ -248,6 +248,7 @@ type RescheduleFormData = z.infer<typeof rescheduleSchema>;
 
 interface EditAppointmentModalProps {
   isOpen: boolean;
+  fetchAppointments : ()=> void;
   onClose: () => void;
   appointment: Appointment;
   mode: 'edit' | 'reschedule';
@@ -258,6 +259,7 @@ export default function EditAppointmentModal({
   onClose,
   appointment,
   mode,
+  fetchAppointments,
 }: EditAppointmentModalProps) {
   const formSchema = mode === 'edit' ? editAppointmentSchema : rescheduleSchema;
   const {
@@ -307,6 +309,7 @@ export default function EditAppointmentModal({
       if (result.success) {
         toast(`${mode === 'edit' ? 'Appointment updated' : 'Appointment rescheduled'} successfully`);
         onClose();
+        fetchAppointments();
       } else {
         toast(result.message || 'An error occurred');
       }
@@ -334,7 +337,7 @@ export default function EditAppointmentModal({
           <div>
             <label className="block text-sm font-medium text-gray-700">Client</label>
             {/* Displaying the client name */}
-            <Input value={appointment.clientName} disabled className="mt-1 bg-gray-50" />
+            <Input value={appointment?.clientName || appointment?.clientId?.name} disabled className="mt-1 bg-gray-50" />
           </div>
 
           <div>

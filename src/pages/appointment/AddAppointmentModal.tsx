@@ -762,6 +762,7 @@ type AppointmentFormData = {
 
 interface AddAppointmentModalProps {
   isOpen: boolean;
+  fetchAppointments : ()=> void;
   onClose: () => void;
   selectedDate?: Date | null;
   selectedTime?: string;
@@ -781,6 +782,7 @@ export default function AddAppointmentModal({
   selectedDate,
   selectedTime,
   appointment,
+  fetchAppointments
 }: AddAppointmentModalProps) {
   const [clients, setClients] = useState<any[]>([]);
 
@@ -861,6 +863,7 @@ export default function AddAppointmentModal({
       if (response.data.success) {
         reset();
         onClose();
+        fetchAppointments()
         toast.success(response.data.message);
       } else {
         console.error('Failed to create appointment:', response.data.message);

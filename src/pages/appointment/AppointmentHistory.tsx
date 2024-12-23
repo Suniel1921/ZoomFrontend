@@ -360,12 +360,12 @@ const filteredAppointments = appointments
                   >
                     {apt.status}
                   </span>
-                  <AppointmentActions
+                  {/* <AppointmentActions
                     appointment={apt}
                     onEdit={() => handleEdit(apt, 'edit')}
                     onReschedule={() => handleEdit(apt, 'reschedule')}
                     onStatusChange={(status) => handleStatusChange(apt.id, status)}
-                  />
+                  /> */}
                   <Button
                     variant="outline"
                     size="sm"

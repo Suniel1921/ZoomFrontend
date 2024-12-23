@@ -306,10 +306,7 @@
 
 
 
-
-
-
-
+// *************NEW CODE******************
 
 import { useState, useMemo, useEffect } from 'react';
 import { Users, Plus, Pencil, Trash2, Mail, Phone, Upload } from 'lucide-react';
@@ -350,25 +347,6 @@ export default function ClientsPage() {
     'General Consultation',
   ];
 
-  // const getAllClients = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`);
-  //     if (Array.isArray(response.data)) {
-  //       setClients(response?.data?.clients);
-  //     } else {
-  //       throw new Error('Unexpected response format');
-  //     }
-  //   } catch (error) {
-  //     setError('Failed to fetch clients.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   getAllClients();
-  // }, []);
 
 
   const getAllClients = async ()=>{

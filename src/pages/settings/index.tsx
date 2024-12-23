@@ -6,7 +6,8 @@ import {
   Shield, 
   FileText, 
   Database,
-  Activity 
+  Activity, 
+  ClipboardEditIcon
 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import ProfileSettings from './ProfileSettings';
@@ -16,6 +17,7 @@ import AdminSettings from './AdminSettings';
 import ProcessTemplatesTab from './ProcessTemplatesTab';
 import BackupRestoreSettings from './BackupRestoreSettings';
 import AuditLogSettings from './AuditLogSettings';
+import CreateSuperAdmin from './CreateSuperAdmin';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -27,6 +29,7 @@ export default function SettingsPage() {
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'admins', label: 'Admin Management', icon: Shield },
     { id: 'templates', label: 'Process Templates', icon: FileText },
+    { id: 'Create_Super_Admin', label: 'Create Super Admin', icon: ClipboardEditIcon },
     { id: 'backup', label: 'Backup & Restore', icon: Database },
     { id: 'audit', label: 'Audit Logs', icon: Activity },
   ];
@@ -71,8 +74,11 @@ export default function SettingsPage() {
           {activeTab === 'templates' && <ProcessTemplatesTab />}
           {activeTab === 'backup' && <BackupRestoreSettings />}
           {activeTab === 'audit' && <AuditLogSettings />}
+          {activeTab === 'Create_Super_Admin' && <CreateSuperAdmin />}
         </div>
       </div>
     </div>
   );
 }
+
+

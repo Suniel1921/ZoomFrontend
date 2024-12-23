@@ -212,6 +212,13 @@
 // }
 
 
+
+
+
+
+
+
+
 import { useState, useEffect } from 'react';
 import { format, isAfter, startOfDay, addDays, isSameDay } from 'date-fns';
 import { Clock, Video, MapPin } from 'lucide-react';
@@ -220,43 +227,35 @@ import { safeParse } from '../../utils/dateUtils';
 import AppointmentActions from './AppointmentActions';
 import type { Appointment } from '../../types';
 import axios from 'axios';
+import { useAppointmentGlobally } from '../../context/AppointmentContext';
 
 interface UpcomingEventsProps {
   onEdit: (appointment: Appointment) => void;
   onReschedule: (appointment: Appointment) => void;
+  fetchAppointments : ()=> void;
 }
 
-export default function UpcomingEvents({ onEdit, onReschedule }: UpcomingEventsProps) {
+export default function UpcomingEvents({ onEdit, onReschedule, fetchAppointments }: UpcomingEventsProps) {
   const { appointments, applications, japanVisitApplications, translations, graphicDesignJobs, updateAppointment } = useStore();
   const today = startOfDay(new Date());
-  const [fetchedAppointments, setFetchedAppointments] = useState<Appointment[]>([]);
+  // const [fetchedAppointments, setFetchedAppointments] = useState<Appointment[]>([]);
+  const {appointmentData} = useAppointmentGlobally();
+  console.log('app data is', appointmentData)
 
-  // Fetch appointments data from the API
-  const fetchAppointments = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`);
-      if (response.data.success) {
-        setFetchedAppointments(response.data.appointments);
-      }
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    }
-  };
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
+    // Check if appointmentData is an array before proceeding
+    const safeAppointmentData = Array.isArray(appointmentData) ? appointmentData : [];
 
+  
   // Get today's appointments (excluding design deadlines)
-  const todayAppointments = fetchedAppointments.filter(apt => {
+  const todayAppointments = safeAppointmentData.filter(apt => {
     const aptDate = safeParse(apt.date);
-    return aptDate && 
-           isSameDay(aptDate, today) && 
-           apt.status === 'Scheduled' &&
-           !apt.type.startsWith('Design Deadline:');
+    return aptDate &&  isSameDay(aptDate, today) &&  apt.status === 'Scheduled' && !apt.type.startsWith('Design Deadline:');
   });
 
+
+
   // Get upcoming appointments (next 7 days, excluding design deadlines)
-  const upcomingAppointments = fetchedAppointments.filter(apt => {
+  const upcomingAppointments = safeAppointmentData.filter(apt => {
     const aptDate = safeParse(apt.date);
     return aptDate && 
            isAfter(aptDate, today) && 
@@ -303,6 +302,7 @@ export default function UpcomingEvents({ onEdit, onReschedule }: UpcomingEventsP
         onEdit={() => onEdit(apt)}
         onReschedule={() => onReschedule(apt)}
         onStatusChange={handleStatusChange}
+        fetchAppointments = {fetchAppointments}
       />
     </div>
   );
@@ -349,3 +349,8 @@ export default function UpcomingEvents({ onEdit, onReschedule }: UpcomingEventsP
     </div>
   );
 }
+
+
+
+
+
