@@ -490,12 +490,7 @@ export default function AddApplicationModal({
         paymentStatus: total <= 0 ? "Paid" : "Due",
       };
 
-      const response = await axios.post(
-        `${
-          import.meta.env.VITE_REACT_APP_URL
-        }/api/v1/visaApplication/createVisaApplication`,
-        payload
-      );
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/createVisaApplication`, payload);
       if (response.data.success) {
         toast.success(response.data.message);
         reset();
