@@ -49,6 +49,26 @@ export default function AddDesignJobModal({
 
   const clientId = watch('clientId');
   const selectedClient = clientsList.find(c => c._id === clientId);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+
+
+
+
+     // Fetch the handlers (admins) from the API
+     useEffect(() => {
+      const fetchHandlers = async () => {
+        try {
+          const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`);
+          setHandlers(response.data.admins); 
+        } catch (error:any) {
+          console.error('Failed to fetch handlers:', error);
+          toast.error(error.response.data.message);
+        }
+      };
+  
+      fetchHandlers();
+    }, []);
+  
 
    //get all client
    useEffect(() => {
@@ -164,6 +184,25 @@ export default function AddDesignJobModal({
                 className="mt-1"
               />
             </div>
+
+                  {/*Handled By */}
+                  <div>
+                <label className="block text-sm font-medium text-gray-700">Handled By</label>
+                <select
+                  {...register('handledBy', { required: 'This field is required' })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+                >
+                  <option value="">Select handler</option>
+                  {handlers.map((handler) => (
+                    <option key={handler.id} value={handler.name}>
+                      {handler.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.handledBy && (
+                  <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
+                )}
+              </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Business Name</label>

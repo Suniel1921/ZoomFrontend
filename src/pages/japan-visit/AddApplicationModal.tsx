@@ -228,6 +228,19 @@ export default function AddApplicationModal({ isOpen, onClose, fetchApplications
                   <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
                 )}
               </div>
+
+              {/*status */}
+              <div>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select
+                {...register('status')}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
               
               {/* deadline */}
 

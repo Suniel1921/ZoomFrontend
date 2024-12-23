@@ -119,7 +119,7 @@ export default function JapanVisitPage() {
       },
     },
     {
-      key: 'applicationStatus',
+      key: 'status',
       label: 'Status',
       render: (value: string) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${

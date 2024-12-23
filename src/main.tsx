@@ -5,13 +5,16 @@ import App from './App';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { AppointmentProvider } from './context/AppointmentContext';
+import { AccountTaskProvider } from './context/AccountTaskContext';
 
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
 <AuthProvider>
   <AppointmentProvider>
+    <AccountTaskProvider>
   <App />
+    </AccountTaskProvider>
   </AppointmentProvider>
 </AuthProvider>
   

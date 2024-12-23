@@ -419,12 +419,238 @@
 
 
 
+// import { useState, useEffect } from "react";
+// import { format } from "date-fns";
+// import FilesTab from "./FilesTab";
+// import ProcessFlowTab from "./ProcessFlowTab";
+// import Button from "../../components/Button";
+// import { Plus } from "lucide-react";
+
+// interface ClientTaskTrackingProps {
+//   client: string; // client id received as prop
+//   allData: any; // all model data received as prop
+// }
+
+// export default function ClientTaskTracking({
+//   client,
+//   allData,
+// }: ClientTaskTrackingProps) {
+//   const [activeTab, setActiveTab] = useState("tasks");
+//   const [clientTasks, setClientTasks] = useState({
+//     applications: [],
+//     appointment: [],
+//     documentTranslation: [],
+//     epassport: [],
+//     graphicDesigns: [],
+//     japanVisit: [],
+//     otherServices: [],
+//   });
+
+//   useEffect(() => {
+//     // Ensure the data and client ID are available
+//     if (allData && client) {
+//       const updatedClientTasks = {
+//         applications: [],
+//         appointment: [],
+//         documentTranslation: [],
+//         epassport: [],
+//         graphicDesigns: [],
+//         japanVisit: [],
+//         otherServices: [],
+//       };
+
+//       Object.keys(allData).forEach((key) => {
+//         const modelData = allData[key];
+//         // Only process array types
+//         if (Array.isArray(modelData)) {
+//           modelData.forEach((item) => {
+//             // console.log("Item Client ID:", item.clientId?._id);  // Log to check clientId
+
+//             // Check if the item belongs to the specific client
+//             if (item?.clientId?._id === client) {
+//               // Populate the client task state based on the data type
+//               if (key === "application") updatedClientTasks.applications.push(item);
+//               if (key === "appointment") updatedClientTasks.appointment.push(item);
+//               if (key === "documentTranslation") updatedClientTasks.documentTranslation.push(item);
+//               if (key === "epassports") updatedClientTasks.epassport.push(item);
+//               if (key === "graphicDesigns") updatedClientTasks.graphicDesigns.push(item);
+//               if (key === "japanVisit") updatedClientTasks.japanVisit.push(item);
+//               if (key === "otherServices") updatedClientTasks.otherServices.push(item);
+//             }
+//           });
+//         }
+//       });
+
+//       // Set the filtered tasks
+//       setClientTasks(updatedClientTasks);
+//     }
+//   }, [client, allData]);
+
+
+  
+
+//   const renderTaskSection = (title: string, tasks: any[], taskType: string) => {
+//     return (
+//       tasks.length > 0 && (
+//         <div>
+//           <h3 className="font-medium mb-3">{title}</h3>
+//           <div className="space-y-4">
+//             {tasks.map((task) => (
+//               <div key={task._id} className="bg-gray-50 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+//                 <div className="flex justify-between items-start">
+//                   <div>
+//                     {/* <p className="font-medium">{task.clientId.name || task.clientName}</p> */}
+//                     <p className="text-sm text-gray-500">
+//                       Deadline:{" "}
+//                       {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy") : "N/A"}
+//                     </p>
+//                   </div>
+
+//                   {/* Render custom statuses based on task type */}
+//                   <span
+//                     className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClassName(task, taskType)}`}
+//                   >
+//                     {getStatusLabel(task, taskType)}
+//                   </span>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//       )
+//     );
+//   };
+
+//   const getStatusClassName = (task: any, taskType: string) => {
+//     const status =
+//       taskType === "application"
+//         ? task.visaStatus
+//         : taskType === "documentTranslation"
+//         ? task.translationStatus
+//         : taskType === "epassport"
+//         ? task.applicationStatus
+//         : taskType === "otherService"
+//         ? task.jobStatus
+//         : task.status;
+
+//     // Return appropriate class based on the task status
+//     switch (status) {
+//       case "Completed":
+//         return "bg-green-100 text-green-700";
+//       case "Cancelled":
+//         return "bg-red-100 text-red-700";
+//       default:
+//         return "bg-blue-100 text-blue-700";
+//     }
+//   };
+
+//   const getStatusLabel = (task: any, taskType: string) => {
+//     return (
+//       taskType === "application"
+//         ? task.visaStatus
+//         : taskType === "documentTranslation"
+//         ? task.translationStatus
+//         : taskType === "epassport"
+//         ? task.applicationStatus
+//         : taskType === "otherService"
+//         ? task.jobStatus
+//         : task.status
+//     );
+//   };
+
+//   return (
+//     <div className="space-y-4">
+//       {/* Tabs */}
+//       <div className="border-b border-gray-200">
+//         <nav className="flex space-x-8">
+//           <button
+//             onClick={() => setActiveTab("tasks")}
+//             className={`py-4 px-1 border-b-2 font-medium text-sm ${
+//               activeTab === "tasks"
+//                 ? "border-brand-yellow text-brand-black"
+//                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//             }`}
+//           >
+//             Tasks
+//           </button>
+//           <button
+//             onClick={() => setActiveTab("processes")}
+//             className={`py-4 px-1 border-b-2 font-medium text-sm ${
+//               activeTab === "processes"
+//                 ? "border-brand-yellow text-brand-black"
+//                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//             }`}
+//           >
+//             Process Flows
+//           </button>
+//           <button
+//             onClick={() => setActiveTab("payments")}
+//             className={`py-4 px-1 border-b-2 font-medium text-sm ${
+//               activeTab === "payments"
+//                 ? "border-brand-yellow text-brand-black"
+//                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//             }`}
+//           >
+//             Payment History
+//           </button>
+//           <button
+//             onClick={() => setActiveTab("files")}
+//             className={`py-4 px-1 border-b-2 font-medium text-sm ${
+//               activeTab === "files"
+//                 ? "border-brand-yellow text-brand-black"
+//                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//             }`}
+//           >
+//             Files
+//           </button>
+//         </nav>
+//       </div>
+
+//       {/* Content */}
+//       {activeTab === "tasks" && (
+//         <div className="space-y-6">
+//           {renderTaskSection("Visa Applications", clientTasks.applications, "application")}
+//           {renderTaskSection("Appointments", clientTasks.appointment, "appointment")}
+//           {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslation")}
+//           {renderTaskSection("Design Services", clientTasks.graphicDesigns, "graphicDesigns")}
+//           {renderTaskSection("Japan Visit Applications", clientTasks.japanVisit, "japanVisit")}
+//           {renderTaskSection("E-passport Applications", clientTasks.epassport, "epassport")}
+//           {renderTaskSection("Other Services", clientTasks.otherServices, "otherService")}
+//         </div>
+//       )}
+
+//       {activeTab === "processes" && <ProcessFlowTab client={client} allData={allData} />}
+//       {activeTab === "files" && <FilesTab />}
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+// -*****************showing data using context ***********
+
+
+
+
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import FilesTab from "./FilesTab";
 import ProcessFlowTab from "./ProcessFlowTab";
 import Button from "../../components/Button";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
+import { useAccountTaskGlobally } from "../../context/AccountTaskContext";
+import { Modal } from "antd";
+import Step from "./process/accountAndTaskComponents/Step";
+import DocumentStep from "./process/accountAndTaskComponents/DocumentStep";
 
 interface ClientTaskTrackingProps {
   client: string; // client id received as prop
@@ -436,6 +662,7 @@ export default function ClientTaskTracking({
   allData,
 }: ClientTaskTrackingProps) {
   const [activeTab, setActiveTab] = useState("tasks");
+  const { accountTaskData } = useAccountTaskGlobally();
   const [clientTasks, setClientTasks] = useState({
     applications: [],
     appointment: [],
@@ -446,9 +673,10 @@ export default function ClientTaskTracking({
     otherServices: [],
   });
 
+
   useEffect(() => {
     // Ensure the data and client ID are available
-    if (allData && client) {
+    if (accountTaskData && client) {
       const updatedClientTasks = {
         applications: [],
         appointment: [],
@@ -459,8 +687,8 @@ export default function ClientTaskTracking({
         otherServices: [],
       };
 
-      Object.keys(allData).forEach((key) => {
-        const modelData = allData[key];
+      Object.keys(accountTaskData).forEach((key) => {
+        const modelData = accountTaskData[key];
         // Only process array types
         if (Array.isArray(modelData)) {
           modelData.forEach((item) => {
@@ -469,13 +697,19 @@ export default function ClientTaskTracking({
             // Check if the item belongs to the specific client
             if (item?.clientId?._id === client) {
               // Populate the client task state based on the data type
-              if (key === "application") updatedClientTasks.applications.push(item);
-              if (key === "appointment") updatedClientTasks.appointment.push(item);
-              if (key === "documentTranslation") updatedClientTasks.documentTranslation.push(item);
+              if (key === "application")
+                updatedClientTasks.applications.push(item);
+              if (key === "appointment")
+                updatedClientTasks.appointment.push(item);
+              if (key === "documentTranslation")
+                updatedClientTasks.documentTranslation.push(item);
               if (key === "epassports") updatedClientTasks.epassport.push(item);
-              if (key === "graphicDesigns") updatedClientTasks.graphicDesigns.push(item);
-              if (key === "japanVisit") updatedClientTasks.japanVisit.push(item);
-              if (key === "otherServices") updatedClientTasks.otherServices.push(item);
+              if (key === "graphicDesigns")
+                updatedClientTasks.graphicDesigns.push(item);
+              if (key === "japanVisit")
+                updatedClientTasks.japanVisit.push(item);
+              if (key === "otherServices")
+                updatedClientTasks.otherServices.push(item);
             }
           });
         }
@@ -484,10 +718,14 @@ export default function ClientTaskTracking({
       // Set the filtered tasks
       setClientTasks(updatedClientTasks);
     }
-  }, [client, allData]);
+  }, [client, accountTaskData]);
 
+  const [isStepModalVisible, setIsStepModalVisible] = useState(false);
 
-  
+  // Close Process Details Modal
+  const handleStepModalClose = () => {
+    setIsStepModalVisible(false);
+  };
 
   const renderTaskSection = (title: string, tasks: any[], taskType: string) => {
     return (
@@ -496,23 +734,32 @@ export default function ClientTaskTracking({
           <h3 className="font-medium mb-3">{title}</h3>
           <div className="space-y-4">
             {tasks.map((task) => (
-              <div key={task._id} className="bg-gray-50 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div
+                key={task._id}
+                className="bg-gray-50 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
                 <div className="flex justify-between items-start">
                   <div>
-                    {/* <p className="font-medium">{task.clientId.name || task.clientName}</p> */}
+                    <p className="font-medium">{task.clientId.name || task.clientName}</p>
                     <p className="text-sm text-gray-500">
                       Deadline:{" "}
-                      {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy") : "N/A"}
+                      {task.deadline
+                        ? format(new Date(task.deadline), "MMM d, yyyy")
+                        : "N/A"}
                     </p>
                   </div>
 
                   {/* Render custom statuses based on task type */}
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClassName(task, taskType)}`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClassName(
+                      task,
+                      taskType
+                    )}`}
                   >
                     {getStatusLabel(task, taskType)}
                   </span>
                 </div>
+                <ChevronRight onClick={() => setIsStepModalVisible(true)} />
               </div>
             ))}
           </div>
@@ -545,17 +792,15 @@ export default function ClientTaskTracking({
   };
 
   const getStatusLabel = (task: any, taskType: string) => {
-    return (
-      taskType === "application"
-        ? task.visaStatus
-        : taskType === "documentTranslation"
-        ? task.translationStatus
-        : taskType === "epassport"
-        ? task.applicationStatus
-        : taskType === "otherService"
-        ? task.jobStatus
-        : task.status
-    );
+    return taskType === "application"
+      ? task.visaStatus
+      : taskType === "documentTranslation"
+      ? task.translationStatus
+      : taskType === "epassport"
+      ? task.applicationStatus
+      : taskType === "otherService"
+      ? task.jobStatus
+      : task.status;
   };
 
   return (
@@ -607,20 +852,63 @@ export default function ClientTaskTracking({
       </div>
 
       {/* Content */}
+
+      {/* step Modal using Ant Design */}
+      <Modal
+        title={`step Details for ${accountTaskData?.clientName}`}
+        open={isStepModalVisible}
+        onCancel={handleStepModalClose} // Close the modal
+        footer={null} // No footer buttons (optional, you can customize this)
+        width={1000}
+      >
+        <Step/>
+      </Modal>
+
       {activeTab === "tasks" && (
         <div className="space-y-6">
-          {renderTaskSection("Visa Applications", clientTasks.applications, "application")}
-          {renderTaskSection("Appointments", clientTasks.appointment, "appointment")}
-          {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslation")}
-          {renderTaskSection("Design Services", clientTasks.graphicDesigns, "graphicDesigns")}
-          {renderTaskSection("Japan Visit Applications", clientTasks.japanVisit, "japanVisit")}
-          {renderTaskSection("E-passport Applications", clientTasks.epassport, "epassport")}
-          {renderTaskSection("Other Services", clientTasks.otherServices, "otherService")}
+          {renderTaskSection(
+            "Visa Applications",
+            clientTasks.applications,
+            "application"
+          )}
+          {renderTaskSection(
+            "Appointments",
+            clientTasks.appointment,
+            "appointment"
+          )}
+          {renderTaskSection(
+            "Document Translations",
+            clientTasks.documentTranslation,
+            "documentTranslation"
+          )}
+          {renderTaskSection(
+            "Design Services",
+            clientTasks.graphicDesigns,
+            "graphicDesigns"
+          )}
+          {renderTaskSection(
+            "Japan Visit Applications",
+            clientTasks.japanVisit,
+            "japanVisit"
+          )}
+          {renderTaskSection(
+            "E-passport Applications",
+            clientTasks.epassport,
+            "epassport"
+          )}
+          {renderTaskSection(
+            "Other Services",
+            clientTasks.otherServices,
+            "otherService"
+          )}
         </div>
       )}
 
-      {activeTab === "processes" && <ProcessFlowTab client={client} allData={allData} />}
+      {activeTab === "processes" && (
+        <ProcessFlowTab client={client} allData={allData} />
+      )}
       {activeTab === "files" && <FilesTab />}
     </div>
   );
 }
+

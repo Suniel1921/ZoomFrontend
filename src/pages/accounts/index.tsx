@@ -346,13 +346,14 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ClientTaskTracking from '../clients/ClientTaskTracking';
+import { useAccountTaskGlobally } from '../../context/AccountTaskContext';
 
 export default function AccountsPage() {
   const navigate = useNavigate();
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [allData, setAllData] = useState<any>(null);
   const [clientsForDropdown, setClientsForDropdown] = useState<any[]>([]);
-
+  const {accountTaskData, setAccountTaskData} = useAccountTaskGlobally();
   // Fetch all model data
   const getAllModelData = async (clientId: string = '') => {
     try {
@@ -361,8 +362,9 @@ export default function AccountsPage() {
       });
       console.log('All model data:', response);
       if (response.data.success) {
-        setAllData(response.data.allData);
-        extractClients(response.data.allData);
+        setAllData(response?.data?.allData);
+        extractClients(response?.data?.allData);
+        setAccountTaskData(response?.data?.allData);
       } else {
         toast.error('Something went wrong while fetching data!');
       }
