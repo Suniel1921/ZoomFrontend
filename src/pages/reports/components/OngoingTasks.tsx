@@ -89,7 +89,7 @@ export default function OngoingTasks() {
     ...japanVisit.map(task => ({
       ...task,
       type: 'Japan Visit',
-      status: task.applicationStatus,
+      status: task.status,
       amount: task.amount || 0,
       paymentStatus: task.paymentStatus || 'Due'
     })),
