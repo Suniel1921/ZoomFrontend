@@ -333,13 +333,8 @@
 
 
 
-
-
-
-
-
 import { useEffect, useState } from 'react';
-import { CreditCard, Search, UserPlus } from 'lucide-react';
+import { CreditCard, UserPlus } from 'lucide-react';
 import SearchableSelect from '../../components/SearchableSelect';
 import Button from '../../components/Button';
 import { useNavigate } from 'react-router-dom';
@@ -350,21 +345,19 @@ import { useAccountTaskGlobally } from '../../context/AccountTaskContext';
 
 export default function AccountsPage() {
   const navigate = useNavigate();
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
-  const [allData, setAllData] = useState<any>(null);
   const [clientsForDropdown, setClientsForDropdown] = useState<any[]>([]);
-  const {accountTaskData, setAccountTaskData} = useAccountTaskGlobally();
+  const { accountTaskData, setAccountTaskData, selectedClientId, setSelectedClientId } = useAccountTaskGlobally();
+
   // Fetch all model data
   const getAllModelData = async (clientId: string = '') => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`, {
-        params: { clientId }, // Pass clientId as query parameter
+        params: { clientId },
       });
       console.log('All model data:', response);
       if (response.data.success) {
-        setAllData(response?.data?.allData);
-        extractClients(response?.data?.allData);
-        setAccountTaskData(response?.data?.allData);
+        setAccountTaskData(response?.data?.allData); // Save all data to context
+        extractClients(response?.data?.allData); // Extract clients for the dropdown
       } else {
         toast.error('Something went wrong while fetching data!');
       }
@@ -398,13 +391,13 @@ export default function AccountsPage() {
 
   useEffect(() => {
     getAllModelData(); // Initial fetch for all clients
-  }, []);
+  }, []); // Initial load
 
   useEffect(() => {
     if (selectedClientId) {
       getAllModelData(selectedClientId); // Fetch data for the selected client
     }
-  }, [selectedClientId]);
+  }, [selectedClientId]); // Fetch for selected client
 
   return (
     <div className="space-y-6">
@@ -434,7 +427,8 @@ export default function AccountsPage() {
 
       {/* Render the ClientTaskTracking component if a client is selected */}
       {selectedClientId ? (
-        <ClientTaskTracking client={selectedClientId} allData={allData} /> // Pass selectedClientId and allData to the child component
+        <ClientTaskTracking getAllModelData={getAllModelData}/> 
+        // Pass accountTaskData from context to the child component
       ) : (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
           <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -447,4 +441,3 @@ export default function AccountsPage() {
     </div>
   );
 }
-

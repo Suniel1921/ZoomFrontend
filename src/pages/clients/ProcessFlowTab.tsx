@@ -449,7 +449,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, ChevronRight, CheckCircle, AlertTriangle, Trash2 } from 'lucide-react';
-import { Modal, Button as AntButton, Button } from 'antd'; // Import Modal and Button from Ant Design
+import { Modal, Button as AntButton, Button } from 'antd'; 
 import CreateProcessModal from './CreateProcessModal';
 import ProcessDetails from './ProcessDetails';
 import ProcessSummary from './process/ProcessSummary';

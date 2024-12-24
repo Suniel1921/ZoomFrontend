@@ -210,9 +210,10 @@ const ClientOngoingTask = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3>{step.name}</h3>
-              {status === 'completed' && formattedUpdatedAt && (
+              {/* {status === 'completed' && formattedUpdatedAt && (
                 <p className="text-xs text-gray-400">Updated: {formattedUpdatedAt}</p>
-              )}
+              )} */}
+               <p className="text-xs text-gray-400">Updated: {formattedUpdatedAt}</p>
             </div>
           </div>
         </Timeline.Item>
@@ -249,7 +250,7 @@ const ClientOngoingTask = () => {
     const formattedDeadline = deadline && isValid(deadline) ? format(deadline, 'MMM d, yyyy') : 'No Deadline';
 
     return (
-      <div key={task._id} className="bg-white rounded-lg overflow-hidden">
+      <div key={task._id} className="bg-white rounded-lg overflow-hidden mb-5">
         <div
           className="p-4 cursor-pointer hover:bg-white"
           onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
@@ -262,14 +263,14 @@ const ClientOngoingTask = () => {
             <div className="flex items-center gap-2">
               <span
                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  task.documentStatus === 'Completed' || task.applicationStatus === 'Completed'
+                  task.visaStatus === 'Completed' || task.applicationStatus === 'Completed'
                     ? 'bg-green-100 text-green-700'
-                    : task.documentStatus === 'In Progress' || task.applicationStatus === 'In Progress'
+                    : task.visaStatus === 'In Progress' || task.applicationStatus === 'In Progress'
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-gray-100 text-gray-700'
                 }`}
               >
-                {task.documentStatus || task.applicationStatus}
+                {task.visaStatus || task.applicationStatus}
               </span>
               {expandedTask === task._id ? (
                 <ChevronUp className="h-5 w-5 text-gray-400" />
