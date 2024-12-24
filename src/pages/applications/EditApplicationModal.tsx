@@ -1,25 +1,23 @@
-
 //*********NEW CODE********
 
-
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { X } from 'lucide-react';
-import Button from '../../components/Button';
-import Input from '../../components/Input';
-import SearchableSelect from '../../components/SearchableSelect';
-import { useStore } from '../../store';
-import DatePicker from 'react-datepicker';
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { X } from "lucide-react";
+import Button from "../../components/Button";
+import Input from "../../components/Input";
+import SearchableSelect from "../../components/SearchableSelect";
+import { useStore } from "../../store";
+import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { countries } from '../../utils/countries';
-import { getHandlers } from '../../utils/adminHelpers';
-import TodoList from '../../components/TodoList';
-import PaymentDetails from './components/PaymentDetails';
-import type { Application } from '../../types';
-import axios from 'axios';
-import toast from 'react-hot-toast';
+import { countries } from "../../utils/countries";
+import { getHandlers } from "../../utils/adminHelpers";
+import TodoList from "../../components/TodoList";
+import PaymentDetails from "./components/PaymentDetails";
+import type { Application } from "../../types";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 // const applicationSchema = z.object({
 //   clientId: z.string().min(1, 'Client is required'),
@@ -52,7 +50,7 @@ import toast from 'react-hot-toast';
 
 interface EditApplicationModalProps {
   isOpen: boolean;
-  getAllApplication : () => void;
+  getAllApplication: () => void;
   onClose: () => void;
   application: Application;
 }
@@ -61,9 +59,10 @@ export default function EditApplicationModal({
   isOpen,
   onClose,
   application,
-  getAllApplication
+  getAllApplication,
 }: EditApplicationModalProps) {
   const { clients, updateApplication } = useStore();
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   const {
     register,
@@ -82,21 +81,37 @@ export default function EditApplicationModal({
         paidAmount: application.payment?.paidAmount || 0,
         discount: application.payment?.discount || 0,
       },
-      todos: application.todos?.map(todo => ({
-        ...todo,
-        id: todo.id || crypto.randomUUID(),
-        dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined
-      })) || [],
+      handledBy: z.string().min(1, "Visa Application Handler is required"),
+      todos:
+        application.todos?.map((todo) => ({
+          ...todo,
+          id: todo.id || crypto.randomUUID(),
+          dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
+        })) || [],
     },
   });
 
+  // Fetch the handlers (admins) from the API
+  useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
+        );
+        setHandlers(response.data.admins); // Assuming the response has an array of handlers
+      } catch (error) {
+        console.error("Failed to fetch handlers:", error);
+      }
+    };
 
+    fetchHandlers();
+  }, []);
 
-  const onSubmit = async (data:any) => {
+  const onSubmit = async (data: any) => {
     console.log("Submitting data:", data);
     try {
       // const client = clients.find((c) => c.id === data.clientId);
-  
+
       // Prepare data to send to the API
       const updateData = {
         ...data,
@@ -105,12 +120,15 @@ export default function EditApplicationModal({
           ...data.payment,
         },
       };
-  
+
       // Call the API to update the application
-      const response = await axios.put(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/updateVisaApplication/${application._id}`,
+      const response = await axios.put(
+        `${
+          import.meta.env.VITE_REACT_APP_URL
+        }/api/v1/visaApplication/updateVisaApplication/${application._id}`,
         updateData
       );
-  
+
       if (response.data.success) {
         // console.log('Application updated:', response.data);
         toast.success(response.data.message);
@@ -118,14 +136,13 @@ export default function EditApplicationModal({
         onClose(); // Close the modal
         getAllApplication();
       }
-    } catch (error:any) {
-      if(error.response){
+    } catch (error: any) {
+      if (error.response) {
         toast.error(error.response.data.message);
       }
-      console.error('Failed to update application:', error);
+      console.error("Failed to update application:", error);
     }
   };
-  
 
   if (!isOpen) return null;
 
@@ -134,7 +151,10 @@ export default function EditApplicationModal({
       <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Edit Application</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -143,7 +163,9 @@ export default function EditApplicationModal({
           {/* Client and Application Details */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Client</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Client
+              </label>
               {/* <p className="mt-1">{application?.clientId?.name}</p> */}
               {/* <SearchableSelect
                 options={clients.map(client => ({
@@ -159,23 +181,29 @@ export default function EditApplicationModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Visa Type</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Visa Type
+              </label>
               <select
-                {...register('type')}
+                {...register("type")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="Visitor Visa">Visitor Visa</option>
                 <option value="Student Visa">Student Visa</option>
               </select>
               {errors.type && (
-                <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.type.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Country</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Country
+              </label>
               <select
-                {...register('country')}
+                {...register("country")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="">Select country</option>
@@ -186,24 +214,30 @@ export default function EditApplicationModal({
                 ))}
               </select>
               {errors.country && (
-                <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.country.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Application Deadline</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Application Deadline
+              </label>
               <DatePicker
-                selected={watch('deadline')}
-                onChange={(date) => setValue('deadline', date as Date)}
+                selected={watch("deadline")}
+                onChange={(date) => setValue("deadline", date as Date)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
                 dateFormat="yyyy-MM-dd"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Document Status</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Document Status
+              </label>
               <select
-                {...register('documentStatus')}
+                {...register("documentStatus")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="Not Yet">Not Yet</option>
@@ -213,19 +247,23 @@ export default function EditApplicationModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Documents to Translate</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Documents to Translate
+              </label>
               <Input
                 type="number"
-                {...register('documentsToTranslate', { valueAsNumber: true })}
+                {...register("documentsToTranslate", { valueAsNumber: true })}
                 className="mt-1"
                 min="0"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Visa Status</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Visa Status
+              </label>
               <select
-                {...register('visaStatus')}
+                {...register("visaStatus")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="Under Review">Under Review</option>
@@ -238,9 +276,11 @@ export default function EditApplicationModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Translation Status</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Translation Status
+              </label>
               <select
-                {...register('translationStatus')}
+                {...register("translationStatus")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="Under Process">Under Process</option>
@@ -248,23 +288,31 @@ export default function EditApplicationModal({
               </select>
             </div>
 
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700">Handled By</label>
+            {/* handledBy */}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Visa Application Handled By
+              </label>
               <select
-                {...register('handledBy')}
+                {...register("handledBy", {
+                  required: "This field is required",
+                })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="">Select handler</option>
-                {getHandlers().map((handler) => (
-                  <option key={handler.id} value={handler.name}>
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.id}>
                     {handler.name}
                   </option>
                 ))}
               </select>
               {errors.handledBy && (
-                <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.handledBy.message}
+                </p>
               )}
-            </div> */}
+            </div>
           </div>
 
           {/* Payment Details Section */}
@@ -282,16 +330,18 @@ export default function EditApplicationModal({
           <div className="space-y-4">
             <h3 className="font-medium">To-Do List</h3>
             <TodoList
-              todos={watch('todos') || []}
-              onTodosChange={(newTodos) => setValue('todos', newTodos)}
+              todos={watch("todos") || []}
+              onTodosChange={(newTodos) => setValue("todos", newTodos)}
             />
           </div>
 
           {/* Notes Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Notes
+            </label>
             <textarea
-              {...register('notes')}
+              {...register("notes")}
               rows={3}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               placeholder="Add any additional notes..."

@@ -450,24 +450,6 @@ export default function AddApplicationModal({
     fetchHandlers();
   }, []);
 
-  // Fetch the application step ID
-  // useEffect(() => {
-  //   const fetchApplicationStep = async () => {
-  //     try {
-  //       const response = await axios.get(
-  //         `${
-  //           import.meta.env.VITE_REACT_APP_URL
-  //         }/api/v1/appointment/getApplicationStep`
-  //       );
-  //       setApplicationStep(response.data.applicationStep); // Assuming the response has an array of handlers
-  //     } catch (error) {
-  //       console.error("Failed to fetch handlers:", error);
-  //     }
-  //   };
-
-  //   fetchApplicationStep();
-  // }, []);
-
   const onSubmit = async (data: ApplicationFormData) => {
     try {
       const client = clients.find((c) => c._id === data.clientId);
@@ -557,18 +539,6 @@ export default function AddApplicationModal({
               </select>
             </div>
           </div>
-
-          {/* Application Step Section */}
-          {/* <div className="space-y-4">
-            <h3 className="font-medium border-b pb-2">Application Step</h3>
-            <select
-              {...register("step", { required: "This field is required" })}
-              className="p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow mb-4"
-            >
-              <option value="">Select Step ID</option>
-              <option value={applicationStep._id}>{applicationStep._id}</option>
-            </select>
-          </div> */}
 
           {/* Document Handling Section */}
           <div className="space-y-4">
