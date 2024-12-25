@@ -46,7 +46,7 @@ export default function EditServiceModal({
   const { admins } = useAdminStore();
   const [clientsList, setClients] = useState<any[]>([]);
 
-  const handlers = admins.filter(admin => admin.role !== 'super_admin');
+  // const handlers = admins.filter(admin => admin.role !== 'super_admin');
 
   // Use empty object as default value for service if it's undefined
   const formDefaultValues = service ? {
@@ -83,6 +83,24 @@ export default function EditServiceModal({
   const clientId = watch('clientId');
   const selectedClient = clientsList.find(c => c.id === clientId);
   const selectedTypes = watch('serviceTypes') || [];
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+
+  // Fetch the handlers (admins) from the API
+  useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
+        );
+        setHandlers(response.data.admins);
+      } catch (error: any) {
+        console.error('Failed to fetch handlers:', error);
+        toast.error(error.response.data.message);
+      }
+    };
+
+    fetchHandlers();
+  }, []);
 
  
     //get all clients list in drop down 
@@ -147,7 +165,7 @@ export default function EditServiceModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
+            {/* <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700">Client</label>
               <SearchableSelect
                   options={clientsList.map(client => ({
@@ -164,16 +182,16 @@ export default function EditServiceModal({
                   }}
                   placeholder="Select client"
                 />
-            </div>
+            </div> */}
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
               <Input 
                 value={watch('mobileNo') || ''} 
                 className="mt-1 bg-gray-50" 
                 disabled 
               />
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Contact Channel</label>
@@ -218,6 +236,24 @@ export default function EditServiceModal({
                 />
               </div>
             )}
+
+
+            {/* handler by*/}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Handled By</label>
+              <select
+                {...register('handledBy')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+              >
+                <option value="">Select handler</option>
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.name}>
+                    {handler.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Deadline</label>

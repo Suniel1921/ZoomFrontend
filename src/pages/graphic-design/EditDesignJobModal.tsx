@@ -262,6 +262,29 @@ export default function EditDesignJobModal({
   const clientId = watch('clientId');
   const selectedClient = clients.find(c => c.id === clientId);
 
+
+
+  
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+
+
+
+  // Fetch the handlers (admins) from the API
+  useEffect(() => {
+   const fetchHandlers = async () => {
+     try {
+       const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`);
+       setHandlers(response.data.admins); 
+     } catch (error:any) {
+       console.error('Failed to fetch handlers:', error);
+       toast.error(error.response.data.message);
+     }
+   };
+
+   fetchHandlers();
+ }, []);
+
+
   //get all clients list in drop down 
   useEffect(() => {
     if (isOpen) {
@@ -373,14 +396,14 @@ export default function EditDesignJobModal({
               <Input {...register('businessName')} className="mt-1" />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
               <Input 
                 value={selectedClient?.phone || ''}
                 className="mt-1 bg-gray-50" 
                 disabled 
               />
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Landline Number</label>
@@ -395,6 +418,23 @@ export default function EditDesignJobModal({
               >
                 {DESIGN_TYPES.map(type => (
                   <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+
+              {/* handler by*/}
+              <div>
+              <label className="block text-sm font-medium text-gray-700">Handled By</label>
+              <select
+                {...register('handledBy')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+              >
+                <option value="">Select handler</option>
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.name}>
+                    {handler.name}
+                  </option>
                 ))}
               </select>
             </div>

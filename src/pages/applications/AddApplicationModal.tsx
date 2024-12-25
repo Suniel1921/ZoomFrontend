@@ -392,6 +392,7 @@ export default function AddApplicationModal({
   const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
   const [applicationStep, setApplicationStep] = useState<any[]>([]);
 
+
   const {
     register,
     handleSubmit,
@@ -417,6 +418,13 @@ export default function AddApplicationModal({
     },
   });
 
+
+
+  
+
+  const handleFamilyMembersChange = (updatedMembers) => {
+    setFamilyMembers(updatedMembers);
+  };
 
   //get all clients list in drop down 
   useEffect(() => {
@@ -450,6 +458,47 @@ export default function AddApplicationModal({
     fetchHandlers();
   }, []);
 
+  // const onSubmit = async (data: ApplicationFormData) => {
+  //   try {
+  //     const client = clients.find((c) => c._id === data.clientId);
+  //     if (!client) {
+  //       toast.error("Client not found");
+  //       return;
+  //     }
+
+  //     const total =
+  //       data.payment.visaApplicationFee +
+  //       data.payment.translationFee -
+  //       (data.payment.paidAmount + data.payment.discount);
+
+  //     const payload = {
+  //       ...data,
+  //       clientName: client.name,
+  //       familyMembers,
+  //       submissionDate: new Date().toISOString(),
+  //       payment: { ...data.payment, total },
+  //       paymentStatus: total <= 0 ? "Paid" : "Due",
+  //     };
+
+  //     const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/createVisaApplication`, payload);
+  //     if (response.data.success) {
+  //       toast.success(response.data.message);
+  //       reset();
+  //       setFamilyMembers([]);
+  //       onClose();
+  //       getAllApplication();
+  //     }
+  //   } catch (error: any) {
+  //     console.error("Error submitting application:", error);
+  //     if (error.response) {
+  //       toast.error(error.response.data.message);
+  //     }
+  //   }
+  // };
+
+
+
+
   const onSubmit = async (data: ApplicationFormData) => {
     try {
       const client = clients.find((c) => c._id === data.clientId);
@@ -457,26 +506,26 @@ export default function AddApplicationModal({
         toast.error("Client not found");
         return;
       }
-
+  
       const total =
         data.payment.visaApplicationFee +
         data.payment.translationFee -
         (data.payment.paidAmount + data.payment.discount);
-
+  
       const payload = {
         ...data,
         clientName: client.name,
-        familyMembers,
+        familyMembers, // Ensure family members are sent as part of the payload
         submissionDate: new Date().toISOString(),
         payment: { ...data.payment, total },
         paymentStatus: total <= 0 ? "Paid" : "Due",
       };
-
+  
       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/createVisaApplication`, payload);
       if (response.data.success) {
         toast.success(response.data.message);
         reset();
-        setFamilyMembers([]);
+        setFamilyMembers([]); // Reset family members after submission
         onClose();
         getAllApplication();
       }
@@ -487,6 +536,7 @@ export default function AddApplicationModal({
       }
     }
   };
+  
 
   if (!isOpen) return null;
 
@@ -539,6 +589,60 @@ export default function AddApplicationModal({
               </select>
             </div>
           </div>
+
+          {/* application deadline */}
+          <div>
+              <label className="block text-sm font-medium text-gray-700">Application Deadline</label>
+              <DatePicker
+                selected={watch('deadline')}
+                onChange={(date) => setValue('deadline', date as Date)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                dateFormat="yyyy-MM-dd"
+              />
+            </div>
+
+
+            {/* document status  */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Document Status</label>
+              <select
+                {...register('documentStatus')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+              >
+                <option value="Not Yet">Not Yet</option>
+                <option value="Few Received">Few Received</option>
+                <option value="Fully Received">Fully Received</option>
+              </select>
+            </div>
+
+
+            {/* visa status  */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Visa Status</label>
+              <select
+                {...register('visaStatus')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+              >
+                <option value="Under Review">Under Review</option>
+                <option value="Under Process">Under Process</option>
+                <option value="Waiting for Payment">Waiting for Payment</option>
+                <option value="Completed">Completed</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+
+          {/* document to translate */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Documents to Translate</label>
+              <Input
+                type="number"
+                {...register('documentsToTranslate', { valueAsNumber: true })}
+                className="mt-1"
+                min="0"
+              />
+            </div>
+
 
           {/* Document Handling Section */}
           <div className="space-y-4">
@@ -599,9 +703,32 @@ export default function AddApplicationModal({
 
           {/* Family Members Section */}
           <FamilyMembersList
-            familyMembers={familyMembers}
-            setFamilyMembers={setFamilyMembers}
-          />
+        familyMembers={familyMembers}
+        onFamilyMembersChange={handleFamilyMembersChange}
+      />
+
+
+            {/* To-Do List Section */}
+                    <div className="space-y-4">
+                      <h3 className="font-medium">To-Do List</h3>
+                      <TodoList
+                        todos={watch("todos") || []}
+                        onTodosChange={(newTodos) => setValue("todos", newTodos)}
+                      />
+                    </div>
+          
+                    {/* Notes Section */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Notes
+                      </label>
+                      <textarea
+                        {...register("notes")}
+                        rows={3}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                        placeholder="Add any additional notes..."
+                      />
+                    </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-4">
@@ -617,3 +744,9 @@ export default function AddApplicationModal({
     </div>
   );
 }
+
+
+
+
+
+

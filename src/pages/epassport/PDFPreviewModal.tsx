@@ -5,28 +5,32 @@ import Button from '../../components/Button';
 interface PDFPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  pdfUrl: string;
+  fileUrls: string[];
   fileName: string;
 }
 
 export default function PDFPreviewModal({
   isOpen,
   onClose,
-  pdfUrl,
+  fileUrls,
   fileName,
 }: PDFPreviewModalProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+ console.log('file data came from prop is', fileUrls)
+
 
   const handleDownload = () => {
-    // Create a temporary link element
-    const link = document.createElement('a');
-    link.href = pdfUrl;
-    link.download = fileName || 'document.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    fileUrls.forEach((dataUrls) => {
+      const link = document.createElement('a');
+      link.href = dataUrls;
+      link.download = fileName || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
   };
+
 
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -52,7 +56,7 @@ export default function PDFPreviewModal({
               onClick={handleDownload}
             >
               <Download className="h-4 w-4 mr-2" />
-              Download
+              Download All
             </Button>
           </div>
           <Button variant="outline" size="sm" onClick={onClose}>
@@ -80,7 +84,7 @@ export default function PDFPreviewModal({
             </div>
           ) : (
             <iframe
-              src={`${pdfUrl}#toolbar=0`}
+              src={`${fileUrls[0]}#toolbar=0`} //show all preview of the image and file data
               className="w-full h-full rounded-lg border border-gray-200"
               title="PDF Preview"
               onLoad={handleIframeLoad}

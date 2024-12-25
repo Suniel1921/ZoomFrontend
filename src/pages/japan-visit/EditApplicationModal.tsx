@@ -280,6 +280,12 @@ export default function EditApplicationModal({
   application,
   clients,
   fetchApplications
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  application: any;
+  clients: any;
+  fetchApplications: () => void;
 }) {
   // Early return if modal is not open
   if (!isOpen) return null;
@@ -290,6 +296,7 @@ export default function EditApplicationModal({
     setValue,
     watch,
     reset, // Reset form on modal close
+    formState: { errors }
   } = useForm({
     defaultValues: {
       ...application,
@@ -302,6 +309,7 @@ export default function EditApplicationModal({
       })) || [],
     },
   });
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   // Clear form when modal is closed
   useEffect(() => {
@@ -310,19 +318,43 @@ export default function EditApplicationModal({
     }
   }, [isOpen, reset]);
 
+  // Fetch the handlers (admins) from the API
+  useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`);
+        setHandlers(response.data.admins); 
+      } catch (error:any) {
+        console.error('Failed to fetch handlers:', error);
+        toast.error(error.response.data.message);
+      }
+    };
+
+    fetchHandlers();
+  }, []);
+
   // API call to update the application
   const onSubmit = async (data: any) => {
     try {
-      // console.log('Sending data to the backend:', { ...data });
+      const applicationData = {
+        ...data,
+        payment: {
+          visaApplicationFee: data.visaApplicationFee,
+          translationFee: data.translationFee,
+          paidAmount: data.paidAmount,
+          discount: data.discount,
+        },
+      };
 
-      const response = await axios.put(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/japanVisit/updateJapanVisitApplication/${application._id}`,
-        { ...data }
+      const response = await axios.put(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/japanVisit/updateJapanVisitApplication/${application._id}`,
+        applicationData
       );
 
       if (response.data.success) {
         toast.success('Application updated successfully!');
         onClose(); // Close the modal after success
-        fetchApplications();
+        fetchApplications(); // Refresh the applications list
       } else {
         toast.error('Failed to update application.');
       }
@@ -342,38 +374,129 @@ export default function EditApplicationModal({
           </button>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Mobile No</label>
-              <Input {...register('mobileNo')} className="mt-1" disabled />
-            </div>
+        <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
+          {/* Client Information Section */}
+          <div className="space-y-6">
+            {/* <h3 className="text-lg font-medium border-b pb-2">Client Information</h3> */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Project Start Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Project Start Date</label>
+                <DatePicker
+                  selected={watch('date')}
+                  onChange={(date) => setValue('date', date as Date)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  dateFormat="yyyy-MM-dd"
+                />
+              </div>
 
+              {/* Handled By */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Handled By</label>
+                <select
+                  // {...register('handledBy', { required: 'This field is required' })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+                >
+                  <option value="">Select handler</option>
+                  {handlers.map((handler) => (
+                    <option key={handler.id} value={handler.name}>
+                      {handler.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.handledBy && (
+                  <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
+                )}
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  {...register('status')}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              {/* Deadline */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Deadline</label>
+                <DatePicker
+                  selected={watch('deadline')}
+                  onChange={(date) => setValue('deadline', date as Date)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  dateFormat="yyyy-MM-dd"
+                />
+              </div>
+
+              {/* Package */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Package</label>
+                <select
+                  {...register('package')}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                >
+                  <option value="Standard Package">Standard Package</option>
+                  <option value="Premium Package">Premium Package</option>
+                </select>
+              </div>
+
+              {/* Number of Applicants */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">No of Applicants</label>
+                <Input
+                  type="number"
+                  min="1"
+                  {...register('noOfApplicants', { valueAsNumber: true })}
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Project Reason */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Project Reason</label>
+                <select
+                  {...register('reasonForVisit')}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                >
+                  <option value="General Visit">General Visit</option>
+                  <option value="Baby Care">Baby Care</option>
+                  <option value="Program Attendance">Program Attendance</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Details Section */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium border-b pb-2">Financial Details</h3>
+            <PaymentSection
+              register={register}
+              watch={watch}
+              setValue={setValue}
+              errors={errors}
+            />
+          </div>
+
+          {/* Notes Section */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium border-b pb-2">Notes</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Date</label>
-              <DatePicker
-                selected={watch('date')}
-                onChange={(date) => setValue('date', date)}
+              <textarea
+                {...register('notes')}
+                rows={3}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
-                dateFormat="yyyy-MM-dd"
+                placeholder="Add any additional notes..."
               />
             </div>
           </div>
 
-          {/* Payment Section */}
-          <PaymentSection register={register} watch={watch} setValue={setValue} />
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
-            <textarea
-              {...register('notes')}
-              rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
-              placeholder="Add any additional notes..."
-            />
-          </div>
-
+          {/* Buttons */}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

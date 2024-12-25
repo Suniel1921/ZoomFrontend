@@ -52,6 +52,7 @@ export default function EpassportPage() {
     axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/getAllePassports`)
       .then((response) => {
         if (response.data.success) {
+          console.log('epassport data is', response)
           setEpassportApplications(response.data.data); // Update the state with the fetched data
         }
       })
@@ -82,13 +83,20 @@ export default function EpassportPage() {
     if (!phone) return '';
     return phone.replace(/\D/g, '');
   };
+  
+
+
+
+ 
+  
+
+
 
   const handleDelete = async (_id: string) => {
     if (window.confirm('Are you sure you want to delete this application?')) {
       try {
         // Send the delete request
-        const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/deleteEpassport/${_id}`);
-        
+        const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/deleteEpassport/${_id}`);        
         // Check if the response was successful
         if (response?.data?.success) {
           // Remove the deleted application from the local state
@@ -185,45 +193,65 @@ export default function EpassportPage() {
         </span>
       ),
     },
+    
+    
+
+
     {
       key: 'id',
       label: 'Actions',
       render: (_: string, item: any) => (
         <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSelectedApplication(item);
-              setIsPDFUploadOpen(true);
-            }}
-            title="Upload PDF"
-          >
-            <Upload className="h-4 w-4" />
-          </Button>
-          {item.pdfFile && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedApplication(item);
-                  setIsPDFPreviewOpen(true);
-                }}
-                title="Preview PDF"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDownloadPDF(item)}
-                title="Download PDF"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            </>
+          {item.clientFiles && item.clientFiles.length > 0 ? (
+            // Show the Download All button only if there are client files
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Loop through each file and trigger the download
+                item.clientFiles.forEach((fileUrls) => {
+                  const link = document.createElement('a');
+                  link.href = fileUrls;
+                  link.download = fileUrls.split('/').pop(); // Use the filename from URL
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                });
+              }}
+              title="Download All Files"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          ) : (
+            // If no client files, show the Upload button
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedApplication(item);
+                setIsPDFUploadOpen(true);
+              }}
+              title="Upload PDF"
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
           )}
+    
+          {item.clientFiles && item.clientFiles.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Preview the first file (you can modify this to support multiple files)
+                setSelectedApplication(item);
+                setIsPDFPreviewOpen(true);
+              }}
+              title="Preview File"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+    
           <Button
             variant="outline"
             size="sm"
@@ -235,6 +263,7 @@ export default function EpassportPage() {
           >
             <Calculator className="h-4 w-4" />
           </Button>
+    
           <Button
             variant="outline"
             size="sm"
@@ -245,6 +274,7 @@ export default function EpassportPage() {
           >
             Edit
           </Button>
+    
           <Button
             variant="outline"
             size="sm"
@@ -255,7 +285,9 @@ export default function EpassportPage() {
           </Button>
         </div>
       ),
-    },
+    }
+    
+    
   ];
 
   return (
@@ -351,21 +383,29 @@ export default function EpassportPage() {
               setSelectedApplication(null);
             }}
             application={selectedApplication}
+            getAllEPassportApplication={getAllEPassportApplication}
           />
 
-          {selectedApplication.pdfFile && (
-            <PDFPreviewModal
-              isOpen={isPDFPreviewOpen}
-              onClose={() => {
-                setIsPDFPreviewOpen(false);
-                setSelectedApplication(null);
-              }}
-              pdfUrl={selectedApplication.pdfFile.url}
-              fileName={selectedApplication.pdfFile.name}
-            />
-          )}
+{selectedApplication && selectedApplication.clientFiles && (
+  <PDFPreviewModal
+    isOpen={isPDFPreviewOpen}
+    onClose={() => {
+      setIsPDFPreviewOpen(false);
+      setSelectedApplication(null);
+    }}
+    fileUrls={selectedApplication.clientFiles} // Pass the array of files
+    fileName={selectedApplication.clientFiles[0]?.split('/').pop() || 'document.pdf'}
+  />
+)}
+
         </>
       )}
     </div>
   );
 }
+
+
+
+
+
+

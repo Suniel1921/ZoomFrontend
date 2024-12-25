@@ -43,7 +43,25 @@ export default function EditTranslationModal({
   const targetLanguage = watch('targetLanguage');
   const nameInTargetScript = watch('nameInTargetScript');
 
-  const handlers = admins.filter(admin => admin.role !== 'super_admin');
+  // const handlers = admins.filter(admin => admin.role !== 'super_admin');
+
+    
+   // Fetch the handlers (admins) from the API
+   const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+   useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`);
+        setHandlers(response.data.admins); 
+      } catch (error:any) {
+        console.error('Failed to fetch handlers:', error);
+        toast.error(error.response.data.message);
+      }
+    };
+
+    fetchHandlers();
+  }, []);
+
 
   useEffect(() => {
     setShowPaymentMethod(paymentStatus === 'Paid');
