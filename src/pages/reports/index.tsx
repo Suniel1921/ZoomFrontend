@@ -256,7 +256,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Sales Report */}
-      <SalesReport tasks={activeTasks} />
+      <SalesReport />
 
       {/* Service Requests */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">

@@ -1,30 +1,50 @@
-import { useState } from 'react';
-import { format, startOfDay, subDays, subMonths, subYears, isAfter, startOfYear } from 'date-fns';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { startOfDay, subDays, subMonths, startOfYear, isAfter } from 'date-fns';
 import { safeParse } from '../../../utils/dateUtils';
 
-interface SalesReportProps {
-  tasks: {
-    applications: any[];
-    japanVisit: any[];
-    translations: any[];
-    designs: any[];
-    epassport: any[];
-    otherServices: any[];
-  };
-}
-
-export default function SalesReport({ tasks }: SalesReportProps) {
+export default function SalesReport() {
   const [period, setPeriod] = useState('daily');
+  const [tasks, setTasks] = useState({
+    applications: [],
+    japanVisit: [],
+    translations: [],
+    designs: [],
+    epassport: [],
+    otherServices: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Ensure all task arrays exist with defaults
-  const {
-    applications = [],
-    japanVisit = [],
-    translations = [],
-    designs = [],
-    epassport = [],
-    otherServices = []
-  } = tasks;
+  // Fetch data from the API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/v1/appointment/fetchAllModelData');
+        if (response.data.success) {
+          const data = response.data.allData;
+          console.log('sale report data is', data)
+          setTasks({
+            applications: data.application || [],
+            japanVisit: data.japanVisit || [],
+            translations: data.documentTranslation || [],
+            designs: data.graphicDesigns || [],
+            epassport: data.epassports || [],
+            otherServices: data.otherServices || [],
+          }); 
+        } else {
+          setError('Failed to fetch data from the API.');
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('An error occurred while fetching data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Get date range based on selected period
   const getDateRange = () => {
@@ -65,74 +85,81 @@ export default function SalesReport({ tasks }: SalesReportProps) {
   // Calculate total sales and pending payments for each category
   const salesData = {
     applications: {
-      total: filterTasksByDate(applications, 'submissionDate')
+      total: filterTasksByDate(tasks.applications, 'submissionDate')
         .reduce((sum, app) => sum + (app.payment?.total || 0), 0),
-      paid: filterTasksByDate(applications, 'submissionDate')
+      paid: filterTasksByDate(tasks.applications, 'submissionDate')
         .reduce((sum, app) => sum + (app.payment?.paidAmount || 0), 0),
-      pending: filterTasksByDate(applications, 'submissionDate')
+      pending: filterTasksByDate(tasks.applications, 'submissionDate')
         .reduce((sum, app) => {
-          const total = app.payment?.total || 0;
+          const total = app.payment?.amount || 0;
           const paid = app.payment?.paidAmount || 0;
           const discount = app.payment?.discount || 0;
           return sum + (total - paid - discount);
         }, 0),
     },
     japanVisit: {
-      total: filterTasksByDate(japanVisit, 'date')
+      total: filterTasksByDate(tasks.japanVisit, 'date')
         .reduce((sum, app) => sum + (app.amount || 0), 0),
-      paid: filterTasksByDate(japanVisit, 'date')
+      paid: filterTasksByDate(tasks.japanVisit, 'date')
         .filter(app => app.paymentStatus === 'Paid')
-        .reduce((sum, app) => sum + (app.amount || 0), 0),
-      pending: filterTasksByDate(japanVisit, 'date')
-        .filter(app => app.paymentStatus === 'Due')
-        .reduce((sum, app) => sum + (app.amount || 0), 0),
+        .reduce((sum, app) => sum + (app.paidAmount || 0), 0),
+      pending: filterTasksByDate(tasks.japanVisit, 'date')
+        // .filter(app => app.paymentStatus === 'Due')
+        .reduce((sum, app) => sum + (app.dueAmount || 0), 0),
     },
     translations: {
-      total: filterTasksByDate(translations, 'createdAt')
+      total: filterTasksByDate(tasks.translations, 'createdAt')
         .reduce((sum, trans) => sum + (trans.amount || 0), 0),
-      paid: filterTasksByDate(translations, 'createdAt')
+      paid: filterTasksByDate(tasks.translations, 'createdAt')
         .filter(trans => trans.paymentStatus === 'Paid')
         .reduce((sum, trans) => sum + (trans.amount || 0), 0),
-      pending: filterTasksByDate(translations, 'createdAt')
+      pending: filterTasksByDate(tasks.translations, 'createdAt')
         .filter(trans => trans.paymentStatus === 'Due')
         .reduce((sum, trans) => sum + (trans.amount || 0), 0),
     },
     designs: {
-      total: filterTasksByDate(designs, 'createdAt')
+      total: filterTasksByDate(tasks.designs, 'createdAt')
         .reduce((sum, job) => sum + (job.amount || 0), 0),
-      paid: filterTasksByDate(designs, 'createdAt')
+      paid: filterTasksByDate(tasks.designs, 'createdAt')
         .filter(job => job.paymentStatus === 'Paid')
         .reduce((sum, job) => sum + (job.amount || 0), 0),
-      pending: filterTasksByDate(designs, 'createdAt')
+      pending: filterTasksByDate(tasks.designs, 'createdAt')
         .filter(job => job.paymentStatus === 'Due')
         .reduce((sum, job) => sum + (job.amount || 0), 0),
     },
     epassport: {
-      total: filterTasksByDate(epassport, 'date')
+      total: filterTasksByDate(tasks.epassport, 'date')
         .reduce((sum, app) => sum + (app.amount || 0), 0),
-      paid: filterTasksByDate(epassport, 'date')
+      paid: filterTasksByDate(tasks.epassport, 'date')
         .filter(app => app.paymentStatus === 'Paid')
         .reduce((sum, app) => sum + (app.amount || 0), 0),
-      pending: filterTasksByDate(epassport, 'date')
+      pending: filterTasksByDate(tasks.epassport, 'date')
         .filter(app => app.paymentStatus === 'Due')
         .reduce((sum, app) => sum + (app.amount || 0), 0),
     },
     otherServices: {
-      total: filterTasksByDate(otherServices, 'createdAt')
+      total: filterTasksByDate(tasks.otherServices, 'createdAt')
         .reduce((sum, service) => sum + (service.amount || 0), 0),
-      paid: filterTasksByDate(otherServices, 'createdAt')
+      paid: filterTasksByDate(tasks.otherServices, 'createdAt')
         .filter(service => service.paymentStatus === 'Paid')
         .reduce((sum, service) => sum + (service.amount || 0), 0),
-      pending: filterTasksByDate(otherServices, 'createdAt')
+      pending: filterTasksByDate(tasks.otherServices, 'createdAt')
         .filter(service => service.paymentStatus === 'Due')
         .reduce((sum, service) => sum + (service.amount || 0), 0),
     },
   };
 
-  // Calculate totals
   const totalSales = Object.values(salesData).reduce((sum, data) => sum + data.total, 0);
   const totalPaid = Object.values(salesData).reduce((sum, data) => sum + data.paid, 0);
   const totalPending = Object.values(salesData).reduce((sum, data) => sum + data.pending, 0);
+
+  if (loading) {
+    return <div className="text-center py-10">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-500">{error}</div>;
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -174,9 +201,14 @@ export default function SalesReport({ tasks }: SalesReportProps) {
           <tbody className="bg-white divide-y divide-gray-200">
             {Object.entries(salesData).map(([category, data]) => (
               <tr key={category} className="hover:bg-gray-50">
+                {/* <h2>{JSON.stringify(salesData.applications.paid)}</h2> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm font-medium text-gray-900">
-                    {category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')}
+                    {category
+                      .charAt(0)
+                      .toUpperCase() +
+                      category.slice(1)
+                        .replace(/([A-Z])/g, ' $1')}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
