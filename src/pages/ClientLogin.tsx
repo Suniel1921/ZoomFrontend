@@ -151,9 +151,12 @@ import { useAuthGlobally } from '../context/AuthContext';
 import CreateClientAccountModal from "./components/CreateClientAccountModal";
 import WaterWave from "react-water-wave";
 // import waveImage from "/water.jpg"; 
-import waveImage from "/water1.jpg"; 
+// import waveImage from "/water1.jpg"; 
 // import waveImage from "/water2.jpg"; 
 // import waveImage from "/water3.jpg"; 
+// import waveImage from "/water4.jpg"; 
+// import waveImage from "/water5.jpg"; 
+import waveImage from "/water6.jpg"; 
 
 
 export default function ClientLogin() {

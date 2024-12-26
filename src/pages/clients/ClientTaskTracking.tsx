@@ -981,18 +981,6 @@ export default function ClientTaskTracking({getAllModelData}) {
     }));
   };
 
-  // const renderStatus = (status) => {
-  //   switch (status) {
-  //     case "completed":
-  //       return { color: "green", icon: <CheckCircle className="h-5 w-5 text-green-500" /> };
-  //     case "processing":
-  //       return { color: "yellow", icon: <Clock className="h-5 w-5 text-yellow-500" /> };
-  //     case "in-progress":
-  //       return { color: "blue", icon: <Loader className="h-5 w-5 text-blue-500 animate-spin" /> };
-  //     default:
-  //       return { color: "gray", icon: <XCircle className="h-5 w-5 text-gray-400" /> };
-  //   }
-  // };
 
 
   const renderStatus = (status) => {
@@ -1218,7 +1206,34 @@ export default function ClientTaskTracking({getAllModelData}) {
       {activeTab === "processes" && <ProcessFlowTab />}
       {/* {activeTab === "payment-history" && <PaymentHistory />} */}
       {activeTab === "payment-history" && <PaymentHistory selectedClientId={selectedClientId} />}
-      {activeTab === "files" && <FilesTab />}
+      {/* {activeTab === "files" && <FilesTab />}  */}
+      {activeTab === "files" && <FilesTab clientId={selectedClientId} modelName="applicationModel"  />} 
+      
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
