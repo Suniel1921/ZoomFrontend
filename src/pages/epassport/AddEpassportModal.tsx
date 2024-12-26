@@ -21,6 +21,7 @@ type EpassportFormData = {
   prefecture?: string;
   amount: number;
   paidAmount: number;
+  dueAmount: number;
   discount: number;
   paymentStatus: string;
   paymentMethod?: string;
@@ -62,6 +63,7 @@ export default function AddEpassportModal({
       dataSentStatus: "Not Sent",
       amount: 0,
       paidAmount: 0,
+      dueAmount:0,
       discount: 0,
       date: new Date(),
       deadline: new Date(),
@@ -132,17 +134,13 @@ export default function AddEpassportModal({
         clientName: client.name,
         date: data.date.toISOString(),
         deadline: data.deadline.toISOString(),
+        dueAmount: amount - (paidAmount + discount),
       };
 
       // console.log('Final Form Data:', formData);
 
-      const response = await axios.post(
-        `${
-          import.meta.env.VITE_REACT_APP_URL
-        }/api/v1/ePassport/createEpassport`,
-        formData
-      );
-      console.log(response);
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/createEpassport`, formData);
+      // console.log(response);
 
       if (response.data.success) {
         setEpassportApplications((prevApplications) => [
@@ -423,6 +421,7 @@ export default function AddEpassportModal({
                   Due Amount (¥)
                 </label>
                 <Input
+                {...register("dueAmount", { valueAsNumber: true })}
                   type="number"
                   value={dueAmount}
                   className="mt-1 bg-gray-50"

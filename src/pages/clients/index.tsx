@@ -711,21 +711,26 @@ export default function ClientsPage() {
   const formatPhoneForViber = (phone: string) => phone.replace(/\D/g, '');
 
   const downloadClientDetails = (client: Client) => {
+    // Format the client details as a string
     const clientDetails = `
-      Name: ${client.name}
-      Phone: ${client.phone}
-      Email: ${client.email}
-      Nationality: ${client.nationality}
-      PostalCode: ${client.postalCode}
-      City: ${client.city}
+    〒${client.postalCode}
+    ${client.prefecture}, ${client.city}, ${client.street} ${client.building}
+    ${client.name}様
+    ${client.phone}
     `;
-
-    const blob = new Blob([clientDetails], { type: 'text/plain;charset=utf-8' });
+  
+    // Create a Blob object with the formatted details
+    const blob = new Blob([clientDetails], { type: 'text/plain' });
+  
+    // Create an anchor element to trigger the file download
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${client.name.replace(/\s+/g, '_')}_details.txt`;
+    link.download = `${client.name}_details.txt`;
+  
+    // Programmatically click the link to trigger the download
     link.click();
   };
+  
 
   return (
     <div className="space-y-6">

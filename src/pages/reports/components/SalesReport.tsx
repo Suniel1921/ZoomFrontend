@@ -20,7 +20,7 @@ export default function SalesReport() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/appointment/fetchAllModelData');
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`);
         if (response.data.success) {
           const data = response.data.allData;
           console.log('sale report data is', data)
@@ -86,12 +86,12 @@ export default function SalesReport() {
   const salesData = {
     applications: {
       total: filterTasksByDate(tasks.applications, 'submissionDate')
-        .reduce((sum, app) => sum + (app.payment?.total || 0), 0),
+        .reduce((sum, app) => sum + (app.payment?.visaApplicationFee || 0), 0),
       paid: filterTasksByDate(tasks.applications, 'submissionDate')
         .reduce((sum, app) => sum + (app.payment?.paidAmount || 0), 0),
       pending: filterTasksByDate(tasks.applications, 'submissionDate')
         .reduce((sum, app) => {
-          const total = app.payment?.amount || 0;
+          const total = app.payment?.visaApplicationFee || 0;
           const paid = app.payment?.paidAmount || 0;
           const discount = app.payment?.discount || 0;
           return sum + (total - paid - discount);
@@ -121,31 +121,31 @@ export default function SalesReport() {
       total: filterTasksByDate(tasks.designs, 'createdAt')
         .reduce((sum, job) => sum + (job.amount || 0), 0),
       paid: filterTasksByDate(tasks.designs, 'createdAt')
-        .filter(job => job.paymentStatus === 'Paid')
-        .reduce((sum, job) => sum + (job.amount || 0), 0),
+        // .filter(job => job.paymentStatus === 'Paid')
+        .reduce((sum, job) => sum + (job.advancePaid || 0), 0),
       pending: filterTasksByDate(tasks.designs, 'createdAt')
         .filter(job => job.paymentStatus === 'Due')
-        .reduce((sum, job) => sum + (job.amount || 0), 0),
+        .reduce((sum, job) => sum + (job.dueAmount || 0), 0),
     },
     epassport: {
       total: filterTasksByDate(tasks.epassport, 'date')
         .reduce((sum, app) => sum + (app.amount || 0), 0),
       paid: filterTasksByDate(tasks.epassport, 'date')
-        .filter(app => app.paymentStatus === 'Paid')
-        .reduce((sum, app) => sum + (app.amount || 0), 0),
+        // .filter(app => app.paymentStatus === 'Paid')
+        .reduce((sum, app) => sum + (app.paidAmount || 0), 0),
       pending: filterTasksByDate(tasks.epassport, 'date')
         .filter(app => app.paymentStatus === 'Due')
-        .reduce((sum, app) => sum + (app.amount || 0), 0),
+        .reduce((sum, app) => sum + (app.dueAmount || 0), 0),
     },
     otherServices: {
       total: filterTasksByDate(tasks.otherServices, 'createdAt')
         .reduce((sum, service) => sum + (service.amount || 0), 0),
       paid: filterTasksByDate(tasks.otherServices, 'createdAt')
-        .filter(service => service.paymentStatus === 'Paid')
-        .reduce((sum, service) => sum + (service.amount || 0), 0),
+        // .filter(service => service.paymentStatus === 'Paid')
+        .reduce((sum, service) => sum + (service.paidAmount || 0), 0),
       pending: filterTasksByDate(tasks.otherServices, 'createdAt')
         .filter(service => service.paymentStatus === 'Due')
-        .reduce((sum, service) => sum + (service.amount || 0), 0),
+        .reduce((sum, service) => sum + (service.dueAmount || 0), 0),
     },
   };
 
@@ -178,8 +178,9 @@ export default function SalesReport() {
             <option value="yearly">This Year</option>
           </select>
         </div>
-      </div>
+      </div> this filter is not working in my database all data have createdAt so based on this 
 
+      createdAt: "2024-12-26T01:41:01.376Z" filter the data 
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -215,6 +216,7 @@ export default function SalesReport() {
                   <span className="text-sm text-gray-900">
                     ¥{data.total.toLocaleString()}
                   </span>
+                  
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm text-green-600">

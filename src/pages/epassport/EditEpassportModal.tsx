@@ -427,9 +427,7 @@
 
 
 
-
-
-
+ 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
@@ -478,7 +476,14 @@ export default function EditEpassportModal({
   const amount = watch('amount') || 0;
   const paidAmount = watch('paidAmount') || 0;
   const discount = watch('discount') || 0;
-  const dueAmount = amount - (paidAmount + discount);
+  // const dueAmount = (amount - discount) - paidAmount;
+    // Dynamically calculate the due amount
+    const dueAmount = amount - discount - paidAmount;
+  
+
+
+
+
 
   // const handlers = admins.filter(admin => admin.role !== 'super_admin');
   const clientId = watch('clientId');
@@ -524,6 +529,7 @@ export default function EditEpassportModal({
   }, [isOpen]);
 
   const onSubmit = (data: any) => {
+    const dueAmount = (data.amount || 0) - (data.discount || 0) - (data.paidAmount || 0); 
     let clientName = '';
     
     // Check if the client is selected
@@ -537,6 +543,7 @@ export default function EditEpassportModal({
       {
         ...data,
         clientName: clientName || 'Default Client', // If no client selected, use a default value
+        dueAmount,
         date: data.date.toISOString(),
         deadline: data.deadline.toISOString(),
       }
@@ -768,6 +775,7 @@ export default function EditEpassportModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700">Due Amount</label>
                 <Input
+                {...register('dueAmount')}
                   value={dueAmount}
                   className="mt-1 bg-gray-50"
                   disabled
@@ -798,3 +806,9 @@ export default function EditEpassportModal({
     </div>
   );
 }
+
+
+
+
+
+
