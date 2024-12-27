@@ -17,17 +17,14 @@ const PaymentHistory = ({ selectedClientId }) => {
         if (Array.isArray(modelData)) {
           modelData.forEach((item) => {
             // Ensure the clientId matches the selectedClientId
-            if (item.clientId?._id === selectedClientId) {
-              // Try to access payment data in different model-specific fields
-              const payment = item.payment || item.paymentHistory || item.paymentDetails; // Modify this line based on your actual model structure
-              
-              if (payment) {
+            if (item.clientId?._id === selectedClientId) {              
+              if (item) {
                 allPayments.push({
-                  date: payment.date,
-                  type: payment.type || `${modelKey.charAt(0).toUpperCase() + modelKey.slice(1)} Service`,
-                  total: payment.total,
-                  paidAmount: payment.paidAmount,
-                  paymentStatus: payment.paymentStatus,
+                  date: item.date,
+                  type: item.type || `${modelKey.charAt(0).toUpperCase() + modelKey.slice(1)} Service`,
+                  total: item.total,
+                  paidAmount: item.paidAmount,
+                  paymentStatus: item.visaStatus || item.status,
                   model: modelKey, // Track the model the payment came from
                 });
               }
