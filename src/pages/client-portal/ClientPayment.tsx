@@ -57,12 +57,12 @@ const ClientPayment = () => {
               <h4 className="font-medium">
                 {task.modelName.replace('Model', '')} {/* Remove the word "Model" */}
               </h4>
-              <p className="text-sm text-gray-500">Amount: {task.amount || task.payment.visaApplicationFee} </p>
-              <p className="text-sm text-gray-500">translationFee: {task.payment.translationFee || 0} </p>
+              <p className="text-sm text-gray-500">Amount: {task.amount || task?.payment?.visaApplicationFee} </p>
+              <p className="text-sm text-gray-500">translationFee: {task?.payment?.translationFee || 0} </p>
               <p className="text-sm text-gray-500">Payment Method: {task.paymentMethod}</p>
               <p className="text-sm text-gray-500">Payment Status: {task.paymentStatus}</p>
-              <p className="text-sm text-gray-500">Due Amount: {task.dueAmount || task.payment.total}</p>
-              <p className="text-sm text-gray-500">Paid Amount: {task.paidAmount || task.payment.paidAmount}</p>
+              <p className="text-sm text-gray-500">Due Amount: {task.dueAmount || task?.payment?.total}</p>
+              <p className="text-sm text-gray-500">Paid Amount: {task.paidAmount || task?.payment?.paidAmount}</p>
             </div>
           ))}
         </div>

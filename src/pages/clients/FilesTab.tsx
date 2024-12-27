@@ -266,6 +266,8 @@
 
 
 
+
+
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Upload, message } from 'antd';
 import { Upload as LucideUpload, Eye } from 'lucide-react'; // Lucide icon
@@ -349,7 +351,7 @@ const FilesTab = () => {
                   {/* Eye Button for file preview */}
                   <Button
                     icon={<Eye className="h-6 w-6 text-black" />} // Increased size and black color
-                    onClick={() => handlePreviewOpen(task._id)}
+                    onClick={() => handlePreviewOpen(task)}
                     size="small"
                     type="link"
                     className="text-green-500"
@@ -420,19 +422,45 @@ const FilesTab = () => {
     setIsModalVisible(false);
   };
 
-  // Handle file preview modal
-  const handlePreviewOpen = (taskId) => {
-    const task = clientTasks.applications.find((task) => task._id === taskId); // Assuming you want to preview files for a task
-    if (task && task.files) {
-      setPreviewFiles(task.files); // Set the files to preview
-      setPreviewModalVisible(true); // Open the preview modal
+  const handlePreviewOpen = (task) => {
+    if (task?.clientFiles?.length > 0) {
+      console.log('Previewing files:', task.clientFiles); // Debugging log
+      setPreviewFiles(task.clientFiles);
+      setPreviewModalVisible(true);
+    } else {
+      message.warning('No files available for preview.');
+      console.log('No files found for task:', task); // Debugging log
     }
   };
-
+  
+  
   const handlePreviewClose = () => {
     setPreviewModalVisible(false);
-    setPreviewFiles([]); // Reset preview files when modal is closed
+    setPreviewFiles([]);
   };
+  
+  // JSX for the Preview Modal
+  <Modal
+    title="Preview Files"
+    open={previewModalVisible}
+    onCancel={handlePreviewClose}
+    footer={null}
+    width="90%"
+  >
+    <div className="p-4 bg-gray-50 space-y-4">
+      {previewFiles.map((fileUrl, index) => (
+        <iframe
+          key={index}
+          src={fileUrl.endsWith('.pdf') ? fileUrl : `https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
+          className="w-full h-96 border"
+          title={`Preview ${index + 1}`}
+        />
+      ))}
+    </div>
+  </Modal>
+  
+
+
 
   return (
     <div className="space-y-4">
@@ -487,7 +515,7 @@ const FilesTab = () => {
       </Modal>
 
       {/* Preview Modal for Google Docs Viewer */}
-      <Modal
+      {/* <Modal
         visible={previewModalVisible}
         onCancel={handlePreviewClose}
         footer={null}
@@ -503,7 +531,27 @@ const FilesTab = () => {
             />
           ))}
         </div>
-      </Modal>
+      </Modal> */}
+
+
+<Modal
+  title="Preview Files"
+  open={previewModalVisible}
+  onCancel={handlePreviewClose}
+  footer={null}
+  width="90%"
+>
+  <div className="p-4 bg-gray-50 space-y-4">
+    {previewFiles.map((fileUrl, index) => (
+      <iframe
+        key={index}
+        src={fileUrl.endsWith('.pdf') ? fileUrl : `https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
+        className="w-full h-96 border"
+        title={`Preview ${index + 1}`}
+      />
+    ))}
+  </div>
+</Modal>
 
       {renderTaskSection("Visa Applications", clientTasks.applications, "applicationModel")}
       {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslationModel")}
