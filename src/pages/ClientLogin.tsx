@@ -315,7 +315,8 @@ import toast from "react-hot-toast";
 import { useAuthGlobally } from "../context/AuthContext";
 import CreateClientAccountModal from "./components/CreateClientAccountModal";
 import WaterWave from "react-water-wave";
-import waveImage from "/water6.jpg";
+// import waveImage from "/water6.jpg";
+import waveImage from "/water7.jpg";
 
 export default function ClientLogin() {
   const [email, setEmail] = useState("");

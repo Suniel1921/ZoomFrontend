@@ -131,7 +131,7 @@ export default function SalesReport() {
       total: filterTasksByDate(tasks.epassport, 'date')
         .reduce((sum, app) => sum + (app.amount || 0), 0),
       paid: filterTasksByDate(tasks.epassport, 'date')
-        // .filter(app => app.paymentStatus === 'Paid')
+        // .filter(app => app.paymentStatus === 'Paid') 
         .reduce((sum, app) => sum + (app.paidAmount || 0), 0),
       pending: filterTasksByDate(tasks.epassport, 'date')
         .filter(app => app.paymentStatus === 'Due')
@@ -178,9 +178,8 @@ export default function SalesReport() {
             <option value="yearly">This Year</option>
           </select>
         </div>
-      </div> this filter is not working in my database all data have createdAt so based on this 
+      </div>
 
-      createdAt: "2024-12-26T01:41:01.376Z" filter the data 
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">

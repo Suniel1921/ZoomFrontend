@@ -21,10 +21,11 @@ export default function AppointmentsSection() {
       console.log('appoint res is', response) 
       if (response?.data?.success) {
         setAppointmentsData(response?.data?.appointments);
-        toast.success(response.data.message)
+        // toast.success(response.data.message)
       }
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to fetch appointments.');
+      // toast.error(error?.response?.data?.message || 'Failed to fetch appointments.');
+      console.log('client appointment error is ', error)
     }
   };
 

@@ -28,6 +28,7 @@ export default function ClientPortal() {
   const [isLoading, setIsLoading] = useState(false);  // No need for loading state anymore, as page is public
   const [auth, setAuth] = useAuthGlobally();
   const navigate = useNavigate();
+  
 
 
   // Simulate client data directly (or fetch it publicly)

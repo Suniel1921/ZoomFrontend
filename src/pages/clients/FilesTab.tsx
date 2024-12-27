@@ -1,227 +1,261 @@
-// import { useState, useRef } from 'react';
-// import { useFileStore } from '../../store/fileStore';
-// import { fileStorageService } from '../../services/fileStorageService';
-// import Button from '../../components/Button';
-// import { Eye, Download, Trash2, Upload, AlertTriangle } from 'lucide-react';
-// import type { Client } from '../../types';
+// import React, { useState, useEffect } from 'react';
+// import { Button, Modal, Upload, message } from 'antd';
+// import { Upload as LucideUpload, Eye } from 'lucide-react'; // Lucide icon
+// import { useAccountTaskGlobally } from '../../context/AccountTaskContext';
 
-// interface FilesTabProps {
-//   client: Client;
-// }
+// const FilesTab = () => {
+//   const { accountTaskData, selectedClientId } = useAccountTaskGlobally();
+//   const [isModalVisible, setIsModalVisible] = useState(false);
+//   const [fileList, setFileList] = useState([]);
+//   const [selectedTaskId, setSelectedTaskId] = useState(null);
+//   const [selectedModelName, setSelectedModelName] = useState('');
+//   const [clientTasks, setClientTasks] = useState({
+//     applications: [],
+//     appointment: [],
+//     documentTranslation: [],
+//     epassport: [],
+//     graphicDesigns: [],
+//     japanVisit: [],
+//     otherServices: [],
+//   });
+//   const [previewModalVisible, setPreviewModalVisible] = useState(false);
+//   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
 
-// export default function FilesTab({ client }: FilesTabProps) {
-//   const [isUploading, setIsUploading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-//   const fileInputRef = useRef<HTMLInputElement>(null);
-//   const { addFile, deleteFile, getFilesByClient } = useFileStore();
-//   const clientFiles = getFilesByClient();
+//   // Fetch tasks based on clientId
+//   useEffect(() => {
+//     if (accountTaskData && selectedClientId) {
+//       const updatedClientTasks = {
+//         applications: [],
+//         appointment: [],
+//         documentTranslation: [],
+//         epassport: [],
+//         graphicDesigns: [],
+//         japanVisit: [],
+//         otherServices: [],
+//       };
 
-//   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = event.target.files?.[0];
-//     if (!file) return;
-
-//     try {
-//       setIsUploading(true);
-//       setError(null);
-
-//       // Check file size (max 10MB)
-//       if (file.size > 10 * 1024 * 1024) {
-//         throw new Error('File size must be less than 10MB');
-//       }
-
-//       // Check file type
-//       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-//       if (!allowedTypes.includes(file.type)) {
-//         throw new Error('Only PDF, Word documents, and images (JPEG/PNG) are allowed');
-//       }
-
-//       // Upload file and get ID
-//       const fileId = await fileStorageService.uploadFile(file);
-      
-//       // Save file metadata
-//       addFile({
-//         taskId: 'general',
-//         taskType: 'other',
-//         clientId: client.id,
-//         fileName: file.name,
-//         fileType: file.type,
-//         driveFileId: fileId,
-//         driveViewLink: fileId,
-//         driveDownloadLink: fileId,
-//         uploadedBy: 'system', // Removed admin reference
+//       Object.keys(accountTaskData).forEach((key) => {
+//         const modelData = accountTaskData[key];
+//         if (Array.isArray(modelData)) {
+//           modelData.forEach((item) => {
+//             if (item?.clientId?._id === selectedClientId) {
+//               if (key === "application") updatedClientTasks.applications.push(item);
+//               if (key === "appointment") updatedClientTasks.appointment.push(item);
+//               if (key === "documentTranslation") updatedClientTasks.documentTranslation.push(item);
+//               if (key === "epassports") updatedClientTasks.epassport.push(item);
+//               if (key === "graphicDesigns") updatedClientTasks.graphicDesigns.push(item);
+//               if (key === "japanVisit") updatedClientTasks.japanVisit.push(item);
+//               if (key === "otherServices") updatedClientTasks.otherServices.push(item);
+//             }
+//           });
+//         }
 //       });
 
-//       // Clear input
-//       if (fileInputRef.current) {
-//         fileInputRef.current.value = '';
-//       }
-//     } catch (error) {
-//       console.error('Upload failed:', error);
-//       setError(error instanceof Error ? error.message : 'Failed to upload file. Please try again.');
-//     } finally {
-//       setIsUploading(false);
+//       setClientTasks(updatedClientTasks);
 //     }
+//   }, [selectedClientId, accountTaskData]);
+
+//   const renderTaskSection = (title, tasks, modelName) => {
+//     return (
+//       tasks.length > 0 && (
+//         <div className="space-y-4">
+//           <h3 className="text-xl font-semibold">{title}</h3>
+//           {tasks.map((task) => (
+//             <div
+//               key={task._id}
+//               className="bg-gray-50 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+//             >
+//               <div className="flex justify-between items-center">
+//                 <div>
+//                   <p className="font-medium">{task.clientId.name || task.clientName}</p>
+//                 </div>
+
+//                 <Button
+//                   icon={<LucideUpload className="h-5 w-5" />}
+//                   onClick={() => handleModalOpen(task._id, modelName)}
+//                   size="small"
+//                   type="link"
+//                   className="text-blue-500"
+//                 />
+
+//                 {/* Eye Button for file preview */}
+//                 <Button
+//                   icon={<Eye className="h-5 w-5" />}
+//                   onClick={() => handlePreviewOpen(task._id)}
+//                   size="small"
+//                   type="link"
+//                   className="text-green-500"
+//                 />
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       )
+//     );
 //   };
 
-//   const handleView = async (fileId: string, fileType: string) => {
-//     try {
-//       const file = await fileStorageService.getFile(fileId);
-//       if (!file?.data) {
-//         throw new Error('File not found');
-//       }
+//   // Open Modal for file upload
+//   const handleModalOpen = (taskId, modelName) => {
+//     setSelectedTaskId(taskId);
+//     setSelectedModelName(modelName);
+//     setIsModalVisible(true);
+//   };
 
-//       // For images, create a temporary URL and open in new window
-//       if (fileType.startsWith('image/')) {
-//         const win = window.open('');
-//         if (!win) {
-//           alert('Please allow popups to view files');
-//           return;
+//   // Close Modal
+//   const handleModalClose = () => {
+//     setIsModalVisible(false);
+//     setFileList([]);
+//   };
+
+//   // Handle file selection
+//   const handleFileChange = ({ fileList }) => {
+//     setFileList(fileList);
+//   };
+
+//   // Handle file upload
+//   const handleUpload = async () => {
+//     if (fileList.length === 0) {
+//       message.error('Please select files before uploading.');
+//       return;
+//     }
+
+//     const formData = new FormData();
+//     fileList.forEach((file) => {
+//       formData.append('clientFiles', file.originFileObj);
+//     });
+
+//     const loadingMessage = message.loading('Uploading files...', 0);
+
+//     try {
+//       const response = await fetch(
+//         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/fileUpload/${selectedClientId}/${selectedModelName}`,
+//         {
+//           method: 'POST',
+//           body: formData,
 //         }
-//         win.document.write(`<img src="${file.data}" alt="Preview" style="max-width: 100%; height: auto;">`);
-//         return;
-//       }
+//       );
+//       const data = await response.json();
 
-//       // For other files, create a blob and open in new tab
-//       const base64Data = file.data.split(',')[1];
-//       const binaryData = atob(base64Data);
-//       const bytes = new Uint8Array(binaryData.length);
-//       for (let i = 0; i < binaryData.length; i++) {
-//         bytes[i] = binaryData.charCodeAt(i);
+//       if (data.success) {
+//         message.success('Files uploaded successfully!');
+//       } else {
+//         message.error(data.message || 'Failed to upload files.');
 //       }
-//       const blob = new Blob([bytes], { type: fileType });
-//       const url = URL.createObjectURL(blob);
-      
-//       window.open(url, '_blank');
-      
-//       // Clean up URL after a delay
-//       setTimeout(() => URL.revokeObjectURL(url), 1000);
 //     } catch (error) {
-//       console.error('View failed:', error);
-//       alert('Failed to view file. Please try downloading instead.');
+//       message.error('An error occurred while uploading files.');
+//     } finally {
+//       loadingMessage();
+//     }
+
+//     setFileList([]);
+//     setIsModalVisible(false);
+//   };
+
+//   // Handle file preview modal
+//   const handlePreviewOpen = (taskId) => {
+//     const task = clientTasks.applications.find((task) => task._id === taskId); // Assuming you want to preview files for a task
+//     if (task) {
+//       setPreviewModalVisible(true);
+//       setCurrentPreviewIndex(0); // Start with the first file
 //     }
 //   };
 
-//   const handleDownload = async (fileId: string, fileName: string, fileType: string) => {
-//     try {
-//       const file = await fileStorageService.getFile(fileId);
-//       if (!file?.data) {
-//         throw new Error('File not found');
-//       }
-
-//       // Convert base64 to blob
-//       const base64Data = file.data.split(',')[1];
-//       const binaryData = atob(base64Data);
-//       const bytes = new Uint8Array(binaryData.length);
-//       for (let i = 0; i < binaryData.length; i++) {
-//         bytes[i] = binaryData.charCodeAt(i);
-//       }
-//       const blob = new Blob([bytes], { type: fileType });
-      
-//       // Create download link
-//       const url = URL.createObjectURL(blob);
-//       const link = document.createElement('a');
-//       link.href = url;
-//       link.download = fileName;
-//       document.body.appendChild(link);
-//       link.click();
-//       document.body.removeChild(link);
-
-//       // Clean up URL
-//       setTimeout(() => URL.revokeObjectURL(url), 1000);
-//     } catch (error) {
-//       console.error('Download failed:', error);
-//       alert('Failed to download file. Please try again.');
-//     }
+//   const handlePreviewClose = () => {
+//     setPreviewModalVisible(false);
+//     setCurrentPreviewIndex(0); // Reset to the first file
 //   };
 
-//   const handleDelete = async (fileId: string) => {
-//     if (!window.confirm('Are you sure you want to delete this file?')) return;
+//   const handleNextPreview = () => {
+//     setCurrentPreviewIndex((prevIndex) => (prevIndex + 1) % fileList.length);
+//   };
 
-//     try {
-//       await fileStorageService.deleteFile(fileId);
-//       deleteFile(fileId);
-//     } catch (error) {
-//       console.error('Delete failed:', error);
-//       alert('Failed to delete file. Please try again.');
-//     }
+//   const handlePrevPreview = () => {
+//     setCurrentPreviewIndex((prevIndex) =>
+//       prevIndex === 0 ? fileList.length - 1 : prevIndex - 1
+//     );
 //   };
 
 //   return (
-//     <div className="space-y-6">
-//       {/* Upload Section */}
-//       <div className="flex items-center gap-4">
-//         <input
-//           type="file"
-//           ref={fileInputRef}
-//           onChange={handleFileSelect}
-//           className="hidden"
-//           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-//         />
-//         <Button
-//           onClick={() => fileInputRef.current?.click()}
-//           disabled={isUploading}
+//     <div className="space-y-4">
+//       <Modal
+//         title="Upload Files"
+//         visible={isModalVisible}
+//         onCancel={handleModalClose}
+//         footer={[
+//           <Button key="back" onClick={handleModalClose}>Cancel</Button>,
+//           <Button
+//             key="submit"
+//             type="primary"
+//             onClick={handleUpload}
+//             disabled={fileList.length === 0}
+//           >
+//             Upload
+//           </Button>,
+//         ]}
+//       >
+//         <Upload
+//           multiple
+//           fileList={fileList}
+//           onChange={handleFileChange}
+//           beforeUpload={() => false} // Prevent auto upload
 //         >
-//           <Upload className="h-4 w-4 mr-2" />
-//           {isUploading ? 'Uploading...' : 'Upload File'}
-//         </Button>
-//       </div>
+//           <Button icon={<LucideUpload className="h-5 w-5" />}>Select Files</Button>
+//         </Upload>
 
-//       {error && (
-//         <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-//           <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-//           <p>{error}</p>
-//         </div>
-//       )}
-
-//       {/* Files List */}
-//       <div className="space-y-4">
-//         {clientFiles.length === 0 ? (
-//           <p className="text-center text-gray-500 py-8">No files uploaded yet.</p>
-//         ) : (
-//           <div className="grid gap-4">
-//             {clientFiles.map((file) => (
-//               <div
-//                 key={file.id}
-//                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-//               >
-//                 <div>
-//                   <p className="font-medium">{file.fileName}</p>
-//                   <p className="text-sm text-gray-500">
-//                     Uploaded on {new Date(file.uploadedAt).toLocaleDateString()}
-//                   </p>
-//                 </div>
-//                 <div className="flex items-center gap-2">
-//                   <Button
-//                     variant="outline"
-//                     size="sm"
-//                     onClick={() => handleView(file.driveFileId, file.fileType)}
-//                   >
-//                     <Eye className="h-4 w-4" />
-//                   </Button>
-//                   <Button
-//                     variant="outline"
-//                     size="sm"
-//                     onClick={() => handleDownload(file.driveFileId, file.fileName, file.fileType)}
-//                   >
-//                     <Download className="h-4 w-4" />
-//                   </Button>
-//                   <Button
-//                     variant="outline"
-//                     size="sm"
-//                     onClick={() => handleDelete(file.id)}
-//                     className="text-red-500 hover:text-red-700"
-//                   >
-//                     <Trash2 className="h-4 w-4" />
-//                   </Button>
-//                 </div>
+//         {fileList.length > 0 && (
+//           <div className="mt-4">
+//             <h4 className="font-semibold">Selected Files:</h4>
+//             {fileList.map((file) => (
+//               <div key={file.uid} className="flex justify-between items-center">
+//                 <a
+//                   href="#"
+//                   onClick={() => handlePreview(file.url)}
+//                   className="text-blue-500 text-sm"
+//                 >
+//                   {file.name}
+//                 </a>
+//                 <Button
+//                   type="link"
+//                   onClick={() => handleFileChange({ fileList: [] })} // Update with new file
+//                   className="text-red-500"
+//                 >
+//                   Change
+//                 </Button>
 //               </div>
 //             ))}
 //           </div>
 //         )}
-//       </div>
+//       </Modal>
+
+//       {/* Preview Modal for images */}
+//       <Modal
+//         visible={previewModalVisible}
+//         onCancel={handlePreviewClose}
+//         footer={[
+//           <Button key="prev" onClick={handlePrevPreview}>Previous</Button>,
+//           <Button key="next" onClick={handleNextPreview}>Next</Button>,
+//         ]}
+//       >
+//         <div>
+//           <img
+//             src={fileList[currentPreviewIndex]?.url || fileList[currentPreviewIndex]?.thumbUrl}
+//             alt="Preview"
+//             className="w-full h-auto"
+//           />
+//         </div>
+//       </Modal>
+
+//       {renderTaskSection("Visa Applications", clientTasks.applications, "applicationModel")}
+//       {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslationModel")}
+//       {renderTaskSection("Design Services", clientTasks.graphicDesigns, "GraphicDesignModel")}
+//       {renderTaskSection("Japan Visit Applications", clientTasks.japanVisit, "japanVisitApplicationModel")}
+//       {renderTaskSection("E-passport Applications", clientTasks.epassport, "ePassportModel")}
+//       {renderTaskSection("Other Services", clientTasks.otherServices, "OtherServiceModel")}
 //     </div>
 //   );
-// }
+// };
+
+// export default FilesTab;
 
 
 
@@ -232,82 +266,189 @@
 
 
 
+import React, { useState, useEffect } from 'react';
+import { Button, Modal, Upload, message } from 'antd';
+import { Upload as LucideUpload, Eye } from 'lucide-react'; // Lucide icon
+import { useAccountTaskGlobally } from '../../context/AccountTaskContext';
 
-
-
-
-import React, { useState } from 'react';
-import { Modal, Button, Upload, message } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
-import axios from 'axios';
-
-const FilesTab = ({ clientId, modelName, modelData }) => {
+const FilesTab = () => {
+  const { accountTaskData, selectedClientId } = useAccountTaskGlobally();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [fileList, setFileList] = useState([]);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [selectedModelName, setSelectedModelName] = useState('');
+  const [clientTasks, setClientTasks] = useState({
+    applications: [],
+    appointment: [],
+    documentTranslation: [],
+    epassport: [],
+    graphicDesigns: [],
+    japanVisit: [],
+    otherServices: [],
+  });
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [previewFiles, setPreviewFiles] = useState([]);
 
-  const handleModalOpen = () => {
+  // Fetch tasks based on clientId
+  useEffect(() => {
+    if (accountTaskData && selectedClientId) {
+      const updatedClientTasks = {
+        applications: [],
+        appointment: [],
+        documentTranslation: [],
+        epassport: [],
+        graphicDesigns: [],
+        japanVisit: [],
+        otherServices: [],
+      };
+
+      Object.keys(accountTaskData).forEach((key) => {
+        const modelData = accountTaskData[key];
+        if (Array.isArray(modelData)) {
+          modelData.forEach((item) => {
+            if (item?.clientId?._id === selectedClientId) {
+              if (key === "application") updatedClientTasks.applications.push(item);
+              if (key === "appointment") updatedClientTasks.appointment.push(item);
+              if (key === "documentTranslation") updatedClientTasks.documentTranslation.push(item);
+              if (key === "epassports") updatedClientTasks.epassport.push(item);
+              if (key === "graphicDesigns") updatedClientTasks.graphicDesigns.push(item);
+              if (key === "japanVisit") updatedClientTasks.japanVisit.push(item);
+              if (key === "otherServices") updatedClientTasks.otherServices.push(item);
+            }
+          });
+        }
+      });
+
+      setClientTasks(updatedClientTasks);
+    }
+  }, [selectedClientId, accountTaskData]);
+
+  const renderTaskSection = (title, tasks, modelName) => {
+    return (
+      tasks.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold">{title}</h3>
+          {tasks.map((task) => (
+            <div
+              key={task._id}
+              className="bg-gray-50 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium">{task.clientId.name || task.clientName}</p>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button
+                    icon={<LucideUpload className="h-6 w-6 text-black" />} // Increased size and black color
+                    onClick={() => handleModalOpen(task._id, modelName)}
+                    size="small"
+                    type="link"
+                    className="text-blue-500"
+                  />
+                  {/* Eye Button for file preview */}
+                  <Button
+                    icon={<Eye className="h-6 w-6 text-black" />} // Increased size and black color
+                    onClick={() => handlePreviewOpen(task._id)}
+                    size="small"
+                    type="link"
+                    className="text-green-500"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    );
+  };
+
+  // Open Modal for file upload
+  const handleModalOpen = (taskId, modelName) => {
+    setSelectedTaskId(taskId);
+    setSelectedModelName(modelName);
     setIsModalVisible(true);
   };
 
+  // Close Modal
   const handleModalClose = () => {
     setIsModalVisible(false);
+    setFileList([]);
   };
 
+  // Handle file selection
   const handleFileChange = ({ fileList }) => {
     setFileList(fileList);
   };
 
-  const handleSubmit = async () => {
-    if (!clientId || !modelName) {
-      message.error('Client ID or Model Name is missing!');
+  // Handle file upload
+  const handleUpload = async () => {
+    if (fileList.length === 0) {
+      message.error('Please select files before uploading.');
       return;
     }
-  
-    console.log('Client ID:', clientId);
-    console.log('Model Name:', modelName); // Make sure it's a valid model name (like "ePassportModel")
-  
+
     const formData = new FormData();
-    fileList.forEach(file => {
-      formData.append('clientFiles', file.originFileObj); // Name of the field must match the backend
+    fileList.forEach((file) => {
+      formData.append('clientFiles', file.originFileObj);
     });
-  
+
+    const loadingMessage = message.loading('Uploading files...', 0);
+
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/epassport/uploadModelFile/${clientId}/${modelName}`,
-        formData,
+      const response = await fetch(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/fileUpload/${selectedClientId}/${selectedModelName}`,
         {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          method: 'POST',
+          body: formData,
         }
       );
-      message.success('Files uploaded successfully!');
-      setIsModalVisible(false); // Close the modal on successful upload
+      const data = await response.json();
+
+      if (data.success) {
+        message.success('Files uploaded successfully!');
+      } else {
+        message.error(data.message || 'Failed to upload files.');
+      }
     } catch (error) {
-      message.error('File upload failed!');
+      message.error('An error occurred while uploading files.');
+    } finally {
+      loadingMessage();
+    }
+
+    setFileList([]);
+    setIsModalVisible(false);
+  };
+
+  // Handle file preview modal
+  const handlePreviewOpen = (taskId) => {
+    const task = clientTasks.applications.find((task) => task._id === taskId); // Assuming you want to preview files for a task
+    if (task && task.files) {
+      setPreviewFiles(task.files); // Set the files to preview
+      setPreviewModalVisible(true); // Open the preview modal
     }
   };
-  
+
+  const handlePreviewClose = () => {
+    setPreviewModalVisible(false);
+    setPreviewFiles([]); // Reset preview files when modal is closed
+  };
 
   return (
-    <>
-      <div>
-        <Button onClick={handleModalOpen}>Upload file</Button>
-      </div>
-
+    <div className="space-y-4">
       <Modal
-        title="Upload Multiple Files"
+        title="Upload Files"
         visible={isModalVisible}
         onCancel={handleModalClose}
         footer={[
-          <Button key="back" onClick={handleModalClose}>
-            Cancel
-          </Button>,
+          <Button key="back" onClick={handleModalClose}>Cancel</Button>,
           <Button
             key="submit"
             type="primary"
-            onClick={handleSubmit}
+            onClick={handleUpload}
             disabled={fileList.length === 0}
           >
-            Submit
+            Upload
           </Button>,
         ]}
       >
@@ -317,10 +458,60 @@ const FilesTab = ({ clientId, modelName, modelData }) => {
           onChange={handleFileChange}
           beforeUpload={() => false} // Prevent auto upload
         >
-          <Button icon={<UploadOutlined />}>Select Files</Button>
+          <Button icon={<LucideUpload className="h-5 w-5" />}>Select Files</Button>
         </Upload>
+
+        {fileList.length > 0 && (
+          <div className="mt-4">
+            <h4 className="font-semibold">Selected Files:</h4>
+            {fileList.map((file) => (
+              <div key={file.uid} className="flex justify-between items-center">
+                <a
+                  href="#"
+                  onClick={() => handlePreview(file.url)}
+                  className="text-blue-500 text-sm"
+                >
+                  {file.name}
+                </a>
+                <Button
+                  type="link"
+                  onClick={() => handleFileChange({ fileList: [] })} // Update with new file
+                  className="text-red-500"
+                >
+                  Change
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
-    </>
+
+      {/* Preview Modal for Google Docs Viewer */}
+      <Modal
+        visible={previewModalVisible}
+        onCancel={handlePreviewClose}
+        footer={null}
+        width="80%" // Adjust the modal width as needed
+      >
+        <div className="flex-1 p-4 bg-gray-50 overflow-auto space-y-4">
+          {previewFiles.map((fileUrl, idx) => (
+            <iframe
+              key={idx}
+              src={`https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
+              className="w-full h-64 border mb-4"
+              title={`Preview ${idx + 1}`}
+            />
+          ))}
+        </div>
+      </Modal>
+
+      {renderTaskSection("Visa Applications", clientTasks.applications, "applicationModel")}
+      {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslationModel")}
+      {renderTaskSection("Design Services", clientTasks.graphicDesigns, "GraphicDesignModel")}
+      {renderTaskSection("Japan Visit Applications", clientTasks.japanVisit, "japanVisitApplicationModel")}
+      {renderTaskSection("E-passport Applications", clientTasks.epassport, "ePassportModel")}
+      {renderTaskSection("Other Services", clientTasks.otherServices, "OtherServiceModel")}
+    </div>
   );
 };
 

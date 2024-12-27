@@ -154,9 +154,9 @@ export default function AddClientModal({ isOpen, onClose , getAllClients}: AddCl
   
 const onSubmit = async (data: any) => {
   if (files.length === 0) {
-    toast.error('No files selected');
+    toast.error('Please selected a Profile Photo');
     return;
-  }
+  }  //make profile photo optional
 
   const toastId = toast.loading('Please wait, Photo is uploading...');
 
