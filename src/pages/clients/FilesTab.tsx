@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Upload, message } from 'antd';
-import { Upload as LucideUpload, Eye } from 'lucide-react'; // Lucide icon
+import { Upload as LucideUpload, Eye, FileText, Trash2 } from 'lucide-react'; // Lucide icon
 import { useAccountTaskGlobally } from '../../context/AccountTaskContext';
 
-const FilesTab = () => {
+const FilesTab = ({getAllModelData}) => {
   const { accountTaskData, selectedClientId } = useAccountTaskGlobally();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [fileList, setFileList] = useState([]);
@@ -20,6 +20,8 @@ const FilesTab = () => {
   });
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [previewFiles, setPreviewFiles] = useState([]);
+  const [fileModalVisible, setFileModalVisible] = useState(false); // To manage file modal visibility
+
 
   // Fetch tasks based on clientId
   useEffect(() => {
@@ -86,6 +88,18 @@ const FilesTab = () => {
                     type="link"
                     className="text-green-500"
                   />
+
+                  {/* File Button to open the new modal */}
+                  <Button
+                    icon={<FileText className="h-6 w-6 text-black" />}
+                    onClick={() =>
+                      handleFileModalOpen(task.clientFiles, modelName)
+                    }
+                    size="small"
+                    type="link"
+                    className="text-orange-500"
+                  />
+
                 </div>
               </div>
             </div>
@@ -162,13 +176,57 @@ const FilesTab = () => {
       console.log('No files found for task:', task); // Debugging log
     }
   };
-  
-  
+
   const handlePreviewClose = () => {
     setPreviewModalVisible(false);
     setPreviewFiles([]);
   };
+
+
   
+  // Open the new modal showing all client files
+  const handleFileModalOpen = (files, modelName) => {
+    setPreviewFiles(files);
+    setSelectedModelName(modelName); // Update model name here
+    setFileModalVisible(true);
+  };
+
+   // Close the file modal
+   const handleFileModalClose = () => {
+    setFileModalVisible(false);
+    setPreviewFiles([]);
+  };
+
+  const handleDeleteFile = async (fileUrl) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/deleteFile`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId: selectedClientId,
+            modelName: selectedModelName,
+            fileUrl,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        getAllModelData();
+        message.success("File deleted successfully!");
+        setPreviewFiles(previewFiles.filter((file) => file !== fileUrl));
+      } else {
+        message.error(data.message || "Failed to delete file.");
+      }
+    } catch (error) {
+      message.error("An error occurred while deleting the file.");
+    }
+  };
+
+
+
   // JSX for the Preview Modal
   <Modal
     title="Preview Files"
@@ -188,9 +246,6 @@ const FilesTab = () => {
       ))}
     </div>
   </Modal>
-  
-
-
 
   return (
     <div className="space-y-4">
@@ -244,26 +299,6 @@ const FilesTab = () => {
         )}
       </Modal>
 
-      {/* Preview Modal for Google Docs Viewer */}
-      {/* <Modal
-        visible={previewModalVisible}
-        onCancel={handlePreviewClose}
-        footer={null}
-        width="80%" // Adjust the modal width as needed
-      >
-        <div className="flex-1 p-4 bg-gray-50 overflow-auto space-y-4">
-          {previewFiles.map((fileUrl, idx) => (
-            <iframe
-              key={idx}
-              src={`https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
-              className="w-full h-64 border mb-4"
-              title={`Preview ${idx + 1}`}
-            />
-          ))}
-        </div>
-      </Modal> */}
-
-
 <Modal
   title="Preview Files"
   open={previewModalVisible}
@@ -283,6 +318,38 @@ const FilesTab = () => {
   </div>
 </Modal>
 
+ {/* Modal for Viewing Client Files */}
+ <Modal
+        title="Client Files"
+        open={fileModalVisible}
+        onCancel={handleFileModalClose}
+        footer={null}
+        width="80%"
+       >
+        <div className="space-y-4">
+          {previewFiles.map((fileUrl, index) => (
+            <div
+              key={index}
+              className="flex justify-between items-center p-2 border-b"
+            >
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500"
+              >
+                {fileUrl.split("/").pop()}
+              </a>
+              <Button
+                icon={<Trash2 className="h-5 w-5 text-red-500" />}
+                onClick={() => handleDeleteFile(fileUrl, selectedModelName)}
+                type="link"
+              />
+            </div>
+          ))}
+        </div>
+      </Modal>
+
       {renderTaskSection("Visa Applications", clientTasks.applications, "applicationModel")}
       {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslationModel")}
       {renderTaskSection("Design Services", clientTasks.graphicDesigns, "GraphicDesignModel")}
@@ -294,3 +361,6 @@ const FilesTab = () => {
 };
 
 export default FilesTab;
+
+
+

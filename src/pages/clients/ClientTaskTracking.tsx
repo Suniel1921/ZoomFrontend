@@ -210,7 +210,6 @@ export default function ClientTaskTracking({getAllModelData}) {
                                 }
                               >
                                 <Option value="pending">Pending</Option>
-                                <Option value="in-progress">In-progress</Option>
                                 <Option value="processing">Processing</Option>
                                 <Option value="completed">Completed</Option>
                               </Select>
@@ -292,8 +291,8 @@ export default function ClientTaskTracking({getAllModelData}) {
       {activeTab === "processes" && <ProcessFlowTab />}
       {/* {activeTab === "payment-history" && <PaymentHistory />} */}
       {activeTab === "payment-history" && <PaymentHistory selectedClientId={selectedClientId} />}
-      {/* {activeTab === "files" && <FilesTab />}  */}
-      {activeTab === "files" && <FilesTab clientId={selectedClientId} modelName="applicationModel"  />} 
+      {activeTab === "files" && <FilesTab getAllModelData={getAllModelData} />} 
+      {/* {activeTab === "files" && <FilesTab clientId={selectedClientId} modelName="applicationModel"  />}  */}
       
     </div>
   );
