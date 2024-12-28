@@ -13,15 +13,15 @@
 //   const navigate = useNavigate();
 //   const searchRef = useRef<HTMLDivElement>(null);
 //   const [query, setQuery] = useState('');
-//   const { 
-//     clients, 
+//   const {
+//     clients,
 //     applications,
 //     japanVisitApplications,
 //     translations,
 //     graphicDesignJobs,
 //     epassportApplications,
 //     otherServices,
-//     appointments 
+//     appointments
 //   } = useStore();
 
 //   useEffect(() => {
@@ -37,52 +37,52 @@
 
 //   // Filter results based on query
 //   const results = {
-//     clients: clients.filter(client => 
+//     clients: clients.filter(client =>
 //       query && (
 //         client.name.toLowerCase().includes(query.toLowerCase()) ||
 //         client.email.toLowerCase().includes(query.toLowerCase()) ||
 //         client.phone.toLowerCase().includes(query.toLowerCase())
 //       )
 //     ),
-//     applications: applications.filter(app => 
+//     applications: applications.filter(app =>
 //       query && (
 //         app.clientName.toLowerCase().includes(query.toLowerCase()) ||
 //         app.type.toLowerCase().includes(query.toLowerCase()) ||
 //         app.country.toLowerCase().includes(query.toLowerCase())
 //       )
 //     ),
-//     japanVisit: japanVisitApplications.filter(app => 
+//     japanVisit: japanVisitApplications.filter(app =>
 //       query && (
 //         app.clientName.toLowerCase().includes(query.toLowerCase()) ||
 //         app.mobileNo.toLowerCase().includes(query.toLowerCase())
 //       )
 //     ),
-//     translations: translations.filter(trans => 
+//     translations: translations.filter(trans =>
 //       query && (
 //         trans.clientName.toLowerCase().includes(query.toLowerCase())
 //       )
 //     ),
-//     designs: graphicDesignJobs.filter(job => 
+//     designs: graphicDesignJobs.filter(job =>
 //       query && (
 //         job.clientName.toLowerCase().includes(query.toLowerCase()) ||
 //         job.mobileNo.toLowerCase().includes(query.toLowerCase()) ||
 //         job.designType.toLowerCase().includes(query.toLowerCase())
 //       )
 //     ),
-//     epassport: epassportApplications.filter(app => 
+//     epassport: epassportApplications.filter(app =>
 //       query && (
 //         app.clientName.toLowerCase().includes(query.toLowerCase()) ||
 //         app.mobileNo.toLowerCase().includes(query.toLowerCase())
 //       )
 //     ),
-//     otherServices: otherServices.filter(service => 
+//     otherServices: otherServices.filter(service =>
 //       query && (
 //         service.clientName.toLowerCase().includes(query.toLowerCase()) ||
 //         service.mobileNo.toLowerCase().includes(query.toLowerCase()) ||
 //         service.serviceTypes.some(type => type.toLowerCase().includes(query.toLowerCase()))
 //       )
 //     ),
-//     appointments: appointments.filter(apt => 
+//     appointments: appointments.filter(apt =>
 //       query && (
 //         apt.clientName.toLowerCase().includes(query.toLowerCase()) ||
 //         apt.type.toLowerCase().includes(query.toLowerCase())
@@ -95,7 +95,7 @@
 //   const handleSelect = (type: string, id: string) => {
 //     onClose();
 //     setQuery('');
-    
+
 //     switch(type) {
 //       case 'client':
 //         navigate(`/dashboard/clients/${id}`);
@@ -346,11 +346,215 @@
 
 
 
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import Input from './Input';
+
+
+
+
+
+
+
+
+// import { useState, useEffect, useRef } from "react";
+// import axios from "axios";
+// import { Search } from "lucide-react";
+// import { useNavigate } from "react-router-dom";
+// import Input from "./Input";
+
+// interface GlobalSearchProps {
+//   isOpen: boolean;
+//   onClose: () => void;
+// }
+
+// export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
+//   const navigate = useNavigate();
+//   const searchRef = useRef<HTMLDivElement>(null);
+
+//   const [query, setQuery] = useState("");
+//   const [results, setResults] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+
+//   useEffect(() => {
+//     const handleClickOutside = (event: MouseEvent) => {
+//       if (
+//         searchRef.current &&
+//         !searchRef.current.contains(event.target as Node)
+//       ) {
+//         onClose();
+//       }
+//     };
+
+//     document.addEventListener("mousedown", handleClickOutside);
+//     return () => document.removeEventListener("mousedown", handleClickOutside);
+//   }, [onClose]);
+
+//   useEffect(() => {
+//     if (!query.trim()) {
+//       setResults([]);
+//       return;
+//     }
+
+//     const fetchResults = async () => {
+//       setLoading(true);
+//       setError(null);
+
+//       try {
+//         const url = `${
+//           import.meta.env.VITE_REACT_APP_URL
+//         }/api/v1/appointment/globalSearch?query=${query}`;
+//         const response = await axios.get(url);
+
+//         const allResults = [
+//           ...(response.data.clients || []).map((item: any) => ({
+//             ...item,
+//             type: "client",
+//           })),
+//           ...(response.data.applications || []).map((item: any) => ({
+//             ...item,
+//             type: "Visa-application",
+//           })),
+//           ...(response.data.japanVisits || []).map((item: any) => ({
+//             ...item,
+//             type: "japan-visit",
+//           })),
+//           ...(response.data.documentTranslations || []).map((item: any) => ({
+//             ...item,
+//             type: "translation",
+//           })),
+//           ...(response.data.ePassports || []).map((item: any) => ({
+//             ...item,
+//             type: "epassport",
+//           })),
+//           ...(response.data.graphicDesigns || []).map((item: any) => ({
+//             ...item,
+//             type: "design",
+//           })),
+//           ...(response.data.otherServices || []).map((item: any) => ({
+//             ...item,
+//             type: "other-service",
+//           })),
+//           ...(response.data.appointments || []).map((item: any) => ({
+//             ...item,
+//             type: "appointment",
+//           })),
+//         ];
+
+//         setResults(allResults);
+//       } catch (err) {
+//         console.error("Error fetching data:", err);
+//         setError("Failed to fetch search results. Please try again.");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     const debounceTimeout = setTimeout(fetchResults, 300);
+//     return () => clearTimeout(debounceTimeout);
+//   }, [query]);
+
+//   const handleSelect = (type: string | undefined, id: string) => {
+//     if (!type) {
+//       console.error(`Unknown type: ${type}`);
+//       return;
+//     }
+
+//     onClose();
+//     setQuery("");
+
+//     const routes: { [key: string]: string } = {
+//       client: "/dashboard/clients/",
+//       "Visa-application": "/dashboard/applications/",
+//       "japan-visit": "/dashboard/japan-visit/",
+//       translation: "/dashboard/translations/",
+//       design: "/dashboard/graphic-design/",
+//       epassport: "/dashboard/epassport/",
+//       "other-service": "/dashboard/other-services/",
+//       appointment: "/dashboard/appointment/",
+//     };
+
+//     const route = routes[type];
+//     if (route) {
+//       navigate(`${route}${id}`);
+//     } else {
+//       console.error(`Unhandled type: ${type}`);
+//     }
+//   };
+
+//   const renderResult = (result: any) => {
+//     const clientName = result.clientName || result.clientId?.name || null; // Get client name or null if unavailable
+//     const modelName = result.type
+//       ?.replace(/-/g, " ")
+//       .replace(/\b\w/g, (c) => c.toUpperCase()); // Format model name
+
+//     // Only return results with a valid client name and model name
+//     if (!clientName || !modelName) {
+//       return null; // Exclude results with missing data
+//     }
+
+//     return `${clientName} - ${modelName}`;
+//   };
+
+//   return (
+//     isOpen && (
+//       <div
+//         ref={searchRef}
+//         className="fixed top-0 left-0 w-full h-80 flex justify-center"
+//       >
+//         <div className="bg-white rounded-lg shadow-lg w-3/4 md:w-1/2 p-6">
+//           <div className="flex items-center mb-4">
+//             <Search className="mr-2 text-gray-500" />
+//             <Input
+//               value={query}
+//               onChange={(e) => setQuery(e.target.value)}
+//               placeholder="Search..."
+//               className="w-full"
+//             />
+//           </div>
+//           {loading && <p>Loading...</p>}
+//           {error && <p className="text-red-500">{error}</p>}
+//           {!loading && results.length === 0 && query && (
+//             <p>No results found for "{query}"</p>
+//           )}
+//           <ul>
+//             {results.map((result) => {
+//               const displayText = renderResult(result);
+//               return displayText ? (
+//                 <li
+//                   key={result._id}
+//                   onClick={() => handleSelect(result.type, result._id)}
+//                   className="cursor-pointer py-2 px-4 hover:bg-gray-100"
+//                 >
+//                   {displayText}
+//                 </li>
+//               ) : null; // Exclude results with missing display text
+//             })}
+//           </ul>
+
+//           <button
+//             onClick={onClose}
+//             className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+//           >
+//             Close
+//           </button>
+//         </div>
+//       </div>
+//     )
+//   );
+// }
+
+
+
+
+
+
+
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Flex, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+import Input from "./Input";
 
 interface GlobalSearchProps {
   isOpen: boolean;
@@ -361,24 +565,27 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Close search when clicking outside
+  const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         onClose();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  // Fetch search results on query change
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -390,96 +597,147 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       setError(null);
 
       try {
-        const url = `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/globalSearch?query=${query}`;
-        console.log('API Request URL:', url); // Log the request URL for debugging
-
+        const url = `${
+          import.meta.env.VITE_REACT_APP_URL
+        }/api/v1/appointment/globalSearch?query=${query}`;
         const response = await axios.get(url);
 
-        console.log('API Response:', response.data); // Log the response data
-
-        // Combine results from all models
         const allResults = [
-          ...response.data.clients || [],
-          ...response.data.applications || [],
-          ...response.data.documentTranslations || [],
-          ...response.data.ePassports || [],
-          ...response.data.graphicDesigns || [],
-          ...response.data.japanVisits || [],
-          ...response.data.otherServices || [],
+          ...(response.data.clients || []).map((item: any) => ({
+            ...item,
+            type: "client",
+          })),
+          ...(response.data.applications || []).map((item: any) => ({
+            ...item,
+            type: "Visa-application",
+          })),
+          ...(response.data.japanVisits || []).map((item: any) => ({
+            ...item,
+            type: "japan-visit",
+          })),
+          ...(response.data.documentTranslations || []).map((item: any) => ({
+            ...item,
+            type: "translation",
+          })),
+          ...(response.data.ePassports || []).map((item: any) => ({
+            ...item,
+            type: "epassport",
+          })),
+          ...(response.data.graphicDesigns || []).map((item: any) => ({
+            ...item,
+            type: "design",
+          })),
+          ...(response.data.otherServices || []).map((item: any) => ({
+            ...item,
+            type: "other-service",
+          })),
+          ...(response.data.appointments || []).map((item: any) => ({
+            ...item,
+            type: "appointment",
+          })),
         ];
 
-        if (allResults.length > 0) {
-          setResults(allResults);
-        } else {
-          setResults([]); // No results found
-        }
+        setResults(allResults);
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to fetch search results. Please try again.');
+        console.error("Error fetching data:", err);
+        setError("Failed to fetch search results. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    const debounceTimeout = setTimeout(fetchResults, 300); // Debounce API calls
+    const debounceTimeout = setTimeout(fetchResults, 300);
     return () => clearTimeout(debounceTimeout);
   }, [query]);
 
-  const handleResultClick = (result: any) => {
-    navigate(`/details/${result._id}`);
+  const handleSelect = (type: string | undefined, id: string) => {
+    if (!type) {
+      console.error(`Unknown type: ${type}`);
+      return;
+    }
+
     onClose();
+    setQuery("");
+
+    const routes: { [key: string]: string } = {
+      client: "/dashboard/clients/",
+      "Visa-application": "/dashboard/applications/",
+      "japan-visit": "/dashboard/japan-visit/",
+      translation: "/dashboard/translations/",
+      design: "/dashboard/graphic-design/",
+      epassport: "/dashboard/epassport/",
+      "other-service": "/dashboard/other-services/",
+      appointment: "/dashboard/appointment/",
+    };
+
+    const route = routes[type];
+    if (route) {
+      navigate(`${route}${id}`);
+    } else {
+      console.error(`Unhandled type: ${type}`);
+    }
   };
 
   const renderResult = (result: any) => {
-    if (result.name) {
-      return result.name; // Display the name if it exists in the client object
+    const clientName = result.clientName || result.clientId?.name || null; // Get client name or null if unavailable
+    const modelName = result.type
+      ?.replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()); // Format model name
+
+    // Only return results with a valid client name and model name
+    if (!clientName || !modelName) {
+      return null; // Exclude results with missing data
     }
 
-    if (result.category) {
-      return result.category; // Display the category if it's an application or other model
-    }
-
-    return 'Unknown'; // Fallback for unknown results
+    return `${clientName} - ${modelName}`;
   };
 
   return (
     isOpen && (
       <div
         ref={searchRef}
-        className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+        className="fixed top-0 left-0 w-full h-80 flex justify-center items-center"
       >
-        <div className="bg-white rounded-lg shadow-lg w-3/4 md:w-1/2 p-6">
-          <div className="flex items-center mb-4">
-            <Search className="mr-2 text-gray-500" />
+        <div className="bg-white rounded-lg shadow-lg w-3/4 md:w-1/2 p-6 relative">
+          <div
+            className="absolute top-4 right-4 cursor-pointer"
+            onClick={onClose}
+          >
+            <X className="text-gray-500" />
+          </div>
+
+          <div className="flex items-center mb-4 gap-2 w-[90%]">
+            <Search className="text-gray-500" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search..."
+              placeholder="Global Search..."
               className="w-full"
             />
           </div>
-          {loading && <p>Loading...</p>}
+          {loading && (
+            <Flex justify="center" align="center">
+              <Spin indicator={antIcon} style={{color: 'black'}}/>
+            </Flex>
+          )}
           {error && <p className="text-red-500">{error}</p>}
           {!loading && results.length === 0 && query && (
             <p>No results found for "{query}"</p>
           )}
           <ul>
-            {results.map((result) => (
-              <li
-                key={result._id}
-                onClick={() => handleResultClick(result)}
-                className="cursor-pointer py-2 px-4 hover:bg-gray-100"
-              >
-                {renderResult(result)} {/* Dynamically render the result based on the model */}
-              </li>
-            ))}
+            {results.map((result) => {
+              const displayText = renderResult(result);
+              return displayText ? (
+                <li
+                  key={result._id}
+                  onClick={() => handleSelect(result.type, result._id)}
+                  className="cursor-pointer py-2 px-4 hover:bg-gray-100"
+                >
+                  {displayText}
+                </li>
+              ) : null; // Exclude results with missing display text
+            })}
           </ul>
-          <button
-            onClick={onClose}
-            className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Close
-          </button>
         </div>
       </div>
     )
