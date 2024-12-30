@@ -1,17 +1,12 @@
-import { useState } from 'react';
-import { X, Search, Plus, Pin, Archive, Tag, Calendar, Paperclip, StickyNote, Flag } from 'lucide-react';
-import { useNoteStore } from '../../store/noteStore';
-import { useAdminStore } from '../../store/adminStore';
+import { useState, useEffect } from 'react';
+import { X, Search, Plus, Pin, Archive, Tag, Calendar, Paperclip, StickyNote, Flag, Edit, Trash } from 'lucide-react';
+import axios from 'axios';
 import NoteEditor from './NoteEditor';
 import Button from '../Button';
 import Input from '../Input';
-import { format } from 'date-fns';
+import { Modal } from 'antd';  // Import Modal from Ant Design
 import type { NotePriority } from '../../types/note';
-
-interface NotesPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { useAuthGlobally } from '../../context/AuthContext';
 
 const priorityConfig: Record<NotePriority, { icon: typeof Flag; color: string }> = {
   urgent: { icon: Flag, color: 'text-red-500' },
@@ -24,40 +19,69 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNote, setSelectedNote] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pinned' | 'archived'>('all');
-  const { notes, addNote, getNotesByAdmin } = useNoteStore();
-  const { currentAdmin } = useAdminStore();
+  const [notes, setNotes] = useState<any[]>([]);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [auth] = useAuthGlobally();
+  const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Track which note is being deleted
 
-  if (!currentAdmin) return null;
 
-  const adminNotes = getNotesByAdmin(currentAdmin.id);
-  const filteredNotes = adminNotes.filter(note => {
+
+  const fetchNotes = async () => {
+    if (auth?.user?.id && isOpen) {
+      setLoading(true);
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/getAllNotes`);
+        setNotes(response.data.notes);
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchNotes();
+  }, [auth?.user?.id, isOpen]);
+
+  const filteredNotes = notes.filter(note => {
     const matchesSearch = note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         note.content.toLowerCase().includes(searchQuery.toLowerCase());
+                          note.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filter === 'all' ||
-                         (filter === 'pinned' && note.isPinned) ||
-                         (filter === 'archived' && note.isArchived);
+                          (filter === 'pinned' && note.isPinned) ||
+                          (filter === 'archived' && note.isArchived);
     return matchesSearch && matchesFilter;
   });
 
   const handleNewNote = () => {
-    const newNote = addNote({
-      title: 'Untitled Note',
-      content: '',
-      tags: [],
-      isPinned: false,
-      isArchived: false,
-      priority: 'medium',
-      subtasks: [],
-      reminders: [],
-    }, currentAdmin.id, currentAdmin.name);
-    setSelectedNote(newNote.id);
+    setIsEditorOpen(true);  // Open the NoteEditor modal when the button is clicked
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/deleteNote/${noteId}`);
+      // setNotes(notes.filter(note => note._id !== noteId)); // Remove the note from state
+      fetchNotes();
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    } finally {
+      setIsDeleting(null); // Close the confirmation modal
+    }
+  };
+
+  const confirmDeleteNote = (noteId: string) => {
+    setIsDeleting(noteId); // Open confirmation modal
+  };
+
+  const cancelDelete = () => {
+    setIsDeleting(null); // Close the confirmation modal
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed right-0 top-16 bottom-0 w-96 bg-white border-l border-gray-200 shadow-lg z-50">
-      {/* Panel Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
@@ -111,23 +135,21 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
 
       {/* Notes List */}
       <div className="h-[calc(100vh-16rem)] overflow-y-auto">
-        {filteredNotes.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
-            No notes found
-          </div>
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">Loading notes...</div>
+        ) : filteredNotes.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">No notes found</div>
         ) : (
           <div className="divide-y divide-gray-200">
             {filteredNotes.map((note) => {
               const PriorityIcon = priorityConfig[note.priority].icon;
               const priorityColor = priorityConfig[note.priority].color;
-              
+
               return (
                 <div
-                  key={note.id}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                    selectedNote === note.id ? 'bg-brand-yellow/10' : ''
-                  }`}
-                  onClick={() => setSelectedNote(note.id)}
+                  key={note._id}
+                  className={`p-4 cursor-pointer hover:bg-gray-50 ${selectedNote === note._id ? 'bg-brand-yellow/10' : ''}`}
+                  onClick={() => setSelectedNote(note._id)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -138,9 +160,21 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
                           <Pin className="h-4 w-4 text-brand-yellow" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 line-clamp-2 mt-1">
-                        {note.content}
-                      </p>
+                      <p className="text-sm text-gray-500 line-clamp-2 mt-1">{note.content}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEditNote(note._id)}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => confirmDeleteNote(note._id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
@@ -153,7 +187,7 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
                     {note.subtasks && note.subtasks.length > 0 && (
                       <div className="flex items-center gap-1">
                         <Tag className="h-3 w-3" />
-                        {note.subtasks.filter(st => st.completed).length}/{note.subtasks.length} tasks
+                        {note.subtasks.filter(st => st.isCompleted).length}/{note.subtasks.length} tasks
                       </div>
                     )}
                     {note.attachments?.length > 0 && (
@@ -178,13 +212,28 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
         </Button>
       </div>
 
-      {/* Note Editor */}
-      {selectedNote && (
+      {/* Note Editor Modal */}
+      {isEditorOpen && (
         <NoteEditor
-          noteId={selectedNote}
-          onClose={() => setSelectedNote(null)}
+        onClose={() => setIsEditorOpen(false)}
+        noteId={selectedNote}
+        fetchNotes = {fetchNotes}
         />
       )}
+
+
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title="Delete Note"
+        visible={isDeleting !== null}
+        onOk={() => handleDeleteNote(isDeleting!)}
+        onCancel={cancelDelete}
+        okText="Yes, Delete"
+        cancelText="Cancel"
+      >
+        <p>Are you sure you want to delete this note?</p>
+      </Modal>
     </div>
   );
 }

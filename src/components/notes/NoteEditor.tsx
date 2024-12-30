@@ -1,82 +1,31 @@
-import { useState, useRef, useEffect } from 'react';
-import { X, Pin, Archive, Bell, Flag, ListTodo, Trash2, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Pin, Archive, Bell, ListTodo } from 'lucide-react';
 import Button from '../Button';
 import Input from '../Input';
-import { useNoteStore } from '../../store/noteStore';
-import { useAdminStore } from '../../store/adminStore';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import ReminderModal from './ReminderModal';
 import SubtaskList from './SubtaskList';
 import PrioritySelect from './PrioritySelect';
 import ReminderList from './ReminderList';
+import axios from 'axios'; // Add Axios for API calls
+import toast from 'react-hot-toast';
 
 interface NoteEditorProps {
-  noteId: string;
+  noteId?: string;
   onClose: () => void;
+  fetchNotes : () => void;
 }
 
-export default function NoteEditor({ noteId, onClose }: NoteEditorProps) {
-  const { 
-    notes, 
-    updateNote, 
-    togglePin, 
-    toggleArchive, 
-    deleteNote, 
-    addAttachment, 
-    removeAttachment,
-    addSubtask,
-    updateSubtask,
-    removeSubtask,
-    toggleSubtask,
-    addReminder,
-    updateReminder,
-    removeReminder,
-    toggleReminder,
-    updatePriority
-  } = useNoteStore();
-  const { currentAdmin } = useAdminStore();
-  const note = notes.find(n => n.id === noteId);
-  const [title, setTitle] = useState(note?.title || '');
-  const [content, setContent] = useState(note?.content || '');
+export default function NoteEditor({ noteId, onClose ,fetchNotes}: NoteEditorProps) {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [reminders, setReminders] = useState([]);
+  const [subtasks, setSubtasks] = useState([]);
   const [showReminderModal, setShowReminderModal] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Ensure the current admin can only edit their own notes
-  if (!currentAdmin || !note || note.adminId !== currentAdmin.id) {
-    return null;
-  }
 
-  useEffect(() => {
-    const saveTimeout = setTimeout(() => {
-      if (note) {
-        updateNote(noteId, { title, content });
-      }
-    }, 500);
-
-    return () => clearTimeout(saveTimeout);
-  }, [title, content, noteId, updateNote]);
-
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      deleteNote(noteId);
-      onClose();
-    }
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Create a URL for the file
-      const fileUrl = URL.createObjectURL(file);
-      addAttachment(noteId, {
-        id: crypto.randomUUID(),
-        name: file.name,
-        url: fileUrl,
-        type: file.type
-      });
-    }
-  };
 
   const handleAddReminder = (reminderData: {
     date: string;
@@ -84,8 +33,40 @@ export default function NoteEditor({ noteId, onClose }: NoteEditorProps) {
     recurring: boolean;
     recurringType?: 'daily' | 'weekly' | 'monthly';
   }) => {
-    addReminder(noteId, reminderData);
+    setReminders([...reminders, reminderData]);
   };
+
+
+  
+  const handleCreateNote = async () => {
+    if (!title.trim() || !content.trim()) {
+      toast.error('Title and content are required.');
+      return;
+    }
+  
+    const newNote = {
+      title: title.trim(),
+      content: content.trim(),
+      priority,
+      reminders,
+      subtasks,
+    };
+  
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/createNote`, newNote);
+      if (response.data.success) {
+        fetchNotes();
+        noteId()
+        toast.success('Note created successfully');
+      }
+      onClose();
+    } catch (error: any) {
+      console.error('Error creating note:', error.response?.data || error.message);
+      toast.error(error.response?.data?.error || 'Failed to create note.');
+    }
+  };
+  
+  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -98,62 +79,28 @@ export default function NoteEditor({ noteId, onClose }: NoteEditorProps) {
             className="text-xl font-semibold border-none focus:ring-0"
             placeholder="Note title"
           />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => togglePin(noteId)}
-              className={`p-2 rounded-full hover:bg-gray-100 ${
-                note.isPinned ? 'text-brand-yellow' : 'text-gray-500'
-              }`}
-            >
-              <Pin className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => toggleArchive(noteId)}
-              className={`p-2 rounded-full hover:bg-gray-100 ${
-                note.isArchived ? 'text-brand-yellow' : 'text-gray-500'
-              }`}
-            >
-              <Archive className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handleDelete}
-              className="p-2 rounded-full hover:bg-gray-100 text-red-500"
-            >
-              <Trash2 className="h-5 w-5" />
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Editor Body */}
         <div className="p-4 space-y-6">
           {/* Priority and Reminders */}
           <div className="flex items-center gap-4">
-            <PrioritySelect
-              value={note.priority}
-              onChange={(priority) => updatePriority(noteId, priority)}
-            />
-            <Button
-              variant="outline"
-              onClick={() => setShowReminderModal(true)}
-            >
+            <PrioritySelect value={priority} onChange={setPriority} />
+            <Button variant="outline" onClick={() => setShowReminderModal(true)}>
               <Bell className="h-4 w-4 mr-2" />
               Add Reminder
             </Button>
           </div>
 
           {/* Reminders List */}
-          {note.reminders && note.reminders.length > 0 && (
-            <ReminderList
-              reminders={note.reminders}
-              onToggle={(reminderId) => toggleReminder(noteId, reminderId)}
-              onDelete={(reminderId) => removeReminder(noteId, reminderId)}
-            />
+          {reminders.length > 0 && (
+            <ReminderList reminders={reminders} />
           )}
 
           {/* Main Content */}
@@ -171,56 +118,37 @@ export default function NoteEditor({ noteId, onClose }: NoteEditorProps) {
               <h3 className="font-medium">Subtasks</h3>
             </div>
             <SubtaskList
-              subtasks={note.subtasks}
-              onAddSubtask={(content) => addSubtask(noteId, content)}
-              onToggleSubtask={(subtaskId) => toggleSubtask(noteId, subtaskId)}
-              onRemoveSubtask={(subtaskId) => removeSubtask(noteId, subtaskId)}
-              onUpdateSubtask={(subtaskId, content) => updateSubtask(noteId, subtaskId, { content })}
+              subtasks={subtasks}
+              onAddSubtask={(content) => setSubtasks([...subtasks, { content, completed: false }])}
+              onToggleSubtask={(index) =>
+                setSubtasks(
+                  subtasks.map((task, i) =>
+                    i === index ? { ...task, completed: !task.completed } : task
+                  )
+                )
+              }
+              onRemoveSubtask={(index) =>
+                setSubtasks(subtasks.filter((_, i) => i !== index))
+              }
+              onUpdateSubtask={(index, content) =>
+                setSubtasks(
+                  subtasks.map((task, i) =>
+                    i === index ? { ...task, content } : task
+                  )
+                )
+              }
             />
           </div>
+        </div>
 
-          {/* Attachments */}
-          <div className="space-y-4">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <Button 
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Add Attachment
-            </Button>
-            {note.attachments && note.attachments.length > 0 && (
-              <div className="mt-2 space-y-2">
-                {note.attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                  >
-                    <span className="text-sm">{attachment.name}</span>
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={attachment.url}
-                        download
-                        className="text-brand-black hover:text-brand-yellow"
-                      >
-                        Download
-                      </a>
-                      <button 
-                        onClick={() => removeAttachment(noteId, attachment.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-4">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleCreateNote}>
+            Create Note
+          </Button>
         </div>
       </div>
 

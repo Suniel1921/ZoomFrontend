@@ -45,6 +45,8 @@
     "recharts": "^2.12.2",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "vite-plugin-pwa": "^0.21.1",
+    "workbox-window": "^7.3.0",
     "xlsx": "^0.18.5",
     "zod": "^3.22.4",
     "zustand": "^4.5.2"

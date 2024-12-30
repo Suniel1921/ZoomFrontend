@@ -31,7 +31,15 @@ const App = () => {
     const [auth] = useAuthGlobally();
     const isOnline = useOnlineOfflineStatus();
 
-    console.log(auth); // Debugging to ensure role is correct
+    // console.log(auth); // Debugging to ensure role is correct
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js').then((registration) => {
+            console.log('Service Worker registered:', registration);
+          });
+        });
+      }
 
     return (
         <Router>
