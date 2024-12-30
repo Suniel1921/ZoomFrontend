@@ -20,10 +20,10 @@ const PaymentHistory = ({ selectedClientId }) => {
             if (item.clientId?._id === selectedClientId) {              
               if (item) {
                 allPayments.push({
-                  date: item.date,
+                  date: item.createdAt,
                   type: item.type || `${modelKey.charAt(0).toUpperCase() + modelKey.slice(1)} Service`,
-                  total: item.total,
-                  paidAmount: item.paidAmount,
+                  total: item?.total || item?.amount || item.payment?.visaApplicationFee || 0,
+                  paidAmount: item.paidAmount || item.payment?.paidAmount || 0,
                   paymentStatus: item.visaStatus || item.status,
                   model: modelKey, // Track the model the payment came from
                 });

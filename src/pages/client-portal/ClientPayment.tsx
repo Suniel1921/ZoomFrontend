@@ -46,7 +46,7 @@ const ClientPayment = () => {
 
   return (
     <div>
-      <h2>Client Payment Section</h2>
+      {/* <h2>Client Payment Section</h2> */}
 
       {/* Display the payment data */}
       {paymentData && paymentData.length > 0 ? (

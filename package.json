@@ -29,6 +29,7 @@
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "jszip": "^3.10.1",
+    "jwt-decode": "^4.0.0",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.344.0",
     "moment": "^2.30.1",

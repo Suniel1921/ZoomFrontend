@@ -56,7 +56,7 @@ const PreviousTask = () => {
 
   return (
     <div>
-      <h1>Completed Tasks</h1>
+      {/* <h1>Completed Tasks</h1> */}
       {tasks.length > 0 ? (
         <div className="space-y-4">
           {tasks.map((task) => (

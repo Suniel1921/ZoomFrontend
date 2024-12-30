@@ -81,11 +81,11 @@ export default function ClientPortal() {
               <button
                 onClick={() => setIsProfileModalOpen(true)}
                 className="flex items-center gap-2 hover:bg-brand-yellow/10 px-3 py-2 rounded-md transition-colors"
-              >
-                {/* {client.profilePhoto ? (
+               >
+                {auth.user.profilePhoto ? (
                   <img 
-                    src={client.profilePhoto} 
-                    alt={client.name}
+                    src={auth.user.profilePhoto} 
+                    alt={auth.user.name}
                     className="h-8 w-8 rounded-full object-cover"
                   />
                 ) : (
@@ -94,7 +94,7 @@ export default function ClientPortal() {
                       {client.name.split(' ').map(n => n[0]).join('')}
                     </span>
                   </div>
-                )} */}
+                )}
                 <span className="text-sm text-gray-200 hidden sm:inline">{auth?.user?.fullName}</span>
               </button>
               <Button 
@@ -242,6 +242,12 @@ export default function ClientPortal() {
         </div>
       </main>
 
+         {/* Profile Edit Modal */}
+         <EditProfileModal
+        isVisible={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
+
       {/* Footer */}
       <footer className="bg-brand-black text-white mt-12 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -250,15 +256,22 @@ export default function ClientPortal() {
           </p>
         </div>
       </footer>
-
-      {/* <EditProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        client={client} // Send mock client data
-      /> */}
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
