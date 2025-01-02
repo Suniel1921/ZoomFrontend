@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Input, Button, Form } from 'antd';
 import axios from 'axios';
 import { toast } from "react-hot-toast";
-import './ForgotPasswordModal.css'; 
+// import './ForgotPasswordModal.css';  //note: need to fix this later 
 
 const ForgotPasswordModal = ({ visible, onClose }) => {
     const [step, setStep] = useState(1); 
