@@ -1,38 +1,44 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios'; 
-import { Plane, Plus, Search, Calculator, Printer } from 'lucide-react';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-import { useStore } from '../../store';
-import AddApplicationModal from './AddApplicationModal';
-import EditApplicationModal from './EditApplicationModal';
-import HisabKitabModal from '../../components/HisabKitabModal';
-import DataTable from '../../components/DataTable';
-import PrintAddressButton from '../../components/PrintAddressButton';
-import type { JapanVisitApplication } from '../../types';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Plane, Plus, Search, Calculator, Printer } from "lucide-react";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import { useStore } from "../../store";
+import AddApplicationModal from "./AddApplicationModal";
+import EditApplicationModal from "./EditApplicationModal";
+import HisabKitabModal from "../../components/HisabKitabModal";
+import DataTable from "../../components/DataTable";
+import PrintAddressButton from "../../components/PrintAddressButton";
+import type { JapanVisitApplication } from "../../types";
+import toast from "react-hot-toast";
+import { useAuthGlobally } from "../../context/AuthContext";
 
 export default function JapanVisitPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPackage, setSelectedPackage] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPackage, setSelectedPackage] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState<JapanVisitApplication | null>(null);
+  const [selectedApplication, setSelectedApplication] =
+    useState<JapanVisitApplication | null>(null);
   const [applications, setApplications] = useState<JapanVisitApplication[]>([]); // Ensure it's initialized as an empty array
   const clients = useStore((state) => state.clients); // Assuming clients are fetched/stored in the global state
-
+  const [auth] = useAuthGlobally();
 
   // Fetch Japan visit applications data from the API using Axios
   const fetchApplications = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/japanVisit/getAllJapanVisitApplication`);  
-      console.log('japan visa status',response)
-      const applicationsData = response.data?.data; 
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_REACT_APP_URL
+        }/api/v1/japanVisit/getAllJapanVisitApplication`
+      );
+      console.log("japan visa status", response);
+      const applicationsData = response.data?.data;
       if (Array.isArray(applicationsData)) {
-        setApplications(applicationsData); 
+        setApplications(applicationsData);
       } else {
-        setApplications([]); 
+        setApplications([]);
       }
     } catch (error) {
       // console.error('Error fetching applications:', error);
@@ -42,59 +48,78 @@ export default function JapanVisitPage() {
   useEffect(() => {
     fetchApplications();
   }, []);
-  
 
-  const handleDelete = async (_id:any) => {
-    if (window.confirm('Are you sure you want to delete this application?')) {
+  const handleDelete = async (_id: any) => {
+    if (window.confirm("Are you sure you want to delete this application?")) {
       try {
         // Sending a DELETE request to the API endpoint
-        const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/japanVisit/deleteJapanVisitApplication/${_id}`);  
+        const response = await axios.delete(
+          `${
+            import.meta.env.VITE_REACT_APP_URL
+          }/api/v1/japanVisit/deleteJapanVisitApplication/${_id}`
+        );
         // Check if the deletion was successful
         if (response.data.success) {
           // Remove the application from the state
-          setApplications((prevApplications) => prevApplications.filter((app) => app.id !== _id));
+          setApplications((prevApplications) =>
+            prevApplications.filter((app) => app.id !== _id)
+          );
           fetchApplications();
-          toast.success('Application deleted successfully!');
+          toast.success("Application deleted successfully!");
         } else {
-          toast.error('Failed to delete application.');
+          toast.error("Failed to delete application.");
         }
       } catch (error) {
-        console.error('Error deleting application:', error);
-        toast.error('Error deleting application. Please try again.');
+        console.error("Error deleting application:", error);
+        toast.error("Error deleting application. Please try again.");
       }
     }
   };
-  
 
   const formatPhoneForViber = (phone: string | undefined | null): string => {
-    if (!phone) return '';
-    return phone.replace(/\D/g, '');
+    if (!phone) return "";
+    return phone.replace(/\D/g, "");
   };
 
   const getClientData = (clientId: string) => {
-    return clients.find(c => c.id === clientId);
+    return clients.find((c) => c.id === clientId);
   };
 
   const filteredApplications = Array.isArray(applications)
-  ? applications.filter((app) => {
-      const clientName = app.clientId?.name || '';  // Safely access clientName
-      const matchesSearch =
-        clientName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (app.reasonForVisit?.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesPackage = !selectedPackage || app.package === selectedPackage;
-      return matchesSearch && matchesPackage;
-    })
-  : [];
+    ? applications.filter((app) => {
+        const clientName = app.clientId?.name || ""; // Safely access clientName
+        const matchesSearch =
+          clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          app.reasonForVisit?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesPackage =
+          !selectedPackage || app.package === selectedPackage;
+        const hasClientId = app.clientId !== null && app.clientId !== undefined; // Check for clientId
+        return matchesSearch && matchesPackage && hasClientId;
+      })
+    : [];
 
+  // const filteredApplications = Array.isArray(applications)
+  // ? applications.filter((app) => {
+  //     // Ensure clientId exists
+  //     const hasClientId = app.clientId && app.clientId.name;  // Check if clientId is valid and has a name
 
+  //     // Safely access clientName and reasonForVisit
+  //     const clientName = app.clientId?.name || '';
+  //     const matchesSearch =
+  //       clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //       (app.reasonForVisit?.toLowerCase().includes(searchQuery.toLowerCase()));
+  //     const matchesPackage = !selectedPackage || app.package === selectedPackage;
 
+  //     return matchesSearch && matchesPackage && hasClientId;  // Include only applications with a valid clientId
+  //   })
+  // : [];
 
   const columns = [
     {
-      key: 'clientName',
-      label: 'Client',
+      key: "clientName",
+      label: "Client",
       render: (value: string, item: JapanVisitApplication) => {
-        const clientName = item.clientId?.name || 'Unknown Name';  // Fallback if clientName is undefined
+        const clientName = item.clientId?.name || "Unknown Name"; // Fallback if clientName is undefined
         return (
           <div>
             <p className="font-medium">{clientName}</p>
@@ -104,12 +129,12 @@ export default function JapanVisitPage() {
     },
 
     {
-      key: 'mobileNo',
-      label: 'Contact',
+      key: "mobileNo",
+      label: "Contact",
       render: (value: string | undefined | null) => {
         if (!value) return <span className="text-gray-400">No contact</span>;
         return (
-          <a 
+          <a
             href={`viber://chat?number=${formatPhoneForViber(value)}`}
             className="text-brand-black hover:text-brand-yellow"
           >
@@ -119,39 +144,47 @@ export default function JapanVisitPage() {
       },
     },
     {
-      key: 'status',
-      label: 'Status',
+      key: "status",
+      label: "Status",
       render: (value: string) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'Completed' ? 'bg-green-100 text-green-700' :
-          value === 'Cancelled' ? 'bg-red-100 text-red-700' :
-          'bg-blue-100 text-blue-700'
-        }`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            value === "Completed"
+              ? "bg-green-100 text-green-700"
+              : value === "Cancelled"
+              ? "bg-red-100 text-red-700"
+              : "bg-blue-100 text-blue-700"
+          }`}
+        >
           {value}
         </span>
       ),
     },
     {
-      key: 'amount',
-      label: 'Amount',
+      key: "amount",
+      label: "Amount",
       render: (value: number) => (
         <span className="text-sm">¥{value?.toLocaleString() ?? 0}</span>
       ),
     },
     {
-      key: 'paymentStatus',
-      label: 'Payment',
+      key: "paymentStatus",
+      label: "Payment",
       render: (value: string) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-        }`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            value === "Paid"
+              ? "bg-green-100 text-green-700"
+              : "bg-yellow-100 text-yellow-700"
+          }`}
+        >
           {value}
         </span>
       ),
     },
     {
-      key: 'id',
-      label: 'Actions',
+      key: "id",
+      label: "Actions",
       render: (_: string, item: JapanVisitApplication) => {
         const client = getClientData(item.clientId);
         return (
@@ -178,14 +211,26 @@ export default function JapanVisitPage() {
             >
               Edit
             </Button>
-            <Button
+
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={() => handleDelete(item._id)}
               className="text-red-500 hover:text-red-700"
             >
               Delete
-            </Button>
+            </Button> */}
+
+            {auth.user.role === "superadmin" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDelete(item._id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                Delete
+              </Button>
+            )}
           </div>
         );
       },
@@ -198,9 +243,11 @@ export default function JapanVisitPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Plane className="h-6 w-6 text-gray-400" />
-            <h1 className="text-xl font-semibold text-gray-900">Japan Visit Applications</h1>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Japan Visit Applications
+            </h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <select
               value={selectedPackage}
@@ -241,7 +288,7 @@ export default function JapanVisitPage() {
       <AddApplicationModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        fetchApplications = {fetchApplications}
+        fetchApplications={fetchApplications}
       />
 
       {selectedApplication && (
@@ -252,10 +299,9 @@ export default function JapanVisitPage() {
               setIsEditModalOpen(false);
               setSelectedApplication(null);
             }}
-            fetchApplications = {fetchApplications}
+            fetchApplications={fetchApplications}
             application={selectedApplication}
           />
-
 
           <HisabKitabModal
             isOpen={isHisabKitabOpen}
@@ -270,6 +316,3 @@ export default function JapanVisitPage() {
     </div>
   );
 }
-
-
-

@@ -16,11 +16,11 @@
 //   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 //   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
 //   const [selectedJob, setSelectedJob] = useState<GraphicDesignJob | null>(null);
-  
+
 //   const { graphicDesignJobs = [], deleteGraphicDesignJob } = useStore();
 
 //   // Filter jobs based on search query
-//   const filteredJobs = graphicDesignJobs.filter(job => 
+//   const filteredJobs = graphicDesignJobs.filter(job =>
 //     job.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
 //     job.businessName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
 //     job.designType?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -69,9 +69,9 @@
 //       key: 'amount',
 //       label: 'Amount',
 //       render: (_: unknown, item: GraphicDesignJob) => (
-//         <AmountCell 
-//           amount={typeof item.amount === 'number' ? item.amount : null} 
-//           dueAmount={typeof item.dueAmount === 'number' ? item.dueAmount : null} 
+//         <AmountCell
+//           amount={typeof item.amount === 'number' ? item.amount : null}
+//           dueAmount={typeof item.dueAmount === 'number' ? item.dueAmount : null}
 //         />
 //       ),
 //     },
@@ -122,7 +122,7 @@
 //             <Palette className="h-6 w-6 text-gray-400" />
 //             <h1 className="text-xl font-semibold text-gray-900">Graphic Design</h1>
 //           </div>
-          
+
 //           <div className="flex items-center gap-4">
 //             <div className="relative flex-1">
 //               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -180,52 +180,60 @@
 //   );
 // }
 
-
-
-
-
 // ************NEW CODE*************
 
-import { useState, useEffect, useCallback } from 'react';
-import { Palette, Plus, Search, Calculator } from 'lucide-react';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-import DataTable from '../../components/DataTable';
-import AmountCell from '../../components/AmountCell';
-import AddDesignJobModal from './AddDesignJobModal';
-import EditDesignJobModal from './EditDesignJobModal';
-import HisabKitabModal from '../../components/HisabKitabModal';
-import type { GraphicDesignJob } from '../../types/graphicDesign';
-import toast from 'react-hot-toast';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from "react";
+import { Palette, Plus, Search, Calculator } from "lucide-react";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import DataTable from "../../components/DataTable";
+import AmountCell from "../../components/AmountCell";
+import AddDesignJobModal from "./AddDesignJobModal";
+import EditDesignJobModal from "./EditDesignJobModal";
+import HisabKitabModal from "../../components/HisabKitabModal";
+import type { GraphicDesignJob } from "../../types/graphicDesign";
+import toast from "react-hot-toast";
+import axios from "axios";
+import { useAuthGlobally } from "../../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_REACT_APP_URL;
 
 const STATUS_CLASSES = {
-  Completed: 'bg-green-100 text-green-700',
-  Cancelled: 'bg-red-100 text-red-700',
-  Pending: 'bg-blue-100 text-blue-700',
+  Completed: "bg-green-100 text-green-700",
+  Cancelled: "bg-red-100 text-red-700",
+  Pending: "bg-blue-100 text-blue-700",
 };
 
 export default function GraphicDesignPage() {
-  const [graphicDesignJobs, setGraphicDesignJobs] = useState<GraphicDesignJob[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [graphicDesignJobs, setGraphicDesignJobs] = useState<
+    GraphicDesignJob[]
+  >([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<GraphicDesignJob | null>(null);
   const [loading, setLoading] = useState(false);
+  const [auth] = useAuthGlobally();
 
   // Fetch graphic design jobs from the API
   const fetchGraphicDesignJobs = () => {
     axios
-      .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/graphicDesign/getAllGraphicDesign`)
+      .get(
+        `${
+          import.meta.env.VITE_REACT_APP_URL
+        }/api/v1/graphicDesign/getAllGraphicDesign`
+      )
       .then((response) => {
         // Ensure response data is an array
-        setGraphicDesignJobs(Array.isArray(response.data.designJobs) ? response.data.designJobs : []);
+        setGraphicDesignJobs(
+          Array.isArray(response.data.designJobs)
+            ? response.data.designJobs
+            : []
+        );
       })
       .catch((error) => {
-        console.error('Error fetching applications:', error);
+        console.error("Error fetching applications:", error);
       });
   };
 
@@ -233,38 +241,51 @@ export default function GraphicDesignPage() {
     fetchGraphicDesignJobs();
   }, []);
 
-
+  // Filter jobs based on search query
+  // const filteredJobs = graphicDesignJobs.filter((job) =>
+  //   [job.clientId?.name, job.businessName, job.designType]
+  //     .some((field) => field?.toLowerCase().includes(searchQuery.toLowerCase()))
+  // );
 
   // Filter jobs based on search query
-  const filteredJobs = graphicDesignJobs.filter((job) =>
-    [job.clientId?.name, job.businessName, job.designType]
-      .some((field) => field?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredJobs = graphicDesignJobs.filter((job) => {
+    const hasClientId = job.clientId !== null && job.clientId !== undefined; // Check for clientId
+
+    // Return true if the job matches the search query and has a clientId
+    return (
+      hasClientId &&
+      [job.clientId?.name, job.businessName, job.designType].some((field) =>
+        field?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  });
 
   // Delete job handler
   const handleDelete = async (_id: string) => {
-    if (window.confirm('Are you sure you want to delete this application?')) {
+    if (window.confirm("Are you sure you want to delete this application?")) {
       try {
-        const response = await axios.delete(`${API_URL}/api/v1/graphicDesign/deleteGraphicDesign/${_id}`);
+        const response = await axios.delete(
+          `${API_URL}/api/v1/graphicDesign/deleteGraphicDesign/${_id}`
+        );
         if (response?.data?.success) {
-          toast.success('Application deleted successfully!');
-          fetchGraphicDesignJobs();  // Refresh the list after delete
+          toast.success("Application deleted successfully!");
+          fetchGraphicDesignJobs(); // Refresh the list after delete
         } else {
-          toast.error('Failed to delete the application.');
+          toast.error("Failed to delete the application.");
         }
       } catch (error) {
-        console.error('Error deleting application:', error);
-        toast.error('An error occurred while deleting the application.');
+        console.error("Error deleting application:", error);
+        toast.error("An error occurred while deleting the application.");
       }
     }
   };
 
   const columns = [
     {
-      key: 'clientName',
-      label: 'Client',
+      key: "clientName",
+      label: "Client",
       render: (value: string, item: GraphicDesignJob) => {
-        const clientName = item.clientId?.name || 'Unknown Name';  // Fallback if clientName is undefined
+        const clientName = item.clientId?.name || "Unknown Name"; // Fallback if clientName is undefined
         return (
           <div>
             <p className="font-medium">{clientName}</p>
@@ -273,44 +294,75 @@ export default function GraphicDesignPage() {
       },
     },
     {
-      key: 'status',
-      label: 'Status',
+      key: "status",
+      label: "Status",
       render: (value: string) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_CLASSES[value] || STATUS_CLASSES.Pending}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            STATUS_CLASSES[value] || STATUS_CLASSES.Pending
+          }`}
+        >
           {value}
         </span>
       ),
     },
     {
-      key: 'deadline',
-      label: 'Deadline',
-      render: (value: string) => <span className="text-sm">{new Date(value).toLocaleDateString()}</span>,
+      key: "deadline",
+      label: "Deadline",
+      render: (value: string) => (
+        <span className="text-sm">{new Date(value).toLocaleDateString()}</span>
+      ),
     },
     {
-      key: 'amount',
-      label: 'Amount',
+      key: "amount",
+      label: "Amount",
       render: (_: unknown, item: GraphicDesignJob) => (
         <AmountCell
-          amount={typeof item.amount === 'number' ? item.amount : null}
-          dueAmount={typeof item.dueAmount === 'number' ? item.dueAmount : null}
+          amount={typeof item.amount === "number" ? item.amount : null}
+          dueAmount={typeof item.dueAmount === "number" ? item.dueAmount : null}
         />
       ),
     },
 
     {
-      key: 'id',
-      label: 'Actions',
+      key: "id",
+      label: "Actions",
       render: (_: string, item: GraphicDesignJob) => (
         <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => { setSelectedJob(item); setIsHisabKitabOpen(true); }} title="View HisabKitab">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedJob(item);
+              setIsHisabKitabOpen(true);
+            }}
+            title="View HisabKitab"
+          >
             <Calculator className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => { setSelectedJob(item); setIsEditModalOpen(true); }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedJob(item);
+              setIsEditModalOpen(true);
+            }}
+          >
             Edit
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700">
+          {/* <Button variant="outline" size="sm" onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700">
             Delete
-          </Button>
+          </Button> */}
+          {auth.user.role === "superadmin" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDelete(item._id)}
+              className="text-red-500 hover:text-red-700"
+            >
+              Delete
+            </Button>
+          )}
         </div>
       ),
     },
@@ -322,7 +374,9 @@ export default function GraphicDesignPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Palette className="h-6 w-6 text-gray-400" />
-            <h1 className="text-xl font-semibold text-gray-900">Graphic Design</h1>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Graphic Design
+            </h1>
           </div>
 
           <div className="flex items-center gap-4">

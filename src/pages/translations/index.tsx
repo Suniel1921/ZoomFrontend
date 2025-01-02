@@ -9,6 +9,7 @@ import DataTable from '../../components/DataTable';
 import type { Translation } from '../../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useAuthGlobally } from '../../context/AuthContext';
 
 export default function TranslationsPage() {
   const [translations, setTranslations] = useState<Translation[]>([]);
@@ -20,6 +21,7 @@ export default function TranslationsPage() {
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
   const [selectedTranslation, setSelectedTranslation] = useState<Translation | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const[auth] = useAuthGlobally();
 
   // Fetch translations from API
    // Fetch the Tanslation from API
@@ -46,7 +48,8 @@ export default function TranslationsPage() {
     const clientName = trans.clientId?.name?.toLowerCase() || ''; // Ensure safe access
     const matchesSearch = clientName.includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || trans.translationStatus === statusFilter;
-    return matchesSearch && matchesStatus;
+    const hasClientId = trans.clientId !== null && trans.clientId !== undefined;  // Check for clientId
+    return matchesSearch && matchesStatus && hasClientId;
   });
   
   
@@ -208,14 +211,24 @@ export default function TranslationsPage() {
           >
             Edit
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={() => handleDelete(item._id)}
             className="text-red-500 hover:text-red-700"
           >
             Delete
-          </Button>
+          </Button> */}
+          {auth.user.role === 'superadmin' && (
+             <Button
+             variant="outline"
+             size="sm"
+             onClick={() => handleDelete(item._id)}
+             className="text-red-500 hover:text-red-700"
+           >
+             Delete
+           </Button>
+          )}
         </div>
       ),
     },

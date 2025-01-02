@@ -680,6 +680,7 @@ import { countries } from '../../utils/countries';
 import { Application } from '../../types';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuthGlobally } from '../../context/AuthContext';
 
 export default function VisaApplicantsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -689,6 +690,7 @@ export default function VisaApplicantsPage() {
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [auth] = useAuthGlobally();
 
   // Fetch the applications from API
   const getAllApplication = () => {
@@ -707,14 +709,18 @@ export default function VisaApplicantsPage() {
     getAllApplication();
   }, []);
 
-  // Filter applications based on search query and selected country
-  const filteredApplications = (applications || []).filter((app) => {
-    const matchesSearch =
-      app.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.type.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCountry = !selectedCountry || app.country === selectedCountry;
-    return matchesSearch && matchesCountry;
-  });
+ 
+
+  // Filter applications based on search query, selected country, and ensure clientId is not null
+const filteredApplications = (applications || []).filter((app) => {
+  const matchesSearch =
+    app.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    app.type.toLowerCase().includes(searchQuery.toLowerCase());
+  const matchesCountry = !selectedCountry || app.country === selectedCountry;
+  const hasClientId = app.clientId !== null && app.clientId !== undefined;  // Check for clientId
+  return matchesSearch && matchesCountry && hasClientId;  // Filter by clientId
+});
+
 
   // Function to delete an application
   const handleDelete = async (_id: string) => {
@@ -809,7 +815,10 @@ export default function VisaApplicantsPage() {
           >
             Edit
           </Button>
-          <Button
+
+         {
+          auth.user.role === 'superadmin' && (
+            <Button
             variant="outline"
             size="sm"
             onClick={() => handleDelete(item._id)}
@@ -817,10 +826,13 @@ export default function VisaApplicantsPage() {
           >
             Delete
           </Button>
+          )
+         }
         </div>
       ),
     },
   ];
+
 
   return (
     <div>
