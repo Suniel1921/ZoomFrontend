@@ -18,23 +18,43 @@ import ProcessTemplatesTab from './ProcessTemplatesTab';
 import BackupRestoreSettings from './BackupRestoreSettings';
 import AuditLogSettings from './AuditLogSettings';
 import CreateSuperAdmin from './CreateSuperAdmin';
+import { useAuthGlobally } from '../../context/AuthContext';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [auth] = useAuthGlobally();
 
   // Base tabs available to all admins
-  const baseTabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'admins', label: 'Admin Management', icon: Shield },
-    { id: 'templates', label: 'Process Templates', icon: FileText },
-    { id: 'Create_Super_Admin', label: 'Create Super Admin', icon: ClipboardEditIcon },
-    { id: 'backup', label: 'Backup & Restore', icon: Database },
-    { id: 'audit', label: 'Audit Logs', icon: Activity },
-  ];
+  // const baseTabs = [
+  //   { id: 'profile', label: 'Profile', icon: User },
+  //   { id: 'notifications', label: 'Notifications', icon: Bell },
+  //   { id: 'security', label: 'Security', icon: Shield },
+  //   { id: 'admins', label: 'Admin Management', icon: Shield },
+  //   { id: 'templates', label: 'Process Templates', icon: FileText },
+  //   { id: 'Create_Super_Admin', label: 'Create Super Admin', icon: ClipboardEditIcon },
+  //   { id: 'backup', label: 'Backup & Restore', icon: Database },
+  //   { id: 'audit', label: 'Audit Logs', icon: Activity },
+  // ];
 
-  // Always show all tabs
+  const baseTabs = auth.user.role === 'superadmin' 
+  ? [
+      { id: 'profile', label: 'Profile', icon: User },
+      { id: 'notifications', label: 'Notifications', icon: Bell },
+      { id: 'security', label: 'Security', icon: Shield },
+      { id: 'admins', label: 'Admin Management', icon: Shield },
+      { id: 'templates', label: 'Process Templates', icon: FileText },
+      { id: 'Create_Super_Admin', label: 'Create Super Admin', icon: ClipboardEditIcon },
+      { id: 'backup', label: 'Backup & Restore', icon: Database },
+      { id: 'audit', label: 'Audit Logs', icon: Activity }
+    ]
+  : [
+      { id: 'profile', label: 'Profile', icon: User },
+      { id: 'notifications', label: 'Notifications', icon: Bell },
+      { id: 'security', label: 'Security', icon: Shield }
+    ];
+
+
+  //show all tabs
   const tabs = baseTabs;
 
   return (

@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Mail, Zap } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, Zap } from "lucide-react";
 import axios from "axios"; 
 import toast from "react-hot-toast";
 import { useAuthGlobally } from '../context/AuthContext';
 import CreateClientAccountModal from "./components/CreateClientAccountModal";
-
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 export default function ClientLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false); // For toggling password visibility
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [auth, setAuthGlobally] = useAuthGlobally();
   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false); 
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,13 +90,19 @@ export default function ClientLogin() {
                 </div>
                 <input
                   id="password"
-                  type="password"
+                  type={passwordVisible ? "text" : "password"} // Toggle password visibility
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500"
                   placeholder="Enter your password"
                   required
                 />
+                <div
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                  onClick={() => setPasswordVisible(!passwordVisible)} // Toggle visibility
+                >
+                  {passwordVisible ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+                </div>
               </div>
             </div>
 
@@ -115,6 +123,13 @@ export default function ClientLogin() {
                 Sign up now
               </button>
             </p>
+
+            {/* Forgot Password Link */}
+            <p onClick={()=> setModalVisible(true)} className="text-center text-sm text-yellow-600">
+              <a className="hover:text-yellow-500 cursor-pointer">
+                Forgot Password?
+              </a>
+            </p>
           </form>
         </div>
       </div>
@@ -124,10 +139,14 @@ export default function ClientLogin() {
         isOpen={isCreateAccountModalOpen}
         onClose={() => setIsCreateAccountModalOpen(false)}
       />
+
+        {/* <ForgotPasswordModal/> */}
+        <ForgotPasswordModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+
+
     </div>
   );
 }
-
 
 
 
