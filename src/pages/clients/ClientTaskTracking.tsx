@@ -138,91 +138,75 @@ export default function ClientTaskTracking({getAllModelData}) {
     return (
       tasks.length > 0 && (
         <div>
-          <h3>{title}</h3>
-          <div className="space-y-4">
-            {tasks.map((task) => (
-              <div
-                key={task._id}
-                className="bg-gray-50 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    {/* Client Name */}
-                    <p className="font-medium">{task.clientId.name || task.clientName}</p>
-
-                    {/* Task Status */}
-                    <p className="text-sm text-gray-500">
-                      Status:{" "}
-                      <span className="font-semibold text-blue-500">
-                        {task.status || task.visaStatus || task.translationStatus || task.applicationStatus || task.jobStatus || "Pending"}
-                      </span>
-                    </p>
-
-                     {/* Country */}
-                     {/* <p className="text-sm text-gray-500">                      
-                      <span className="font-semibold text-dark-500">
-                        {task.country}
-                      </span>
-                    </p> */}
-
-                    {/* Deadline */}
-                    <p className="text-sm text-gray-500">
-                      Deadline:{" "}
-                      {task.deadline
-                        ? format(new Date(task.deadline), "MMM d, yyyy")
-                        : "N/A"}
-                    </p>
-                  </div>
-
-                  {/* Update or Hide Steps Button */}
-                  <button
-                    className="text-brand-gray font-medium hover:underline"
-                    onClick={() => toggleStepVisibility(task._id)}
-                  >
-                    {visibleSteps[task._id] ? "Hide Steps" : "Update Step"}
-                  </button>
-                </div>
-
-                {/* Render Steps */}
-                {task.steps &&
-                  visibleSteps[task._id] && ( // Show steps only if visible
-                    <div className="mt-4 space-y-2">
-                      {task.steps.map((step) => {
-                        const status = step.status || "pending";
-                        const { color, icon } = renderStatus(status);
-                        return (
-                          <div
-                            key={step._id}
-                            className="flex items-center justify-between bg-white p-2 rounded shadow-sm"
-                          >
-                            <div className="flex items-center space-x-2">
-                              {icon}
-                              <div className="text-sm font-medium text-gray-700">
-                                {step.name}
-                              </div>
-                            </div>
-                            <div>
-                              <Select
-                                value={status}
-                                style={{ width: 120 }}
-                                onChange={(value) =>
-                                  handleStatusChange(step._id, value, taskType)
-                                }
-                              >
-                                <Option value="pending">Pending</Option>
-                                <Option value="processing">Processing</Option>
-                                <Option value="completed">Completed</Option>
-                              </Select>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-              </div>
-            ))}
+          {/* <img src={tasks.profilePhoto} alt="" /> */}
+          {/* <h1>{JSON.stringify(tasks.profilePhoto)}</h1> */}
+  <h3 className="text-lg font-semibold mb-4">{title}</h3>
+  <div className="space-y-4">
+    {tasks.map((task) => (
+      <div
+        key={task._id}
+        className="border border-gray-300 rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors duration-200"
+      >
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="font-medium text-gray-800">{task.clientId.name || task.clientName}</p>
+            <p className="text-sm text-gray-600">
+              Status:{" "}
+              <span className="font-semibold text-blue-500">
+                {task.status || task.visaStatus || task.translationStatus || task.applicationStatus || task.jobStatus || "Pending"}
+              </span>
+            </p>
+            <p className="text-sm text-gray-600">
+              Deadline:{" "}
+              {task.deadline
+                ? format(new Date(task.deadline), "MMM d, yyyy")
+                : "N/A"}
+            </p>
           </div>
+
+          <button
+            className="text-brand-gray font-medium hover:underline"
+            onClick={() => toggleStepVisibility(task._id)}
+          >
+            {visibleSteps[task._id] ? "Hide Steps" : "Update Step"}
+          </button>
         </div>
+
+        {task.steps &&
+          visibleSteps[task._id] && (
+            <div className="mt-4 border-t border-gray-200 pt-4 space-y-2">
+              {task.steps.map((step) => {
+                const status = step.status || "pending";
+                const { bgColor, textColor, icon } = renderStatus(status);
+
+                return (
+                  <div
+                    key={step._id}
+                    className="flex items-center justify-between p-2 rounded border border-gray-200"
+                  >
+                    <div className="flex items-center space-x-2">
+                      {icon}
+                      <div className="text-sm font-medium text-gray-700">{step.name}</div>
+                    </div>
+                    <Select
+                      value={status}
+                      style={{ width: 120 }}
+                      onChange={(value) => handleStatusChange(step._id, value, taskType)}
+                    >
+                      <Option value="pending">Pending</Option>
+                      <Option value="processing">Processing</Option>
+                      <Option value="completed">Completed</Option>
+                    </Select>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+      </div>
+    ))}
+  </div>
+</div>
+
       )
     );
   };
@@ -297,19 +281,6 @@ export default function ClientTaskTracking({getAllModelData}) {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

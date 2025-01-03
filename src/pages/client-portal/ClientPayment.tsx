@@ -21,7 +21,6 @@ const ClientPayment = () => {
           allData[modelName].map(task => ({ ...task, modelName }))
         );
         
-
         setPaymentData(allTasks); 
         setLoading(false);
       } catch (err:any) {
@@ -52,17 +51,24 @@ const ClientPayment = () => {
       {paymentData && paymentData.length > 0 ? (
         <div className="space-y-4">
           {paymentData.map((task: any) => (
-            <div key={task._id} className="bg-white rounded-lg p-4">
+            <div key={task._id} className="bg-white rounded-lg p-4 relative">
               {/* Display model name with the word "Model" removed */}
-              <h4 className="font-medium">
+              <h4 className="font-medium mb-2">
                 {task.modelName.replace('Model', '')} {/* Remove the word "Model" */}
               </h4>
-              <p className="text-sm text-gray-500">Amount: {task.amount || task?.payment?.visaApplicationFee} </p>
-              <p className="text-sm text-gray-500">translationFee: {task?.payment?.translationFee || 0} </p>
-              <p className="text-sm text-gray-500">Payment Method: {task.paymentMethod}</p>
-              <p className="text-sm text-gray-500">Payment Status: {task.paymentStatus}</p>
-              <p className="text-sm text-gray-500">Due Amount: {task.dueAmount || task?.payment?.total}</p>
-              <p className="text-sm text-gray-500">Paid Amount: {task.paidAmount || task?.payment?.paidAmount}</p>
+
+              {/* Display payment status in the top-right corner */}
+              <span
+                className={`absolute top-2 right-2 px-2 py-1 text-xs rounded-full ${task.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' : task.paymentStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}
+              >
+                {task.paymentStatus}
+              </span>
+
+              <p className="text-sm text-gray-500 mb-4">Amount: {task.amount || task?.payment?.visaApplicationFee}</p>
+              <p className="text-sm text-gray-500 mb-4">Translation Fee: {task?.payment?.translationFee || 0}</p>
+              <p className="text-sm text-gray-500 mb-4">Due Amount: {task.dueAmount || task?.payment?.total}</p>
+              <p className="text-sm text-gray-500 mb-4">Discount Amount: {task.discount || task?.payment?.discount}</p>
+              <p className="text-sm text-gray-500 mb-4">Paid Amount: {task.paidAmount || task?.payment?.paidAmount}</p>
             </div>
           ))}
         </div>

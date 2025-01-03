@@ -22,9 +22,9 @@ const PaymentHistory = ({ selectedClientId }) => {
                 allPayments.push({
                   date: item.createdAt,
                   type: item.type || `${modelKey.charAt(0).toUpperCase() + modelKey.slice(1)} Service`,
-                  total: item?.total || item?.amount || item.payment?.visaApplicationFee || 0,
+                  total: item?.total || item?.amount || item.payment.total || 0,
                   paidAmount: item.paidAmount || item.payment?.paidAmount || 0,
-                  paymentStatus: item.visaStatus || item.status,
+                  paymentStatus: item.status || item.paymentStatus,
                   model: modelKey, // Track the model the payment came from
                 });
               }
@@ -59,7 +59,7 @@ const PaymentHistory = ({ selectedClientId }) => {
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th> */}
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
@@ -82,9 +82,9 @@ const PaymentHistory = ({ selectedClientId }) => {
                       {payment.paymentStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {modelName}
-                  </td>
+                  </td> */}
                 </tr>
               );
             })

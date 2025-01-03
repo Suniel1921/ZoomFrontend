@@ -193,7 +193,7 @@ export default function ServiceRequestModal({
       await axios.post(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/createServiceRequest`,
         {
-          clientId: client.id,
+          clientId: auth.user.id,
           clientName: auth?.user?.fullName || '',
           phoneNumber: phoneNumber.trim(),
           serviceName: selectedService.trim(),

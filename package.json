@@ -41,6 +41,7 @@
     "react-hook-form": "^7.51.0",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.22.3",
+    "react-spring": "^9.7.5",
     "react-water-wave": "^2.0.1",
     "recharts": "^2.12.2",
     "tailwind-merge": "^2.5.5",

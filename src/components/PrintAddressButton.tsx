@@ -123,6 +123,7 @@ const PrintAddressButton: React.FC<PrintAddressButtonProps> = ({ client }) => {
       ['Street', client.street],
       ['Building', client.building],
       ['Mode of Contact', client.modeOfContact.join(', ')],
+      ['Facebook Url', client.socialMedia]
     ];
 
     // Set up table formatting
