@@ -214,19 +214,24 @@ export default function EditTranslationModal({
 
             {/* Handled By */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Handled By</label>
+              <label className="block text-sm font-medium text-gray-700">
+              Handled By
+              </label>
               <select
-                {...register('handledBy')}
+                {...register("handledBy")}
+                value={watch("handledBy") || getAllTranslations.handledBy} // Ensure the initial value is set
+                onChange={(e) => setValue("handledBy", e.target.value)} // Sync changes with the form
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="">Select handler</option>
-                {handlers.map((admin) => (
-                  <option key={admin.id} value={admin.name}>
-                    {admin.name}
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.id}>
+                    {handler.name}
                   </option>
                 ))}
               </select>
             </div>
+
 
             {/* Deadline */}
             <div>
@@ -280,3 +285,4 @@ export default function EditTranslationModal({
     </div>
   );
 }
+ 

@@ -8,6 +8,7 @@ interface TasksProps {
   tasks: {
     application: any[];
     appointment: any[];
+    documentTranslation : any[];
     epassports: any[];
     graphicDesigns: any[];
     japanVisit: any[];
@@ -50,6 +51,7 @@ export default function OngoingTasks() {
   const {
     application = [],
     appointment = [],
+    documentTranslation = [],
     epassports = [],
     graphicDesigns = [],
     japanVisit = [],
@@ -83,6 +85,13 @@ export default function OngoingTasks() {
       ...task,
       type: 'Design',
       status: task.status,
+      amount: task.amount || 0,
+      paymentStatus: task.paymentStatus || 'Due'
+    })),
+    ...documentTranslation.map(task => ({
+      ...task,
+      type: 'DocumentTranslation',
+      status: task.status || task?.translationStatus,
       amount: task.amount || 0,
       paymentStatus: task.paymentStatus || 'Due'
     })),

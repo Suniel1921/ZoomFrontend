@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Download, Eye } from 'lucide-react';
 import Button from '../../components/Button';
-import { format } from 'date-fns';
 import { useAuthGlobally } from '../../context/AuthContext';
 
 interface DocumentsSectionProps {
@@ -38,7 +36,7 @@ export default function DocumentsSection({ userId }: DocumentsSectionProps) {
     };
 
     fetchFiles();
-  }, [userId]);
+  }, [userId, auth.user.id]);
 
   const groupFilesByType = (data: any) => {
     const friendlyNames: { [key: string]: string } = {
@@ -89,6 +87,24 @@ export default function DocumentsSection({ userId }: DocumentsSectionProps) {
       anchor.download = fileUrl.split('/').pop();
       anchor.click();
     });
+  };
+
+  const renderPreview = (fileUrl: string) => {
+    const fileExtension = fileUrl.split('.').pop()?.toLowerCase();
+
+    // Check if the file is an image and render accordingly
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'].includes(fileExtension || '')) {
+      return <img src={fileUrl} alt="Preview" className="w-full h-auto border mb-4" />;
+    }
+
+    // For documents, use Google Docs Viewer (iframe)
+    return (
+      <iframe
+        src={`https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
+        className="w-full h-64 border mb-4"
+        title="Document Preview"
+      />
+    );
   };
 
   return (
@@ -155,12 +171,9 @@ export default function DocumentsSection({ userId }: DocumentsSectionProps) {
             </div>
             <div className="flex-1 p-4 bg-gray-50 overflow-auto space-y-4">
               {previewFiles.map((fileUrl, idx) => (
-                <iframe
-                  key={idx}
-                  src={`https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
-                  className="w-full h-64 border mb-4"
-                  title={`Preview ${idx + 1}`}
-                />
+                <div key={idx}>
+                  {renderPreview(fileUrl)}
+                </div>
               ))}
             </div>
           </div>
@@ -169,3 +182,6 @@ export default function DocumentsSection({ userId }: DocumentsSectionProps) {
     </div>
   );
 }
+
+
+

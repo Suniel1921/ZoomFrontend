@@ -192,9 +192,16 @@ export default function AddClientModal({
       formData.append("city", data.address.city);
       formData.append("street", data.address.street);
       formData.append("building", data.address.building);
-      formData.append("modeOfContact", data.modeOfContact);
-      formData.append("socialMedia", data.socialMedia);
-      formData.append("timeline", data.address.timeline);
+      // formData.append("modeOfContact", data.modeOfContact);
+      // formData.append("socialMedia", data.socialMedia);
+      // formData.append("timeline", data.address.timeline);
+
+
+      // Stringify modeOfContact and socialMedia before appending
+    formData.append("modeOfContact", JSON.stringify(data.modeOfContact));
+    formData.append("socialMedia", JSON.stringify(data.socialMedia));
+    formData.append("timeline", JSON.stringify(data.address.timeline));
+  
 
       // Add profile photo if selected
       if (files && files.length > 0) {

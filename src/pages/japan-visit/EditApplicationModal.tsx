@@ -391,23 +391,28 @@ export default function EditApplicationModal({
               </div>
 
               {/* Handled By */}
+=
               <div>
-                <label className="block text-sm font-medium text-gray-700">Handled By</label>
-                <select
-                  // {...register('handledBy', { required: 'This field is required' })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
-                >
-                  <option value="">Select handler</option>
-                  {handlers.map((handler) => (
-                    <option key={handler.id} value={handler.name}>
-                      {handler.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.handledBy && (
-                  <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
-                )}
-              </div>
+              <label className="block text-sm font-medium text-gray-700">
+              Handled By
+              </label>
+              <select
+                {...register("handledBy")}
+                value={watch("handledBy") || application.handledBy} // Ensure the initial value is set
+                onChange={(e) => setValue("handledBy", e.target.value)} // Sync changes with the form
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+              >
+                <option value="">Select handler</option>
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.id}>
+                    {handler.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+
+            
 
               {/* Status */}
               <div>

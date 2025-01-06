@@ -55,6 +55,7 @@ export default function ClientsPage() {
       const response = await axios.get(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`
       );
+      console.log("client data is ", response)
       if (response.data.success) {
         setClients(response.data.clients);
         console.log("client data is", response);

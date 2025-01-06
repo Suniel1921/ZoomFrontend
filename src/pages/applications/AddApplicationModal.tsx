@@ -474,6 +474,9 @@ export default function AddApplicationModal({
       const payload = {
         ...data,
         clientName: client.name,
+       handledBy: client.handledBy || data.handledBy, // Use client.handledBy if available
+      translationHandler: client.translationHandler || data.translationHandler, // Use client.translationHandler if available
+
         familyMembers, // Ensure family members are sent as part of the payload
         submissionDate: new Date().toISOString(),
         payment: { ...data.payment, total },
@@ -481,6 +484,7 @@ export default function AddApplicationModal({
       };
   
       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/createVisaApplication`, payload);
+
       if (response.data.success) {
         toast.success(response.data.message);
         reset();

@@ -1,36 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Clock, X } from 'lucide-react';
-import { useServiceRequestStore } from '../../store/serviceRequestStore';
 import Button from '../../components/Button';
 import type { Client } from '../../types';
-
-interface ServiceRequestHistoryProps {
-  client: Client;
-}
+import { useAuthGlobally } from '../../context/AuthContext';
+import axios from 'axios';
 
 const ITEMS_PER_PAGE = 2;
 
 export default function ServiceRequestHistory({ client }: ServiceRequestHistoryProps) {
-  const { getRequestsByClient, updateRequest } = useServiceRequestStore();
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  const requests = getRequestsByClient(client.id)
-    .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+  const [auth] = useAuthGlobally();
 
-  const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
-  const paginatedRequests = requests.slice(
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const fetchServiceRequested = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/getAllRequestedService`);
+        setServiceRequests(response.data.data || []); // Store fetched service requests
+      } catch (error) {
+        console.error("Failed to fetch service requests:", error);
+        setServiceRequests([]);
+      }
+    };
+
+    if (auth.user.id) {
+      fetchServiceRequested();
+    }
+  }, [auth.user.id]);
+
+  const totalPages = Math.ceil(serviceRequests.length / ITEMS_PER_PAGE);
+  const paginatedRequests = serviceRequests.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
   const handleCancelRequest = (requestId: string) => {
     if (window.confirm('Are you sure you want to cancel this request?')) {
-      updateRequest(requestId, { status: 'cancelled' });
+      // Call API to update request status
+      fetch(`/updateRequest/${requestId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'cancelled' }),
+        headers: { 'Content-Type': 'application/json' },
+      }).then((res) => {
+        if (res.ok) {
+          setServiceRequests((prevRequests) =>
+            prevRequests.map((request) =>
+              request.id === requestId ? { ...request, status: 'cancelled' } : request
+            )
+          );
+        }
+      });
     }
   };
 
-  if (requests.length === 0) {
+  if (serviceRequests.length === 0) {
     return null;
   }
 
@@ -51,7 +76,7 @@ export default function ServiceRequestHistory({ client }: ServiceRequestHistoryP
               <div>
                 <h3 className="font-medium">{request.serviceName}</h3>
                 <p className="text-sm text-gray-500">
-                  Requested on: {format(new Date(request.requestedAt), 'MMM d, yyyy')}
+                  Requested on: {format(new Date(request.createdAt), 'MMM d, yyyy')}
                 </p>
                 <p className="text-sm text-gray-600 mt-2">
                   Message: {request.message}

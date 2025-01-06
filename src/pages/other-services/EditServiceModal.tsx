@@ -13,6 +13,7 @@ import { SERVICE_TYPES } from '../../constants/serviceTypes';
 import type { OtherService } from '../../types/otherService';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import OtherServicesPage from '.';
 
 type ServiceFormData = {
   clientId: string;
@@ -238,16 +239,20 @@ export default function EditServiceModal({
             )}
 
 
-            {/* handler by*/}
+            {/* Handled By */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Handled By</label>
+              <label className="block text-sm font-medium text-gray-700">
+              Handled By
+              </label>
               <select
-                {...register('handledBy')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+                {...register("handledBy")}
+                value={watch("handledBy") || OtherServicesPage.handledBy} // Ensure the initial value is set
+                onChange={(e) => setValue("handledBy", e.target.value)} // Sync changes with the form
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
               >
                 <option value="">Select handler</option>
                 {handlers.map((handler) => (
-                  <option key={handler.id} value={handler.name}>
+                  <option key={handler.id} value={handler.id}>
                     {handler.name}
                   </option>
                 ))}

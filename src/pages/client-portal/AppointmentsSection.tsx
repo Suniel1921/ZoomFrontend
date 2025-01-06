@@ -18,7 +18,7 @@ export default function AppointmentsSection() {
     try {
       // const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`);
       const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointmentByID/${auth?.user?.id}`);
-      console.log('appoint res is', response) 
+      // console.log('appoint res is', response) 
       if (response?.data?.success) {
         setAppointmentsData(response?.data?.appointments);
         // toast.success(response.data.message)

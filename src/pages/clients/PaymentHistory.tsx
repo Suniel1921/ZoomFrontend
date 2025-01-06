@@ -22,9 +22,10 @@ const PaymentHistory = ({ selectedClientId }) => {
                 allPayments.push({
                   date: item.createdAt,
                   type: item.type || `${modelKey.charAt(0).toUpperCase() + modelKey.slice(1)} Service`,
-                  total: item?.total || item?.amount || item.payment.total || 0,
+                  total: item?.total || item?.amount || item.payment?.total || 0,
                   paidAmount: item.paidAmount || item.payment?.paidAmount || 0,
-                  paymentStatus: item.status || item.paymentStatus,
+                  // paymentStatus: item.status || item.paymentStatus,
+                  paymentStatus: item.paymentStatus,
                   model: modelKey, // Track the model the payment came from
                 });
               }

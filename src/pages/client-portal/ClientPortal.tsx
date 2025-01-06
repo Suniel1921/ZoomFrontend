@@ -168,6 +168,10 @@ export default function ClientPortal() {
                 . You can message us on WhatsApp or Viber too.
               </p>
             </div>
+
+            <div>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m23!1m12!1m3!1d103680.99060723219!2d139.72904699687305!3d35.70085582044349!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m8!3e6!4m0!4m5!1s0x6018896804baff7d%3A0x41a6107aea0b6618!2z44Kw44Op44Oz44OJ44K544OG44O844K_44K5S0lZQTJGLCAxIENob21lLTExLTcgVGFpaGVpLCBTdW1pZGEgQ2l0eSwgVG9reW8gMTMwLTAwMTI!3m2!1d35.7008839!2d139.8114481!5e0!3m2!1sen!2sjp!4v1736155394129!5m2!1sen!2sjp" width="550" height="450"></iframe>
+            </div>
           </div>
 
           {/* Contact Details */}
