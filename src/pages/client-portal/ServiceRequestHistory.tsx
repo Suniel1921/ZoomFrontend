@@ -142,6 +142,9 @@
 
 
 
+
+
+
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Clock, X } from 'lucide-react';
@@ -163,18 +166,24 @@ export default function ServiceRequestHistory({ client }: ServiceRequestHistoryP
   useEffect(() => {
     const fetchServiceRequested = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/getAllRequestedService`);
-        setServiceRequests(response.data.data || []); // Store fetched service requests
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/getRequestedServiceByID/${auth.user.id}`
+        );
+        
+        // Ensure the response is structured as an array
+        const data = Array.isArray(response.data.data) ? response.data.data : [response.data.data]; // Wrap in array if it's a single object
+        setServiceRequests(data);
       } catch (error) {
         console.error("Failed to fetch service requests:", error);
-        setServiceRequests([]);
+        setServiceRequests([]); // Fallback to an empty array if there's an error
       }
     };
-
+  
     if (auth?.user?.id) {
       fetchServiceRequested();
     }
   }, [auth.user.id]);
+  
 
   const totalPages = Math.ceil(serviceRequests.length / ITEMS_PER_PAGE);
   const paginatedRequests = serviceRequests.slice(
@@ -192,29 +201,27 @@ export default function ServiceRequestHistory({ client }: ServiceRequestHistoryP
       console.error("No request ID selected.");
       return;
     }
-  
+
     try {
-      // Check API endpoint
+      // Correct API endpoint and method (ensure the patch works correctly)
       const response = await axios.patch(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/updateRequestedSerices/${selectedRequestId}`, // Correct endpoint
-        { status: 'cancelled' }, // Payload
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/updateRequestedSerices/${selectedRequestId}`, 
+        { status: 'cancelled' }, // Payload for updating request
         {
           headers: { 'Content-Type': 'application/json' },
         }
       );
-      console.log('respone data from client is ', response)
-  
-      // Debug API response
-      console.log('API Response:', response);
-  
+      console.log('Response from API:', response);
+
+      // Handle API response accordingly
       if (response.data.success) {
-        // Update the status locally
+        // Update status locally for the UI
         setServiceRequests((prevRequests) =>
           prevRequests.map((request) =>
             request._id === selectedRequestId ? { ...request, status: 'cancelled' } : request
           )
         );
-        setIsModalVisible(false); // Close the modal
+        setIsModalVisible(false); // Close the modal after cancellation
       } else {
         console.error("Failed to cancel request:", response.data.message);
       }
@@ -222,9 +229,9 @@ export default function ServiceRequestHistory({ client }: ServiceRequestHistoryP
       console.error("API call failed:", error);
     }
   };
-  
+
   if (serviceRequests.length === 0) {
-    return null;
+    return <div>No service requests found.</div>;
   }
 
   return (
@@ -237,7 +244,7 @@ export default function ServiceRequestHistory({ client }: ServiceRequestHistoryP
       <div className="space-y-4">
         {paginatedRequests.map((request) => (
           <div
-            key={request.id}
+            key={request._id}
             className="bg-gray-50 rounded-lg p-4 border border-gray-200"
           >
             <div className="flex justify-between items-start">
@@ -263,12 +270,12 @@ export default function ServiceRequestHistory({ client }: ServiceRequestHistoryP
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleCancelRequest(request.id)}
+                    onClick={() => handleCancelRequest(request._id)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <X className="h-4 w-4 mr-1" />
                     Cancel Request
-                  </Button> 
+                  </Button>
                 )}
               </div>
             </div>
@@ -298,9 +305,8 @@ export default function ServiceRequestHistory({ client }: ServiceRequestHistoryP
         open={isModalVisible}
         onOk={confirmCancelRequest}
         onCancel={() => setIsModalVisible(false)}
-       >
+      >
         <div className="text-center">
-        {/* <img src="/cancel.png" alt="Cancel Icon" className="w-[200px] h-[200px] mb-4 align-center" /> */}
           <p>Ohh! Looks like you want to cancel the requested services.</p>
           <p>Are you sure you want to proceed?</p>
         </div>

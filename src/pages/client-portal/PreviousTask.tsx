@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthGlobally } from '../../context/AuthContext';
+import Confetti from 'react-confetti'; // Import the Confetti component
 
 const PreviousTask = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [auth] = useAuthGlobally();
+  const [showConfetti, setShowConfetti] = useState(false); // State to control confetti
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +30,17 @@ const PreviousTask = () => {
 
         setTasks(completedTasks);
         setLoading(false);
-      } catch (err:any) {
+
+        // Check if all tasks are completed and trigger confetti
+        if (completedTasks.length === allTasks.length) {
+          setShowConfetti(true);
+
+          // Hide the confetti after 2 seconds
+          setTimeout(() => {
+            setShowConfetti(false);
+          }, 4000);
+        }
+      } catch (err: any) {
         console.error('Error fetching data:', err);
         const errorMessage =
           err.response?.data?.message || 'Failed to fetch data. Please try again later.';
@@ -50,7 +62,9 @@ const PreviousTask = () => {
 
   return (
     <div>
-      {/* <h1>Completed Tasks</h1> */}
+      {/* Render confetti when all tasks are completed */}
+      {showConfetti && <Confetti />}
+
       {tasks.length > 0 ? (
         <div className="space-y-4">
           {tasks.map(task => (
@@ -58,8 +72,6 @@ const PreviousTask = () => {
               <h4 className="font-medium">
                 {task.modelName.replace('Model', '')} {/* Remove the word "Model" */}
               </h4>
-              {/* <h3>{task.type || task.applicationType}</h3> */}
-              {/* <p>{task.country}</p> */}
               <p className="text-sm text-gray-500">Completed</p>
             </div>
           ))}
