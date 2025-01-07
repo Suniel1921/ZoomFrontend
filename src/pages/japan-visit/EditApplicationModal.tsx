@@ -391,7 +391,6 @@ export default function EditApplicationModal({
               </div>
 
               {/* Handled By */}
-=
               <div>
               <label className="block text-sm font-medium text-gray-700">
               Handled By

@@ -498,7 +498,7 @@ export default function AdminSettings() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end gap-2">
-                    <Button
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
@@ -507,7 +507,7 @@ export default function AdminSettings() {
                       }}
                     >
                       <Shield className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                     <Button
                       variant="outline"
                       size="sm"

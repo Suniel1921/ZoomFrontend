@@ -285,10 +285,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 Dashboard
               </span>
               <div className="hidden sm:flex sm:items-center">
-                <FileText className="h-8 w-8 text-brand-yellow" />
-                <span className="ml-2 text-2xl font-bold text-white tracking-tight">
+                {/* <FileText className="h-8 w-8 text-brand-yellow" /> */}
+                <img src="/logo2.png" alt="Cancel Icon" className=" h-[50px]  align-center" />
+                {/* <span className="ml-2 text-2xl font-bold text-white tracking-tight">
                   Zoom Dashboard
-                </span>
+                </span> */}
               </div>
             </Link>
           </div>

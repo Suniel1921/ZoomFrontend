@@ -71,9 +71,9 @@ export default function ClientPortal() {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <FileText className="h-8 w-8 text-brand-yellow" />
-                <span className="ml-2 text-xl font-semibold hidden sm:inline">Zoom Creatives</span>
-                <span className="ml-2 text-xl font-semibold sm:hidden">Zoom Creatives</span>
+                 <img src="/logo2.png" alt="Cancel Icon" className=" h-[50px]  align-center" />
+                {/* <FileText className="h-8 w-8 text-brand-yellow" /> */}
+                {/* <span className="ml-2 text-xl font-semibold hidden sm:inline">Zoom Creatives</span> */}
               </div>
             </div>
             <div className="flex items-center gap-4">

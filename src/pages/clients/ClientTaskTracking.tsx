@@ -149,7 +149,7 @@ export default function ClientTaskTracking({getAllModelData}) {
       >
         <div className="flex justify-between items-start">
           <div>
-            <p className="font-medium text-gray-800">{task.clientId.name || task.clientName}</p>
+            {/* <p className="font-medium text-gray-800">{task.clientId.name || task.clientName}</p> */}
             <p className="text-sm text-gray-600">
               Status:{" "}
               <span className="font-semibold text-blue-500">
