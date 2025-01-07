@@ -495,6 +495,7 @@ const FilesTab = ({ getAllModelData }) => {
   };
 
   // Handle file selection
+  // Handle file selection
   const handleFileChange = ({ fileList }) => {
     setFileList(fileList);
   };
@@ -716,13 +717,12 @@ const FilesTab = ({ getAllModelData }) => {
       </Modal>
 
       {/* Task Sections */}
-      {renderTaskSection("Applications", clientTasks.applications, "application")}
-      {renderTaskSection("Appointment", clientTasks.appointment, "appointment")}
-      {renderTaskSection("Document Translation", clientTasks.documentTranslation, "documentTranslation")}
-      {renderTaskSection("E-Passport", clientTasks.epassport, "epassport")}
-      {renderTaskSection("Graphic Designs", clientTasks.graphicDesigns, "graphicDesigns")}
-      {renderTaskSection("Japan Visit", clientTasks.japanVisit, "japanVisit")}
-      {renderTaskSection("Other Services", clientTasks.otherServices, "otherServices")}
+      {renderTaskSection("Visa Applications", clientTasks.applications, "applicationModel")}
+      {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslationModel")}
+      {renderTaskSection("Design Services", clientTasks.graphicDesigns, "GraphicDesignModel")}
+      {renderTaskSection("Japan Visit Applications", clientTasks.japanVisit, "japanVisitApplicationModel")}
+      {renderTaskSection("E-passport Applications", clientTasks.epassport, "ePassportModel")}
+      {renderTaskSection("Other Services", clientTasks.otherServices, "OtherServiceModel")}
     </div>
   );
 };
