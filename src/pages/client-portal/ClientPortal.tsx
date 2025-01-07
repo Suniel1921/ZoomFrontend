@@ -203,7 +203,6 @@ export default function ClientPortal() {
                       Taihei 1-11-7 Grand Status KIYA 2F, 130-0012
                     </p>
                   </div>
-
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Contact Numbers</h4>
                     <div className="space-y-1">
@@ -242,9 +241,10 @@ export default function ClientPortal() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> 
         </div>
       </main>
+    
 
          {/* Profile Edit Modal */}
          <EditProfileModal
@@ -263,19 +263,6 @@ export default function ClientPortal() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

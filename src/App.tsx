@@ -26,6 +26,7 @@ import SettingsPage from './pages/settings';
 import OtherServicesPage from './pages/other-services';
 import AccountsPage from './pages/accounts';
 import useOnlineOfflineStatus from './components/onlineOfflineStatus/useOnlineOfflineStatus';
+import Not_Found_Page from './pages/applications/components/Not_Found_Page';
 
 const App = () => {
     const [auth] = useAuthGlobally();
@@ -64,7 +65,7 @@ const App = () => {
                 </Route>
 
                 {/* Catch-All Route */}
-                <Route path="*" element={<div>404 Not Found</div>} />
+                <Route path="*" element= {<Not_Found_Page/>} />
             </Routes>
             <Toaster />
 
