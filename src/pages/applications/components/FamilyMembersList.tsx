@@ -81,7 +81,7 @@ export default function FamilyMembersList({
                 <p className="text-sm text-gray-500">{familyMember.relationship}</p>
               </div>
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2">
+                {/* <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={familyMember.includedInApplication}
@@ -89,7 +89,7 @@ export default function FamilyMembersList({
                     className="rounded border-gray-300 text-brand-yellow focus:ring-brand-yellow"
                   />
                   <span className="text-sm">Include in Application</span>
-                </label>
+                </label> */}
                 <Button
                   type="button"
                   variant="outline"
