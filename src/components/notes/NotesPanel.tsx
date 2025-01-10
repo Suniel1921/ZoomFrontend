@@ -163,12 +163,12 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
                       <p className="text-sm text-gray-500 line-clamp-2 mt-1">{note.content}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                      {/* <button
                         onClick={() => handleEditNote(note._id)}
                         className="text-blue-500 hover:text-blue-700"
-                      >
+                       >
                         <Edit className="h-4 w-4" />
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => confirmDeleteNote(note._id)}
                         className="text-red-500 hover:text-red-700"

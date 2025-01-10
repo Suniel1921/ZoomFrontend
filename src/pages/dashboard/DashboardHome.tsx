@@ -69,7 +69,7 @@ export default function DashboardHome() {
 
     const fetchSuperAdminName = async ()=>{
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/auth/getSuperAdmin/${auth.user.id}`);
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/superAdmin/getSuperAdmin/${auth.user.id}`);
         if(response.data.success){
           setSuperAdminName(response.data.data)
         }

@@ -269,7 +269,7 @@ export default function AddEpassportModal({
                     required: "This field is required",
                   })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
-                >
+                 >
                   <option value="">Select handler</option>
                   {handlers.map((handler) => (
                     <option key={handler.id} value={handler.name}>

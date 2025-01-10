@@ -292,7 +292,7 @@ export default function ClientsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <CategoryBadge category={client.category} />
+                      <CategoryBadge category={client.category || 'import from CSV file'} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -369,6 +369,7 @@ export default function ClientsPage() {
       <ImportClientsModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+        getAllClients={getAllClients}
       />
     </div>
   );

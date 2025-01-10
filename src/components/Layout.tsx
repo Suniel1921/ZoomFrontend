@@ -232,7 +232,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Role-Based Menu Items
   const menuItems = [
-    ...(auth.user.role === 'superadmin'
+    ...(auth?.user?.role === 'superadmin'
       ? [
         { icon: Users, label: 'Clients', path: '/dashboard/clients' },
         { icon: FileText, label: 'Visa Applicants', path: '/dashboard/applications' },

@@ -67,9 +67,10 @@ export default function TranslationsPage() {
 
   const handleCopyName = (translation: Translation) => {
     navigator.clipboard.writeText(translation.nameInTargetScript);
-    setCopiedId(translation.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setCopiedId(translation._id); // Set the ID of the clicked row
+    setTimeout(() => setCopiedId(null), 2000); // Reset the state after 2 seconds
   };
+
 
   
 
@@ -178,18 +179,20 @@ export default function TranslationsPage() {
       label: 'Actions',
       render: (_: string, item: Translation) => (
         <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleCopyName(item)}
-            title="Copy Name in Target Script"
-          >
-            {copiedId === item.id ? (
-              <Check className="h-4 w-4 text-green-500" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
-          </Button>
+              <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleCopyName(item)} // Pass the specific row data
+          title="Copy Name in Target Script"
+        >
+          {copiedId === item._id ? ( // Only show the check icon for the clicked row
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+        </Button>
+
+
           <Button
             variant="outline"
             size="sm"
