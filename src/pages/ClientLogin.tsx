@@ -10,11 +10,11 @@ import ForgotPasswordModal from "./ForgotPasswordModal";
 export default function ClientLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordVisible, setPasswordVisible] = useState(false); // For toggling password visibility
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [auth, setAuthGlobally] = useAuthGlobally();
-  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false); 
+  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -43,28 +43,30 @@ export default function ClientLogin() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left Side - Branding */}
-      <div className="w-1/2 bg-black text-white flex flex-col justify-center items-center px-10 hidden md:flex">
-        <div className="max-w-lg text-center">
-          <div className="flex justify-center items-center gap-4 mb-14">
-            <span><Zap className="h-12 w-12 text-yellow-500" /></span>
-            <h1 className="text-5xl font-bold text-yellow-500">Zoom CRM</h1>
+    <div className="flex min-h-screen flex-col md:flex-row">
+      {/* Branding - Shows at top on mobile, left side on desktop */}
+      <div className="w-full md:w-1/2 bg-black text-white flex flex-col justify-center items-center p-6 md:px-10">
+        <div className="max-w-lg text-center py-8 md:py-0">
+          <div className="flex justify-center items-center gap-4 mb-8 md:mb-14">
+            <span><Zap className="h-8 w-8 md:h-12 md:w-12 text-yellow-500" /></span>
+            <h1 className="text-3xl md:text-5xl font-bold text-yellow-500">Zoom CRM</h1>
           </div>
 
-          <p className="text-[37px] font-medium mb-8">Transform Your Business with Smart Solutions</p>
-          <p className="text-lg leading-relaxed text-gray-400 text-lg">
-            Streamline your customer relationships, boost productivity, and drive growth with our powerful CRM platform.
-          </p>
+          <div className="hidden md:block">
+            <p className="text-[37px] font-medium mb-8">Transform Your Business with Smart Solutions</p>
+            <p className="text-lg leading-relaxed text-gray-400">
+              Streamline your customer relationships, boost productivity, and drive growth with our powerful CRM platform.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="w-full md:w-1/2 bg-white flex flex-col justify-center px-10">
-        <div className="max-w-md mx-auto">
-          <h3 className="text-3xl font-bold text-black mb-8 text-center">Welcome Back</h3>
+      {/* Login Form */}
+      <div className="w-full md:w-1/2 bg-white flex flex-col justify-center px-6 md:px-10 py-8">
+        <div className="max-w-md mx-auto w-full">
+          <h3 className="text-2xl md:text-3xl font-bold text-black mb-8 text-center">Welcome Back</h3>
           <form onSubmit={handleSubmit} className="space-y-6 w-full">
-            <div className="w-[444px]">
+            <div className="w-full">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -90,16 +92,16 @@ export default function ClientLogin() {
                 </div>
                 <input
                   id="password"
-                  type={passwordVisible ? "text" : "password"} // Toggle password visibility
+                  type={passwordVisible ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500"
+                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500"
                   placeholder="Enter your password"
                   required
                 />
                 <div
                   className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
-                  onClick={() => setPasswordVisible(!passwordVisible)} // Toggle visibility
+                  onClick={() => setPasswordVisible(!passwordVisible)}
                 >
                   {passwordVisible ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
                 </div>
@@ -114,18 +116,17 @@ export default function ClientLogin() {
             </button>
 
             <p className="text-center text-sm text-gray-600">
-              Don’t have an account?{" "}
+              Don't have an account?{" "}
               <button
                 type="button"
                 className="font-medium text-yellow-600 hover:text-yellow-500"
-                onClick={() => setIsCreateAccountModalOpen(true)} // Open modal
+                onClick={() => setIsCreateAccountModalOpen(true)}
               >
                 Sign up now
               </button>
             </p>
 
-            {/* Forgot Password Link */}
-            <p onClick={()=> setModalVisible(true)} className="text-center text-sm text-yellow-600">
+            <p onClick={() => setModalVisible(true)} className="text-center text-sm text-yellow-600">
               <a className="hover:text-yellow-500 cursor-pointer">
                 Forgot Password?
               </a>
@@ -134,22 +135,15 @@ export default function ClientLogin() {
         </div>
       </div>
 
-      {/* Sign Up Modal */}
+      {/* Modals */}
       <CreateClientAccountModal
         isOpen={isCreateAccountModalOpen}
         onClose={() => setIsCreateAccountModalOpen(false)}
       />
-
-        {/* <ForgotPasswordModal/> */}
-        <ForgotPasswordModal visible={modalVisible} onClose={() => setModalVisible(false)} />
-
-
+      <ForgotPasswordModal visible={modalVisible} onClose={() => setModalVisible(false)} />
     </div>
   );
 }
-
-
-
 
 
 
