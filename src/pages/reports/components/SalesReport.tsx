@@ -255,7 +255,8 @@
 
 
 
-// **************showing total amount in card******
+// **************showing total amount in card (index ()ReportsPage component)******
+
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { startOfDay, subDays, subMonths, startOfYear, isAfter } from 'date-fns';
