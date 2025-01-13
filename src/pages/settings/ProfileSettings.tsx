@@ -104,7 +104,7 @@ export default function ProfileSettings() {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
       setIsSuccess(true);
-      setTimeout(() => setIsSuccess(false), 3000);
+      setTimeout(() => setIsSuccess(false), 2000);
       toast.success("Profile Updated Successfully");
     } catch (error) {
       console.error("Failed to update profile:", error);
