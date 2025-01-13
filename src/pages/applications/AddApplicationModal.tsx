@@ -786,5 +786,3 @@ export default function AddApplicationModal({
     </div>
   );
 }
-
-// make sure all input field are same margin padding and border color and with responsiv desing and also add form validation  in country ,Visa Application Handled By Translation Handled By this is reqauried filed

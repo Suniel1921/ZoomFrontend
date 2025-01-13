@@ -148,8 +148,8 @@ export default function ClientsPage() {
               onChange={(e) =>
                 setSelectedCategory(e.target.value as ClientCategory | "all")
               }
-              className="rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
-            >
+              className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
+              >
               <option value="all">All Categories</option>
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -165,7 +165,7 @@ export default function ClientsPage() {
                   e.target.value as "all" | "active" | "inactive"
                 )
               }
-              className="rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+              className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
