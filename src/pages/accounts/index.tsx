@@ -113,6 +113,12 @@
 
 
 
+
+
+
+
+
+
 import { useEffect, useState } from 'react';
 import { CreditCard, UserPlus } from 'lucide-react';
 import SearchableSelect from '../../components/SearchableSelect';
@@ -136,8 +142,8 @@ export default function AccountsPage() {
       });
       console.log('All model data:', response);
       if (response.data.success) {
-        setAccountTaskData(response?.data?.allData); // Save all data to context
-        extractClients(response?.data?.allData); // Extract clients for the dropdown
+        setAccountTaskData(response?.data?.allData); 
+        extractClients(response?.data?.allData); 
       } else {
         toast.error('Something went wrong while fetching data!');
       }
@@ -171,14 +177,14 @@ export default function AccountsPage() {
   };
 
   useEffect(() => {
-    getAllModelData(); // Initial fetch for all clients
-  }, []); // Initial load
+    getAllModelData(); 
+  }, []); 
 
   useEffect(() => {
     if (selectedClientId) {
-      getAllModelData(selectedClientId); // Fetch data for the selected client
+      getAllModelData(selectedClientId); 
     }
-  }, [selectedClientId]); // Fetch for selected client
+  }, [selectedClientId]); 
 
   // Ensure accountTaskData is defined and safely find the selected client
   const selectedClient = selectedClientId && accountTaskData

@@ -33,11 +33,11 @@ const PreviousTask = () => {
 
         // Check if all tasks are completed and trigger confetti
         if (completedTasks.length === allTasks.length) {
-          setShowConfetti(true);
+          // setShowConfetti(true);
 
           // Hide the confetti after 2 seconds
           setTimeout(() => {
-            setShowConfetti(false);
+            // setShowConfetti(false);
           }, 4000);
         }
       } catch (err: any) {

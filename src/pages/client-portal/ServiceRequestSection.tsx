@@ -139,9 +139,6 @@
 
 
 
-
-
-
 import { useState } from 'react';
 import { Briefcase } from 'lucide-react';
 import Button from '../../components/Button';
@@ -224,6 +221,12 @@ interface ServiceRequestSectionProps {
 
 export default function ServiceRequestSection({ client }: ServiceRequestSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+
+  const openModalWithService = (service: Service) => {
+    setSelectedService(service); // Set the selected service
+    setIsModalOpen(true); // Open the modal
+  };
 
   return (
     <div className="relative bg-white rounded-lg shadow-sm p-6">
@@ -243,6 +246,7 @@ export default function ServiceRequestSection({ client }: ServiceRequestSectionP
           <div
             key={service.id}
             className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors"
+            onClick={() => openModalWithService(service)} // Open the modal with the clicked service
           >
             <div className="flex items-start gap-4">
               <div className="text-2xl">{service.icon}</div>
@@ -259,7 +263,7 @@ export default function ServiceRequestSection({ client }: ServiceRequestSectionP
         <ServiceRequestModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          service={null}
+          service={selectedService} // Pass the selected service to the modal
           client={client}
         />
       )}
@@ -267,13 +271,10 @@ export default function ServiceRequestSection({ client }: ServiceRequestSectionP
       {/* Floating Button for Mobile and Tablet only */}
       <div
         className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 md:hidden"
-        // className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 md:hidden"
         style={{
           width: 'auto',
           height: '50px',
           backgroundColor: 'black',
-          // backgroundColor: '#FEDC00',
-          // borderRadius: '25px',
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
         }}
       >
