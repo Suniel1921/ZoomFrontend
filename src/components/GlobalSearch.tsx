@@ -53,11 +53,11 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   }, [onClose]);
 
   useEffect(() => {
-    if (query.length >= 2) {
+    if (query.length >= 1) {
       setIsLoading(true);
       const url = `${
         import.meta.env.VITE_REACT_APP_URL
-      }/api/v1/globalSearch/globalSearch?query=${query}`;
+      }/api/v1/globalSearch/globalSearch?query=${query.toLowerCase()}`; // Ensure lowercase query here
       axios
         .get(url)
         .then((response) => {
@@ -82,6 +82,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       });
     }
   }, [query]);
+  
 
   const handleSelect = (type: string, id: string) => {
     onClose();
@@ -146,7 +147,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
             <Flex justify="center" align="center" style={{ marginTop: '34px' }}>
             <Spin indicator={antIcon} style={{ color: "black" }} />
           </Flex>
-          ) : query.length >= 2 ? (
+          ) : query.length >= 1 ? (
             <div className="mt-4 max-h-[calc(100vh-12rem)] overflow-y-auto border-t border-gray-100">
               <div className="space-y-4 py-2">
                 {Object.entries(results).map(
@@ -212,196 +213,5 @@ function getIcon(type: string) {
   }
 }
 
-// import { useState, useEffect, useRef } from "react";
-// import axios from "axios";
-// import { Search, X } from "lucide-react";
-// import { useNavigate } from "react-router-dom";
-// import { Flex, Spin } from "antd";
-// import { LoadingOutlined } from "@ant-design/icons";
-// import Input from "./Input";
 
-// interface GlobalSearchProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-// }
 
-// export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
-//   const navigate = useNavigate();
-//   const searchRef = useRef<HTMLDivElement>(null);
-
-//   const [query, setQuery] = useState("");
-//   const [results, setResults] = useState<any[]>([]);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-
-//   const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
-
-//   useEffect(() => {
-//     const handleClickOutside = (event: MouseEvent) => {
-//       if (
-//         searchRef.current &&
-//         !searchRef.current.contains(event.target as Node)
-//       ) {
-//         onClose();
-//       }
-//     };
-
-//     document.addEventListener("mousedown", handleClickOutside);
-//     return () => document.removeEventListener("mousedown", handleClickOutside);
-//   }, [onClose]);
-
-//   useEffect(() => {
-//     if (!query.trim()) {
-//       setResults([]);
-//       return;
-//     }
-
-//     const fetchResults = async () => {
-//       setLoading(true);
-//       setError(null);
-
-//       try {
-//         const url = `${import.meta.env.VITE_REACT_APP_URL }/api/v1/globalSearch/globalSearch?query=${query}`;
-//         const response = await axios.get(url);
-
-//         const allResults = [
-//           ...(response.data.clients || []).map((item: any) => ({
-//             ...item,
-//             type: "client",
-//           })),
-//           ...(response.data.applications || []).map((item: any) => ({
-//             ...item,
-//             type: "Visa-application",
-//           })),
-//           ...(response.data.japanVisits || []).map((item: any) => ({
-//             ...item,
-//             type: "japan-visit",
-//           })),
-//           ...(response.data.documentTranslations || []).map((item: any) => ({
-//             ...item,
-//             type: "translation",
-//           })),
-//           ...(response.data.ePassports || []).map((item: any) => ({
-//             ...item,
-//             type: "epassport",
-//           })),
-//           ...(response.data.graphicDesigns || []).map((item: any) => ({
-//             ...item,
-//             type: "design",
-//           })),
-//           ...(response.data.otherServices || []).map((item: any) => ({
-//             ...item,
-//             type: "other-service",
-//           })),
-//           ...(response.data.appointments || []).map((item: any) => ({
-//             ...item,
-//             type: "appointment",
-//           })),
-//         ];
-
-//         setResults(allResults);
-//       } catch (err) {
-//         console.error("Error fetching data:", err);
-//         setError("Failed to fetch search results. Please try again.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     const debounceTimeout = setTimeout(fetchResults, 300);
-//     return () => clearTimeout(debounceTimeout);
-//   }, [query]);
-
-//   const handleSelect = (type: string | undefined, id: string) => {
-//     if (!type) {
-//       console.error(`Unknown type: ${type}`);
-//       return;
-//     }
-
-//     onClose();
-//     setQuery("");
-
-//     const routes: { [key: string]: string } = {
-//       client: "/dashboard/clients/",
-//       "Visa-application": "/dashboard/applications/",
-//       "japan-visit": "/dashboard/japan-visit/",
-//       translation: "/dashboard/translations/",
-//       design: "/dashboard/graphic-design/",
-//       epassport: "/dashboard/epassport/",
-//       "other-service": "/dashboard/other-services/",
-//       appointment: "/dashboard/appointment/",
-//     };
-
-//     const route = routes[type];
-//     if (route) {
-//       navigate(`${route}${id}`);
-//     } else {
-//       console.error(`Unhandled type: ${type}`);
-//     }
-//   };
-
-//   const renderResult = (result: any) => {
-//     const clientName = result.clientName || result.clientId?.name || null; // Get client name or null if unavailable
-//     const modelName = result.type
-//       ?.replace(/-/g, " ")
-//       .replace(/\b\w/g, (c) => c.toUpperCase()); // Format model name
-
-//     // Only return results with a valid client name and model name
-//     if (!clientName || !modelName) {
-//       return null; // Exclude results with missing data
-//     }
-
-//     return `${clientName} - ${modelName}`;
-//   };
-
-//   return (
-//     isOpen && (
-//       <div
-//         ref={searchRef}
-//         className="fixed top-0 left-0 w-full h-80 flex justify-center items-center"
-//       >
-//         <div className="bg-white rounded-lg shadow-lg w-3/4 md:w-1/2 p-6 relative">
-//           <div
-//             className="absolute top-4 right-4 cursor-pointer"
-//             onClick={onClose}
-//           >
-//             <X className="text-gray-500" />
-//           </div>
-
-//           <div className="flex items-center mb-4 gap-2 w-[90%]">
-//             <Search className="text-gray-500" />
-//             <Input
-//               value={query}
-//               onChange={(e) => setQuery(e.target.value)}
-//               placeholder="Global Search..."
-//               className="w-full"
-//             />
-//           </div>
-//           {loading && (
-//             <Flex justify="center" align="center">
-//               <Spin indicator={antIcon} style={{color: 'black'}}/>
-//             </Flex>
-//           )}
-//           {error && <p className="text-red-500">{error}</p>}
-//           {!loading && results.length === 0 && query && (
-//             <p>No results found for "{query}"</p>
-//           )}
-//           <ul>
-//             {results.map((result) => {
-//               const displayText = renderResult(result);
-//               return displayText ? (
-//                 <li
-//                   key={result._id}
-//                   onClick={() => handleSelect(result.type, result._id)}
-//                   className="cursor-pointer py-2 px-4 hover:bg-gray-100"
-//                 >
-//                   {displayText}
-//                 </li>
-//               ) : null; // Exclude results with missing display text
-//             })}
-//           </ul>
-//         </div>
-//       </div>
-//     )
-//   );
-// }

@@ -216,6 +216,7 @@ import {
   X,
   Search as SearchIcon,
   ReceiptPoundSterlingIcon,
+  PhoneCall,
 } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 import NotesPanel from './notes/NotesPanel';
@@ -242,8 +243,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: Briefcase, label: 'Other Services', path: '/dashboard/other-services' },
         { icon: Palette, label: 'Graphic Design', path: '/dashboard/graphic-design' },
         { icon: CreditCard, label: 'Accounts & Tasks', path: '/dashboard/accounts' },
-          { icon: Calendar, label: 'Appointments', path: '/dashboard/appointment' },
-          { icon: ReceiptPoundSterlingIcon, label: 'Reports', path: '/dashboard/reports' },
+        { icon: Calendar, label: 'Appointments', path: '/dashboard/appointment' },
+        { icon: ReceiptPoundSterlingIcon, label: 'Reports', path: '/dashboard/reports' },
+        { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
         ]
       : [
           { icon: Users, label: 'Clients', path: '/dashboard/clients' },
@@ -254,6 +256,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           { icon: Briefcase, label: 'Other Services', path: '/dashboard/other-services' },
           { icon: Palette, label: 'Graphic Design', path: '/dashboard/graphic-design' },
           { icon: CreditCard, label: 'Accounts & Tasks', path: '/dashboard/accounts' },
+          { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
         ]),
   ];
 

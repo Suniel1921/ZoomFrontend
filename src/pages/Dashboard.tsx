@@ -54,6 +54,7 @@ import SettingsPage from './settings';
 import OtherServicesPage from './other-services';
 import AccountsPage from './accounts';
 import Layout from '../components/Layout';
+import CallLogs from './callLogs/CallLogs';
 
 export default function Dashboard() {
   return (
@@ -71,6 +72,7 @@ export default function Dashboard() {
         <Route path="settings/*" element={<SettingsPage />} />
         <Route path="other-services/*" element={<OtherServicesPage />} />
         <Route path="accounts/*" element={<AccountsPage />} />
+        <Route path="call-logs/*" element={<CallLogs />} />
       </Routes>
     </Layout>
   );

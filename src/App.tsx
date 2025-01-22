@@ -27,6 +27,8 @@ import OtherServicesPage from './pages/other-services';
 import AccountsPage from './pages/accounts';
 import useOnlineOfflineStatus from './components/onlineOfflineStatus/useOnlineOfflineStatus';
 import Not_Found_Page from './pages/applications/components/Not_Found_Page';
+import CallLogs from './pages/callLogs/CallLogs';
+
 
 const App = () => {
     const [auth] = useAuthGlobally();
@@ -43,6 +45,8 @@ const App = () => {
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                     <Route path='/client-portal' element={<ClientPortal />} />
+                    {/* <Route path='/call-logs' element={<CallLogs/>}/> */}
+
                 </Route>
 
                 {/* Admin Protected Routes */}
@@ -60,6 +64,7 @@ const App = () => {
                         <Route path="accounts/*" element={<AccountsPage />} />
                         <Route path="reports/*" element={<ReportsPage />} />
                         <Route path="appointment/*" element={<AppointmentPage />} />
+                        <Route path="call-logs/*" element={<CallLogs />} />
 
                     </Route>
                 </Route>
@@ -86,6 +91,12 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+
+
 
 
 
