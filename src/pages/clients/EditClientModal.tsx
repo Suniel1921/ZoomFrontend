@@ -389,7 +389,7 @@ export default function EditClientModal({
     defaultValues: {
       ...client,
       address: client.address || {},
-      credentials: client.credentials || { password: '' },
+      // credentials: client.credentials || { password: '' },
       modeOfContact: parsedModeOfContact,
       socialMedia: parsedSocialMedia,
     },
@@ -562,10 +562,10 @@ export default function EditClientModal({
               )}
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <Input {...register('password')} type="password" className="w-full" disabled />
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Nationality</label>
