@@ -62,6 +62,7 @@ export default function AddAdminModal({ isOpen, onClose , fetchAdmins}: AddAdmin
         toast.success('Admin created successfully!');
         fetchAdmins();
         reset(); // Reset form fields
+        setGeneratedPassword(''); 
         onClose(); // Close the modal
       } else {
         toast.error('Failed to create admin. Please try again.');

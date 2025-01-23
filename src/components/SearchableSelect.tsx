@@ -98,6 +98,8 @@
 
 
 // *********new layout style*****
+
+
 import { useState, useEffect } from 'react';
 import { Search, User } from 'lucide-react';
 import Input from './Input';
