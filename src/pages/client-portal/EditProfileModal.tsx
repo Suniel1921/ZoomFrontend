@@ -57,7 +57,8 @@ const EditProfileModal = ({ isVisible, onClose }) => {
       open={isVisible}
       onCancel={onClose}
       onOk={handleSubmit}
-      okText="Save"
+      // okText="Save"
+      footer={null}
       cancelText="Cancel"
     >
       <div>

@@ -447,7 +447,7 @@ const applicationSchema = z.object({
   ),
 
   // Additional Information
-  notes: z.string().min(1, "Notes are required").max(500, "Notes must be less than 500 characters"),
+  // notes: z.string().min(1, "Notes are required").max(500, "Notes must be less than 500 characters"),
 });
 
 interface AddApplicationModalProps {

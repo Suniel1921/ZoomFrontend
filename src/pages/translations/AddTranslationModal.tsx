@@ -16,7 +16,7 @@ const translationSchema = z.object({
   clientId: z.string().min(1, 'Client is required'),
   sourceLanguage: z.enum(['English', 'Japanese', 'Nepali', 'Hindi']),
   targetLanguage: z.enum(['English', 'Japanese', 'Nepali', 'Hindi']),
-  nameInTargetScript: z.string().min(1, 'Name in target script is required'),
+  // nameInTargetScript: z.string().min(1, 'Name in target script is required'),
   pages: z.number().min(1, 'Number of pages must be at least 1'),
   amount: z.number().min(0, 'Amount must be positive'),
   paymentStatus: z.enum(['Due', 'Paid']),
