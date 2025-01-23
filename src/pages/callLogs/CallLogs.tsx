@@ -1,16 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Loader2, Save, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { format } from 'date-fns';
 
 interface CallLog {
   _id: string;
   name: string;
   phone: string;
   purpose: string;
+  followUp : string;
   handler: string;
   remarks: 'Done' | 'Working on it' | 'Stuck' | 'Complete';
+  date: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface NewCallLog {
@@ -18,7 +22,9 @@ interface NewCallLog {
   phone: string;
   purpose: string;
   handler: string;
+  followUp: string;
   remarks: 'Done' | 'Working on it' | 'Stuck' | 'Complete';
+  date: string;
 }
 
 const INITIAL_NEW_ROW: NewCallLog = {
@@ -26,7 +32,9 @@ const INITIAL_NEW_ROW: NewCallLog = {
   phone: '',
   purpose: '',
   handler: '',
+  followUp : 'No',
   remarks: 'Working on it',
+  date: '',
 };
 
 const CallLogs: React.FC = () => {
@@ -132,7 +140,7 @@ const CallLogs: React.FC = () => {
   };
 
   const addNewRow = async () => {
-    if (!newRow.name || !newRow.phone || !newRow.purpose || !newRow.handler) {
+    if (!newRow.name || !newRow.phone || !newRow.purpose || !newRow.handler || !newRow.followUp) {
       const message = 'Please fill in all required fields';
       setError(message);
       toast.error(message);
@@ -227,7 +235,9 @@ const CallLogs: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Handler</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Follow UP</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
@@ -272,6 +282,23 @@ const CallLogs: React.FC = () => {
                   ))}
                 </select>
               </td>
+
+
+
+                  
+              {/* follow UP */}
+              <td className="px-6 py-4">
+                <select
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={newRow.followUp}
+                  onChange={(e) => handleNewRowChange('followUp', e.target.value as CallLog['followUp'])}
+                >
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </td> 
+
+              
               <td className="px-6 py-4">
                 <select
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -284,6 +311,13 @@ const CallLogs: React.FC = () => {
                   <option value="Complete">Complete</option>
                 </select>
               </td>
+
+              <td></td>
+      
+
+           
+
+
               <td className="px-6 py-4">
                 <button
                   onClick={addNewRow}
@@ -294,6 +328,15 @@ const CallLogs: React.FC = () => {
                   Add New
                 </button>
               </td>
+
+              {/*Date*/}
+              {/* <td className="px-6 py-4">
+                    {format(new Date(newRow.value), 'yyyy-MM-dd HH:mm:ss')}
+                  </td> */}
+
+             
+
+
             </tr>
             {rows.map((row) => (
               <tr key={row._id} className="hover:bg-gray-50">
@@ -332,6 +375,19 @@ const CallLogs: React.FC = () => {
                     ))}
                   </select>
                 </td>
+               
+              {/* follow UP */}
+              <td className="px-6 py-4">
+                <select
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={row.followUp}
+                  onChange={(e) => handleInputChange(row._id, 'followUp', e.target.value as CallLog['followUp'])}
+                >
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </td> 
+
                 <td className="px-6 py-4">
                   <select
                     className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -343,7 +399,15 @@ const CallLogs: React.FC = () => {
                     <option value="Stuck">Stuck</option>
                     <option value="Complete">Complete</option>
                   </select>
-                </td>
+                 </td>
+
+
+                 <td className="px-6 py-4">
+                    {format(new Date(row.createdAt), 'yyyy-MM-dd HH:mm:ss')}
+                  </td>
+                
+
+              
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
                     <Save className="w-4 h-4 text-gray-400" />
@@ -360,6 +424,10 @@ const CallLogs: React.FC = () => {
 };
 
 export default CallLogs;
+
+
+
+
 
 
 
