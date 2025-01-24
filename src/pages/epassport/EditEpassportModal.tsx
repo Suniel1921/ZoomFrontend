@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
-import SearchableSelect from '../../components/SearchableSelect';
 import { useAdminStore } from '../../store/adminStore';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -150,39 +149,11 @@ export default function EditEpassportModal({
           <div className="space-y-4">
             <h3 className="font-medium border-b pb-2">Client Information</h3>
             <div className="grid grid-cols-2 gap-4">
-              {/* <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Client</label>
-                <SearchableSelect
-                  options={clients.map(client => ({
-                    value: client._id,
-                    label: client.name
-                  }))}
-                  value={watch('clientId')}
-                  onChange={(value) => {
-                    setValue('clientId', value);
-                    const client = clients.find(c => c._id === value);
-                    if (client) {
-                      setValue('mobileNo', client.phone);
-                    }
-                  }}
-                  placeholder="Select client"
-                />
-              </div> */}
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
-                <Input 
-                  value={selectedClient?.phone || ''} 
-                  className="mt-1 bg-gray-50" 
-                  disabled 
-                />
-              </div> */}
-
               <div>
                 <label className="block text-sm font-medium text-gray-700">Contact Channel</label>
                 <select
                   {...register('contactChannel')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Viber">Viber</option>
                   <option value="Facebook">Facebook</option>
@@ -192,7 +163,7 @@ export default function EditEpassportModal({
                 </select>
               </div>
             </div>
-          </div>
+          </div>  
 
           {/* Application Details */}
           <div className="space-y-4">
@@ -202,7 +173,7 @@ export default function EditEpassportModal({
                 <label className="block text-sm font-medium text-gray-700">Application Type</label>
                 <select
                   {...register('applicationType')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Newborn Child">Newborn Child</option>
                   <option value="Passport Renewal">Passport Renewal</option>
@@ -217,7 +188,7 @@ export default function EditEpassportModal({
                 <label className="block text-sm font-medium text-gray-700">Application Status</label>
                 <select
                   {...register('applicationStatus')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Details Pending">Details Pending</option>
                   <option value="Ready to Process">Ready to Process</option>
@@ -231,7 +202,7 @@ export default function EditEpassportModal({
                 <label className="block text-sm font-medium text-gray-700">Data Sent Status</label>
                 <select
                   {...register('dataSentStatus')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Not Sent">Not Sent</option>
                   <option value="Sent">Sent</option>
@@ -248,7 +219,7 @@ export default function EditEpassportModal({
                 {...register("handledBy")}
                 value={watch("handledBy") || application.handledBy} // Ensure the initial value is set
                 onChange={(e) => setValue("handledBy", e.target.value)} // Sync changes with the form
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="">Select handler</option>
                 {handlers.map((handler) => (
@@ -264,7 +235,7 @@ export default function EditEpassportModal({
                 <DatePicker
                   selected={watch('date')}
                   onChange={(date) => setValue('date', date as Date)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                   dateFormat="yyyy-MM-dd"
                 />
               </div>
@@ -274,7 +245,7 @@ export default function EditEpassportModal({
                 <DatePicker
                   selected={watch('deadline')}
                   onChange={(date) => setValue('deadline', date as Date)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                   dateFormat="yyyy-MM-dd"
                 />
               </div>
@@ -302,7 +273,7 @@ export default function EditEpassportModal({
                   <label className="block text-sm font-medium text-gray-700">Prefecture</label>
                   <select
                     {...register('prefecture')}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                   >
                     <option value="">Select prefecture</option>
                     {PREFECTURES.map((prefecture) => (
