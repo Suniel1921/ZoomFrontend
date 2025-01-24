@@ -190,7 +190,7 @@ import { CheckCircle, Clock, XCircle } from 'lucide-react';
 import { useAuthGlobally } from '../../context/AuthContext';
 import { format, isValid } from 'date-fns';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import PreviousTask from './PreviousTask'; // Import PreviousTask
+import PreviousTask from './PreviousTask'; 
 
 const ClientOngoingTask = () => {
   const [clientTasks, setClientTasks] = useState<any>([]);
@@ -282,7 +282,6 @@ const ClientOngoingTask = () => {
     }
   });
 
-  // Render individual ongoing tasks
 // Render individual tasks, including Japan Visit Application
 const renderTasks = (task: any, modelName: string) => {
   const deadline = task.deadline ? new Date(task.deadline) : null;
@@ -293,13 +292,17 @@ const renderTasks = (task: any, modelName: string) => {
     task.status || // Default 'status' field for most models
     task.visaStatus || // Specific for visa models
     task.applicationStatus || // For applications
+    task.translationStatus ||
+    task.jobStatus || 
     'Unknown'; // Fallback status
 
   // Determine task type dynamically
   const taskType =
-    task.reasonForVisit || // Japan Visit Application
-    task.applicationType || // Other applications
+    task.reasonForVisit || 
+    task.applicationType ||
     modelName || 'Unknown Task'; // Fallback to model name
+
+    
 
   return (
     <div key={task._id} className="bg-white rounded-lg overflow-hidden mb-5">

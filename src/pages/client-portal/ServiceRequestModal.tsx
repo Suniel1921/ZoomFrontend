@@ -182,7 +182,8 @@ export default function ServiceRequestModal({
     e.preventDefault();
     setError('');
 
-    if (!message.trim() || !selectedService.trim() || !phoneNumber.trim()) {
+    if (!message.trim() || !selectedService.trim()) {
+    // if (!message.trim() || !selectedService.trim() || !phoneNumber.trim()) {
       setError('Please fill all the required fields.');
       return;
     }
@@ -195,7 +196,7 @@ export default function ServiceRequestModal({
         {
           clientId: auth.user.id,
           clientName: auth?.user?.fullName || '',
-          phoneNumber: phoneNumber.trim(),
+          // phoneNumber: phoneNumber.trim(),
           serviceName: selectedService.trim(),
           message: message.trim(),
         }
@@ -282,7 +283,8 @@ export default function ServiceRequestModal({
             <Button
               type="submit"
               disabled={
-                isSubmitting || !message.trim() || !phoneNumber.trim() || !selectedService.trim()
+                isSubmitting || !message.trim() || !selectedService.trim()
+                // isSubmitting || !message.trim() || !phoneNumber.trim() || !selectedService.trim()
               }
             >
               {isSubmitting ? 'Submitting...' : 'Submit Request'}

@@ -4,7 +4,7 @@ import axios from 'axios';
 import NoteEditor from './NoteEditor';
 import Button from '../Button';
 import Input from '../Input';
-import { Modal } from 'antd';  // Import Modal from Ant Design
+import { Modal } from 'antd';
 import type { NotePriority } from '../../types/note';
 import { useAuthGlobally } from '../../context/AuthContext';
 
@@ -23,9 +23,8 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [auth] = useAuthGlobally();
   const [loading, setLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Track which note is being deleted
-
-
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [editingNote, setEditingNote] = useState<any>(null); // Track the note being edited
 
   const fetchNotes = async () => {
     if (auth?.user?.id && isOpen) {
@@ -55,14 +54,19 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
   });
 
   const handleNewNote = () => {
-    setIsEditorOpen(true);  // Open the NoteEditor modal when the button is clicked
+    setEditingNote(null); // Clear editing note
+    setIsEditorOpen(true); // Open the NoteEditor modal
+  };
+
+  const handleEditNote = (note: any) => {
+    setEditingNote(note); // Set the note to edit
+    setIsEditorOpen(true); // Open the NoteEditor modal
   };
 
   const handleDeleteNote = async (noteId: string) => {
     try {
       await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/deleteNote/${noteId}`);
-      // setNotes(notes.filter(note => note._id !== noteId)); // Remove the note from state
-      fetchNotes();
+      fetchNotes(); // Refresh the notes list
     } catch (error) {
       console.error('Error deleting note:', error);
     } finally {
@@ -163,14 +167,20 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
                       <p className="text-sm text-gray-500 line-clamp-2 mt-1">{note.content}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* <button
-                        onClick={() => handleEditNote(note._id)}
-                        className="text-blue-500 hover:text-blue-700"
-                       >
-                        <Edit className="h-4 w-4" />
-                      </button> */}
                       <button
-                        onClick={() => confirmDeleteNote(note._id)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent note selection
+                          handleEditNote(note);
+                        }}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent note selection
+                          confirmDeleteNote(note._id);
+                        }}
                         className="text-red-500 hover:text-red-700"
                       >
                         <Trash className="h-4 w-4" />
@@ -215,13 +225,15 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
       {/* Note Editor Modal */}
       {isEditorOpen && (
         <NoteEditor
-        onClose={() => setIsEditorOpen(false)}
-        noteId={selectedNote}
-        fetchNotes = {fetchNotes}
+          onClose={() => {
+            setIsEditorOpen(false);
+            setEditingNote(null); // Clear editing note
+          }}
+          noteId={editingNote?._id}
+          fetchNotes={fetchNotes}
+          initialData={editingNote} // Pass the note data to the editor
         />
       )}
-
-
 
       {/* Delete Confirmation Modal */}
       <Modal

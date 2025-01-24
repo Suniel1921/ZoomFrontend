@@ -151,7 +151,7 @@ export default function AddEpassportModal({
           "Epassport application created successfully:",
           response.data
         );
-        toast.success(response.data.message);
+        toast.success(response.data. essage);
         reset();
         onClose();
         getAllEPassportApplication();

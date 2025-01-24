@@ -8,24 +8,23 @@ import ReminderModal from './ReminderModal';
 import SubtaskList from './SubtaskList';
 import PrioritySelect from './PrioritySelect';
 import ReminderList from './ReminderList';
-import axios from 'axios'; // Add Axios for API calls
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 interface NoteEditorProps {
   noteId?: string;
   onClose: () => void;
-  fetchNotes : () => void;
+  fetchNotes: () => void;
+  initialData?: any; // Pass initial data for editing
 }
 
-export default function NoteEditor({ noteId, onClose ,fetchNotes}: NoteEditorProps) {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [priority, setPriority] = useState('medium');
-  const [reminders, setReminders] = useState([]);
-  const [subtasks, setSubtasks] = useState([]);
+export default function NoteEditor({ noteId, onClose, fetchNotes, initialData }: NoteEditorProps) {
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [content, setContent] = useState(initialData?.content || '');
+  const [priority, setPriority] = useState(initialData?.priority || 'medium');
+  const [reminders, setReminders] = useState(initialData?.reminders || []);
+  const [subtasks, setSubtasks] = useState(initialData?.subtasks || []);
   const [showReminderModal, setShowReminderModal] = useState(false);
-
-
 
   const handleAddReminder = (reminderData: {
     date: string;
@@ -36,37 +35,37 @@ export default function NoteEditor({ noteId, onClose ,fetchNotes}: NoteEditorPro
     setReminders([...reminders, reminderData]);
   };
 
-
-  
-  const handleCreateNote = async () => {
+  const handleSaveNote = async () => {
     if (!title.trim() || !content.trim()) {
       toast.error('Title and content are required.');
       return;
     }
-  
-    const newNote = {
+
+    const noteData = {
       title: title.trim(),
       content: content.trim(),
       priority,
       reminders,
       subtasks,
     };
-  
+
     try {
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/createNote`, newNote);
-      if (response.data.success) {
-        fetchNotes();
-        noteId()
+      if (noteId) {
+        // Update existing note
+        await axios.put(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/updateNote/${noteId}`, noteData);
+        toast.success('Note updated successfully');
+      } else {
+        // Create new note
+        await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/createNote`, noteData);
         toast.success('Note created successfully');
       }
-      onClose();
+      fetchNotes(); // Refresh the notes list
+      onClose(); // Close the editor
     } catch (error: any) {
-      console.error('Error creating note:', error.response?.data || error.message);
-      toast.error(error.response?.data?.error || 'Failed to create note.');
+      console.error('Error saving note:', error.response?.data || error.message);
+      toast.error(error.response?.data?.error || 'Failed to save note.');
     }
   };
-  
-  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -146,8 +145,8 @@ export default function NoteEditor({ noteId, onClose ,fetchNotes}: NoteEditorPro
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleCreateNote}>
-            Create Note
+          <Button variant="primary" onClick={handleSaveNote}>
+            {noteId ? 'Update Note' : 'Create Note'}
           </Button>
         </div>
       </div>

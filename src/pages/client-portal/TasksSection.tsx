@@ -1,12 +1,12 @@
 // ***********new code********
 
 import React, { useState } from 'react';
-import ClientOngoingTask from './ClientOngoingTask';  // Import ClientOngoingTask component
-import PreviousTask from './PreviousTask';  // Import PreviousTask component
-import ClientPayment from './ClientPayment';  // Import ClientPayment component
+import ClientOngoingTask from './ClientOngoingTask'; 
+import PreviousTask from './PreviousTask';  
+import ClientPayment from './ClientPayment';  
 
 const TasksSection = () => {
-  const [activeTab, setActiveTab] = useState<string>('ongoingTasks'); // State for active tab
+  const [activeTab, setActiveTab] = useState<string>('ongoingTasks');
 
   // Handle Tab Switch
   const handleTabChange = (tab: string) => {
