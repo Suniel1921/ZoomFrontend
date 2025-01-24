@@ -7,7 +7,8 @@ import {
   FileText, 
   Database,
   Activity, 
-  ClipboardEditIcon
+  ClipboardEditIcon,
+  AmpersandIcon
 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import ProfileSettings from './ProfileSettings';
@@ -41,7 +42,7 @@ export default function SettingsPage() {
       { id: 'profile', label: 'Profile', icon: User },
       { id: 'notifications', label: 'Notifications', icon: Bell },
       { id: 'security', label: 'Security', icon: Shield },
-      { id: 'admins', label: 'Admin Management', icon: Shield },
+      { id: 'admins', label: 'Admin Management', icon: User },
       { id: 'templates', label: 'Process Templates', icon: FileText },
       { id: 'Create_Super_Admin', label: 'Create Super Admin', icon: ClipboardEditIcon },
       { id: 'backup', label: 'Backup & Restore', icon: Database },

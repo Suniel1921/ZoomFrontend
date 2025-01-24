@@ -1,24 +1,17 @@
 import { useState, useEffect } from "react";
-import {
-  Shield,
-  Download,
-  Filter,
-  Calendar,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { Download, Filter, Trash2 } from "lucide-react";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
-import { AuditAction, AuditLog, UserType } from "../../store/auditLogStore";
 
-const ACTION_TYPES: AuditAction[] = [
+// Define action types and user types
+const ACTION_TYPES = [
   "login",
   "logout",
-  "create",  
-  "update",   
+  "create",
+  "update",
   "delete",
   "import",
   "export",
@@ -26,24 +19,36 @@ const ACTION_TYPES: AuditAction[] = [
   "failed_login",
 ];
 
-const USER_TYPES: UserType[] = ["super_admin", "admin", "client"];
+const USER_TYPES = ["super_admin", "admin", "client"];
+
+// Define labels for actions
+const actionLabels = {
+  login: "Login",
+  logout: "Logout",
+  create: "Create",
+  update: "Update",
+  delete: "Delete",
+  import: "Import",
+  export: "Export",
+  view: "View",
+  failed_login: "Failed Login",
+};
 
 export default function AuditLogSettings() {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [logs, setLogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedActions, setSelectedActions] = useState<AuditAction[]>([]);
-  const [selectedUserTypes, setSelectedUserTypes] = useState<UserType[]>([]);
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+  const [selectedActions, setSelectedActions] = useState([]);
+  const [selectedUserTypes, setSelectedUserTypes] = useState([]);
+  const [dateRange, setDateRange] = useState([null, null]);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch logs when component is mounted
+  // Fetch logs when the component is mounted
   useEffect(() => {
     const fetchLogs = async () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/logs/get-audit-log`
         );
-        console.log(response.data); // Check the response
         if (response.data.logs && Array.isArray(response.data.logs)) {
           setLogs(response.data.logs);
         } else {
@@ -57,6 +62,7 @@ export default function AuditLogSettings() {
     fetchLogs();
   }, []);
 
+  // Filter logs based on search query, date range, actions, and user types
   const filteredLogs = logs
     .filter((log) => {
       // Apply date range filter
@@ -76,8 +82,7 @@ export default function AuditLogSettings() {
         const searchLower = searchQuery.toLowerCase();
         return (
           log.userName.toLowerCase().includes(searchLower) ||
-          // log.resource.toLowerCase().includes(searchLower) ||
-          log.details.toLowerCase().includes(searchLower) // No decryption here
+          log.details.toLowerCase().includes(searchLower)
         );
       }
 
@@ -87,6 +92,7 @@ export default function AuditLogSettings() {
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     });
 
+  // Handle CSV export
   const handleExport = async () => {
     try {
       const response = await axios.get(
@@ -112,6 +118,7 @@ export default function AuditLogSettings() {
     }
   };
 
+  // Handle clearing all logs
   const handleClearLogs = async () => {
     if (
       window.confirm(
@@ -127,18 +134,6 @@ export default function AuditLogSettings() {
         console.error("Error clearing logs:", error);
       }
     }
-  };
-
-  const actionLabels = {
-    login: "Login",
-    logout: "Logout",
-    create: "Create",   
-    update: "Update",   
-    delete: "Delete",
-    import: "Import",
-    export: "Export",
-    view: "View",
-    failed_login: "Failed Login",
   };
 
   return (
@@ -173,6 +168,7 @@ export default function AuditLogSettings() {
       {showFilters && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Date Range Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Date Range
@@ -200,6 +196,7 @@ export default function AuditLogSettings() {
               </div>
             </div>
 
+            {/* Search Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Search
@@ -234,7 +231,7 @@ export default function AuditLogSettings() {
                       }}
                     />
                     <label htmlFor={`action-${action}`} className="ml-2">
-                      {actionLabels[action]} {/* Ensure this renders properly */}
+                      {actionLabels[action]}
                     </label>
                   </div>
                 ))}
@@ -302,7 +299,7 @@ export default function AuditLogSettings() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
+                  <tr key={log._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(log.timestamp).toLocaleString()}
                     </td>
@@ -322,18 +319,14 @@ export default function AuditLogSettings() {
                             : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
-                        {actionLabels[log.action] ||
-                          log.action.charAt(0).toUpperCase() +
-                            log.action.slice(1)}
+                        {actionLabels[log.action] || log.action}
                       </span>
                     </td>
-                    
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {typeof log.details === "object"
                         ? JSON.stringify(log.details)
                         : log.details}
                     </td>
-
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {log.ipAddress}
                     </td>

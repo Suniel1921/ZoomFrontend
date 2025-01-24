@@ -386,8 +386,6 @@
 
 
 
-
-
 import { useState, useEffect } from 'react';
 import { Users, Plus, Shield, Trash2, Edit } from 'lucide-react';
 import Button from '../../components/Button';
@@ -437,7 +435,7 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium leading-6 text-gray-900">Admin Management</h3>
+        <h3 className="text-lg font-medium leading-6 text-gray-900">Admins Management</h3>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Admin
