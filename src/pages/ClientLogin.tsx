@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Lock, Mail, Eye, EyeOff, Zap } from "lucide-react";
-import axios from "axios"; 
+import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuthGlobally } from '../context/AuthContext';
 import CreateClientAccountModal from "./components/CreateClientAccountModal";
@@ -16,6 +16,20 @@ export default function ClientLogin() {
   const [auth, setAuthGlobally] = useAuthGlobally();
   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Check if the user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Redirect based on the user's role
+      const user = JSON.parse(token).user;
+      if (user.role === 'admin' || user.role === 'superadmin') {
+        navigate('/dashboard');
+      } else {
+        navigate('/client-portal');
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -144,8 +158,6 @@ export default function ClientLogin() {
     </div>
   );
 }
-
-
 
 
 

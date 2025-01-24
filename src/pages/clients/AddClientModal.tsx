@@ -20,14 +20,14 @@
 //   "Student Visa Applicant",
 //   "Epassport Applicant",
 //   "Japan Visa",
-//   "General Consultation",
+//   "Other Services",
 // ];
 
 // const optionalCategories: ClientCategory[] = [
 //   "Document Translation",
 //   "Epassport Applicant",
 //   "Japan Visa",
-//   "General Consultation",
+//   "Other Services",
 // ];
 
 // interface AddClientModalProps {
@@ -50,7 +50,7 @@
 //     null
 //   );
 //   const [selectedCategory, setSelectedCategory] = useState<ClientCategory>(
-//     "General Consultation"
+//     "Other Services"
 //   );
 
 //   const {
@@ -596,6 +596,12 @@
 
 
 
+
+// *******************change genratl consulation to other services*******************
+
+
+
+
 import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -618,14 +624,16 @@ const categories: ClientCategory[] = [
   "Student Visa Applicant",
   "Epassport Applicant",
   "Japan Visa",
-  "General Consultation",
+  "Other Services",
+  // "Graphic Desing",
 ];
 
 const optionalCategories: ClientCategory[] = [
   "Document Translation",
   "Epassport Applicant",
   "Japan Visa",
-  "General Consultation",
+  "Other Services",
+  // "Graphic Desing",
 ];
 
 interface AddClientModalProps {
@@ -648,7 +656,7 @@ export default function AddClientModal({
     null
   );
   const [selectedCategory, setSelectedCategory] = useState<ClientCategory>(
-    "General Consultation"
+    "Other Services"
   );
 
   const {
