@@ -299,10 +299,10 @@ export default function ReportsPage() {
       <SalesReport onTotalSalesUpdate={handleTotalSalesUpdate} />
 
       {/* Service Requests */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Recent Service Requests</h2>
         <ServiceRequestsList itemsPerPage={2} requests={serviceRequested} />
-      </div>
+      </div> */}
     </div>
   );
 }

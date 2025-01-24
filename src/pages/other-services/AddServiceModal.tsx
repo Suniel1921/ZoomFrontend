@@ -218,7 +218,7 @@ export default function AddServiceModal({
               <DatePicker
                 selected={watch('deadline')}
                 onChange={(date) => setValue('deadline', date as Date)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 dateFormat="yyyy-MM-dd"
               />
             </div>
@@ -228,7 +228,7 @@ export default function AddServiceModal({
               <label className="block text-sm font-medium text-gray-700">Handled By</label>
               <select
                 {...register('handledBy')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="">Select handler</option>
                 {handlers.map((handler) => (

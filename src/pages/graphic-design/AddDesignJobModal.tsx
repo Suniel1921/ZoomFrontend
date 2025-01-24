@@ -216,7 +216,7 @@ export default function AddDesignJobModal({
   <label className="block text-sm font-medium text-gray-700">Design Type</label>
   <select
     {...register('designType', { required: 'Design type is required' })}
-    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
   >
     <option value="">Select Design Type</option>
     {DESIGN_TYPES.map((designType) => (

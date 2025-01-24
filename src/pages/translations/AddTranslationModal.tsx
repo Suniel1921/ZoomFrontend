@@ -161,7 +161,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
               <label className="block text-sm font-medium text-gray-700">From</label>
               <select
                 {...register('sourceLanguage')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="English">English</option>
                 <option value="Japanese">Japanese</option>
@@ -174,7 +174,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
               <label className="block text-sm font-medium text-gray-700">To</label>
               <select
                 {...register('targetLanguage')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="Japanese">Japanese</option>
                 <option value="English">English</option>
@@ -236,7 +236,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
                   register('paymentStatus').onChange(e);
                   setShowPaymentMethod(e.target.value === 'Paid');
                 }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="Due">Due</option>
                 <option value="Paid">Paid</option>
@@ -248,7 +248,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
                 <label className="block text-sm font-medium text-gray-700">Payment Method</label>
                 <select
                   {...register('paymentMethod')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Counter Cash">Counter Cash</option>
                   <option value="Bank Transfer">Bank Transfer</option>
@@ -265,7 +265,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
                 <label className="block text-sm font-medium text-gray-700">Handled By</label>
                 <select
                   {...register('handledBy', { required: 'This field is required' })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="">Select handler</option>
                   {handlers.map((handler) => (
@@ -284,7 +284,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
               <DatePicker
                 selected={watch('deadline')}
                 onChange={(date: Date) => setValue('deadline', date)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               />
             </div>
 
@@ -292,7 +292,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
               <label className="block text-sm font-medium text-gray-700">Translation Status</label>
               <select
                 {...register('translationStatus')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="Not Started">Not Started</option>
                 <option value="Processing">Processing</option>
@@ -305,7 +305,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
               <label className="block text-sm font-medium text-gray-700">Delivery Type</label>
               <select
                 {...register('deliveryType')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="Office Pickup">Office Pickup</option>
                 <option value="Sent on Email">Sent on Email</option>
