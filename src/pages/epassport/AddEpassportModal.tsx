@@ -209,7 +209,7 @@ export default function AddEpassportModal({
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Mobile No
                 </label>
@@ -218,7 +218,7 @@ export default function AddEpassportModal({
                   className="mt-1 bg-gray-50"
                   disabled
                 />
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -226,8 +226,9 @@ export default function AddEpassportModal({
                 </label>
                 <select
                   {...register("contactChannel")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
-                >
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
+                  // className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                 >
                   <option value="Viber">Viber</option>
                   <option value="Facebook">Facebook</option>
                   <option value="WhatsApp">WhatsApp</option>
@@ -248,7 +249,7 @@ export default function AddEpassportModal({
                 </label>
                 <select
                   {...register("applicationType")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Newborn Child">Newborn Child</option>
                   <option value="Passport Renewal">Passport Renewal</option>
@@ -268,7 +269,7 @@ export default function AddEpassportModal({
                   {...register("handledBy", {
                     required: "This field is required",
                   })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow p-2 mb-4"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                  >
                   <option value="">Select handler</option>
                   {handlers.map((handler) => (
@@ -290,7 +291,7 @@ export default function AddEpassportModal({
                 </label>
                 <select
                   {...register("applicationStatus")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Details Pending">Details Pending</option>
                   <option value="Ready to Process">Ready to Process</option>
@@ -306,7 +307,7 @@ export default function AddEpassportModal({
                 </label>
                 <select
                   {...register("dataSentStatus")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Not Sent">Not Sent</option>
                   <option value="Sent">Sent</option>
@@ -320,7 +321,7 @@ export default function AddEpassportModal({
                 <DatePicker
                   selected={watch("date")}
                   onChange={(date) => setValue("date", date as Date)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                   dateFormat="yyyy-MM-dd"
                 />
               </div>
@@ -332,7 +333,7 @@ export default function AddEpassportModal({
                 <DatePicker
                   selected={watch("deadline")}
                   onChange={(date) => setValue("deadline", date as Date)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                   dateFormat="yyyy-MM-dd"
                 />
               </div>
@@ -362,7 +363,7 @@ export default function AddEpassportModal({
                   </label>
                   <select
                     {...register("prefecture")}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                   >
                     <option value="">Select prefecture</option>
                     {PREFECTURES.map((prefecture) => (
@@ -435,7 +436,7 @@ export default function AddEpassportModal({
                 </label>
                 <select
                   {...register("paymentStatus")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Due">Due</option>
                   <option value="Paid">Paid</option>
@@ -448,7 +449,7 @@ export default function AddEpassportModal({
                 </label>
                 <select
                   {...register("paymentMethod")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Bank Furicomy">Bank Furicomy</option>
                   <option value="Counter Cash">Counter Cash</option>
@@ -462,7 +463,7 @@ export default function AddEpassportModal({
 
           {/* Notes */}
           <div className="space-y-4">
-            <h3 className="font-medium border-b pb-2">Notes</h3>
+            <h3 className="font-medium border-b pb-3">Notes</h3>
             <div>
               <textarea
                 {...register("remarks")}
