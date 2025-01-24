@@ -557,12 +557,12 @@
 
 
 
-
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Loader2, Trash2, Download, AlertCircle, FileText } from 'lucide-react';
+import { PlusCircle, Loader2, Trash2, Download, AlertCircle, FileText, PhoneCall, Search } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import Input from '../../components/Input';
 
 interface CallLog {
     _id: string;
@@ -609,6 +609,7 @@ const CallLogs: React.FC = () => {
     const [selectedCallLog, setSelectedCallLog] = useState<CallLog | null>(null);
     const [notesInput, setNotesInput] = useState<string>('');
     const rowsPerPage = 20;
+    const [searchQuery, setSearchQuery] = useState("");
 
     const fetchCallLogs = async () => {
         try {
@@ -879,9 +880,20 @@ const CallLogs: React.FC = () => {
         }
     };
 
+    const filterRows = (rows: CallLog[], query: string) => {
+        if (!query) return rows;
+
+        return rows.filter((row) =>
+            Object.values(row).some((value) =>
+                String(value).toLowerCase().includes(query.toLowerCase())
+            )
+        );
+    };
+
+    const filteredRows = filterRows(rows, searchQuery);
     const indexOfLastRow = currentPage * rowsPerPage;
     const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-    const currentRows = rows.slice(indexOfFirstRow, indexOfLastRow);
+    const currentRows = filteredRows.slice(indexOfFirstRow, indexOfLastRow);
 
     const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -943,22 +955,40 @@ const CallLogs: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="sm:flex sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Call Logs</h1>
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={handleExport}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-[#fedc00] hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                    >
-                        <Download className="w-4 h-4 mr-2" />
-                        Export
-                    </button>
-                    {loading && (
-                        <div className="flex items-center text-gray-500">
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Processing...
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <PhoneCall className="h-6 w-6 text-gray-400" />
+                        <h1 className="text-xl font-semibold text-gray-900">
+                            Call Logs
+                        </h1>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                                type="search"
+                                placeholder="Search designs..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10"
+                            />
                         </div>
-                    )}
+                        <button
+                            onClick={handleExport}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-[#fedc00] hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Export
+                        </button>
+                        {loading && (
+                            <div className="flex items-center text-gray-500">
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Processing...
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -987,7 +1017,7 @@ const CallLogs: React.FC = () => {
                         <tr className="bg-gray-50">
                             <td className="px-6 py-4">
                                 <input
-                                    className="w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
+                                    className="w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
                                     value={newRow.name}
                                     onChange={(e) => handleNewRowChange('name', e.target.value)}
                                     placeholder="Name"
@@ -996,7 +1026,7 @@ const CallLogs: React.FC = () => {
                             <td className="px-6 py-4">
                                 <div className="space-y-1">
                                     <input
-                                        className={`w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:ring-blue-500 bg-white transition duration-200 ease-in-out ${
+                                        className={`w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:ring-blue-500 bg-white transition duration-200 ease-in-out ${
                                             phoneError ? 'border-red-500 focus:border-red-500' : 'focus:border-blue-500'
                                         }`}
                                         value={newRow.phone}
@@ -1011,7 +1041,7 @@ const CallLogs: React.FC = () => {
                             </td>
                             <td className="px-6 py-4">
                                 <input
-                                    className="w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
+                                    className="w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
                                     value={newRow.purpose}
                                     onChange={(e) => handleNewRowChange('purpose', e.target.value)}
                                     placeholder="Purpose"
@@ -1019,7 +1049,7 @@ const CallLogs: React.FC = () => {
                             </td>
                             <td className="px-6 py-4">
                                 <select
-                                    className="w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
+                                    className="w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
                                     value={newRow.handler}
                                     onChange={(e) => handleNewRowChange('handler', e.target.value)}
                                 >
@@ -1033,7 +1063,7 @@ const CallLogs: React.FC = () => {
                             </td>
                             <td className="px-6 py-4">
                                 <select
-                                    className={`w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${getFollowUpColor(newRow.followUp)} transition duration-200 ease-in-out`}
+                                    className={`w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${getFollowUpColor(newRow.followUp)} transition duration-200 ease-in-out`}
                                     value={newRow.followUp}
                                     onChange={(e) => handleNewRowChange('followUp', e.target.value as CallLog['followUp'])}
                                 >
@@ -1043,7 +1073,7 @@ const CallLogs: React.FC = () => {
                             </td>
                             <td className="px-6 py-4">
                                 <select
-                                    className={`w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${getRemarksColor(newRow.remarks)} transition duration-200 ease-in-out`}
+                                    className={`w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${getRemarksColor(newRow.remarks)} transition duration-200 ease-in-out`}
                                     value={newRow.remarks}
                                     onChange={(e) => handleNewRowChange('remarks', e.target.value as CallLog['remarks'])}
                                 >
@@ -1069,14 +1099,14 @@ const CallLogs: React.FC = () => {
                             <tr key={row._id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4">
                                     <input
-                                        className="w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
+                                        className="w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
                                         value={row.name}
                                         onChange={(e) => handleInputChange(row._id, 'name', e.target.value)}
                                     />
                                 </td>
                                 <td className="px-6 py-4">
                                     <input
-                                        className="w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
+                                        className="w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
                                         value={row.phone}
                                         onChange={(e) => handlePhoneChange(e.target.value, row._id)}
                                         type="tel"
@@ -1084,14 +1114,14 @@ const CallLogs: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <input
-                                        className="w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
+                                        className="w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
                                         value={row.purpose}
                                         onChange={(e) => handleInputChange(row._id, 'purpose', e.target.value)}
                                     />
                                 </td>
                                 <td className="px-6 py-4">
                                     <select
-                                        className="w-full h-10 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
+                                        className="w-full h-9 px-3 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white transition duration-200 ease-in-out"
                                         value={row.handler}
                                         onChange={(e) => handleInputChange(row._id, 'handler', e.target.value)}
                                     >
@@ -1150,10 +1180,10 @@ const CallLogs: React.FC = () => {
             </div>
 
             {/* Conditional Pagination */}
-            {rows.length > rowsPerPage && (
+            {filteredRows.length > rowsPerPage && (
                 <div className="flex justify-center mt-6">
                     <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        {Array.from({ length: Math.ceil(rows.length / rowsPerPage) }, (_, i) => i + 1).map((pageNumber) => (
+                        {Array.from({ length: Math.ceil(filteredRows.length / rowsPerPage) }, (_, i) => i + 1).map((pageNumber) => (
                             <button
                                 key={pageNumber}
                                 onClick={() => paginate(pageNumber)}
