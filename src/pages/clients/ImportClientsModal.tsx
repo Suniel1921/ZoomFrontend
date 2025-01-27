@@ -40,32 +40,34 @@ export default function ImportClientsModal({ isOpen, onClose,getAllClients }: { 
   const handleFileUpload = async (e) => {
     e.preventDefault();
     const file = e.target.files[0];
-
+  
     if (!file) {
       return toast.error('Please select a file');
     }
-
+  
     const formData = new FormData();
     formData.append('csvFile', file);
-
+  
     try {
-      setLoading(true);  // Show loading spinner
+      setLoading(true); // Show loading spinner
       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`, formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          withCredentials: true, // Include credentials (cookies, auth headers)
+        }
       );
-      getAllClients();
-      toast.success('CSV data imported successfully');
-      // Parse file based on file type (CSV or Excel)
-      if (file.name.endsWith('.csv')) {
-        handleParseCSV(file);
-      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        handleParseExcel(file);
+      if(response.data.success){
+        getAllClients();
+        toast.success('CSV data imported successfully');
       }
+
     } catch (err) {
       console.error('Error uploading CSV:', err);
       toast.error('Error importing CSV data');
     } finally {
-      setLoading(false);  // Hide loading spinner
+      setLoading(false); // Hide loading spinner
     }
   };
 
@@ -124,3 +126,8 @@ export default function ImportClientsModal({ isOpen, onClose,getAllClients }: { 
     </div>
   );
 }
+
+
+
+
+

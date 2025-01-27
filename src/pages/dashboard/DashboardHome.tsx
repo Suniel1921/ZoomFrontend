@@ -1,6 +1,5 @@
 // ********add new responsiveness**********
 
-
 import { useEffect, useState } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -17,7 +16,6 @@ import ServiceRequestsList from './components/ServiceRequestsList';
 import { useAuthGlobally } from '../../context/AuthContext';
 import axios from 'axios'; 
 import toast from 'react-hot-toast';
-import io from 'socket.io-client';
 
 export default function DashboardHome() {
   const navigate = useNavigate();
@@ -27,7 +25,6 @@ export default function DashboardHome() {
   const [appointments, setAppointments] = useState([]); 
   const [serviceRequested, setServiceRequested] = useState([]); 
   const [superAdminName, setSuperAdminName] = useState([]);
-  const socket = io(import.meta.env.VITE_REACT_APP_URL); // Initialize WebSocket connection
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -88,16 +85,6 @@ export default function DashboardHome() {
     fetchAppointments();
     fetchServiceRequested();
     fetchSuperAdminName();
-
-       // WebSocket event listener for new service request
-       socket.on('newServiceRequest', (newRequest) => {
-        setServiceRequested((prevRequests) => [newRequest, ...prevRequests]); // Add the new request
-        new Audio('/notification.mp3').play(); // Play notification sound when a new request comes in
-      });
-  
-      return () => {
-        socket.off('newServiceRequest'); // Cleanup on component unmount
-      };
 
   }, [auth.user.id]); 
 
@@ -232,13 +219,6 @@ export default function DashboardHome() {
     </div>
   );
 }
-
-
-
-
-
-
-
 
 
 
