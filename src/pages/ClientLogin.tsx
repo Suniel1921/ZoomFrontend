@@ -17,20 +17,51 @@ export default function ClientLogin() {
   const [auth, setAuthGlobally] = useAuthGlobally();
   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Check if the user is already logged in
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Redirect based on the user's role
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   if (token) {
+  //     // Redirect based on the user's role
+  //     const user = JSON.parse(token).user;
+  //     if (user.role === 'admin' || user.role === 'superadmin') {
+  //       navigate('/dashboard');
+  //     } else {
+  //       navigate('/client-portal');
+  //     }
+  //   }
+  // }, [navigate]);
+
+
+
+
+
+
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
       const user = JSON.parse(token).user;
       if (user.role === 'admin' || user.role === 'superadmin') {
         navigate('/dashboard');
       } else {
         navigate('/client-portal');
       }
+    } catch (err) {
+      console.error("Error parsing token:", err);
     }
-  }, [navigate]);
+  }
+  setIsCheckingAuth(false); // Ensure the page is rendered once the check is complete
+}, [navigate]);
+
+if (isCheckingAuth) {
+  return <div>Loading...</div>; // Render a loading spinner or similar UI
+}
+
+
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -176,6 +207,7 @@ export default function ClientLogin() {
 
 
 
+        
 
 
 

@@ -55,6 +55,7 @@ import OtherServicesPage from './other-services';
 import AccountsPage from './accounts';
 import Layout from '../components/Layout';
 import CallLogs from './callLogs/CallLogs';
+import Campaign from './campaign/Campaign';
 
 export default function Dashboard() {
   return (
@@ -73,6 +74,7 @@ export default function Dashboard() {
         <Route path="other-services/*" element={<OtherServicesPage />} />
         <Route path="accounts/*" element={<AccountsPage />} />
         <Route path="call-logs/*" element={<CallLogs />} />
+        <Route path="campaign/*" element={<Campaign />} />
       </Routes>
     </Layout>
   );
