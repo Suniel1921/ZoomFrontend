@@ -217,6 +217,8 @@ import {
   Search as SearchIcon,
   ReceiptPoundSterlingIcon,
   PhoneCall,
+  Axis3D,
+  ArrowDownLeftSquare,
 } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 import NotesPanel from './notes/NotesPanel';
@@ -246,6 +248,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: Calendar, label: 'Appointments', path: '/dashboard/appointment' },
         { icon: ReceiptPoundSterlingIcon, label: 'Reports', path: '/dashboard/reports' },
         { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
+        { icon: ArrowDownLeftSquare, label: 'Campaign', path: '/dashboard/campaign' },
         ]
       : [
           { icon: Users, label: 'Clients', path: '/dashboard/clients' },

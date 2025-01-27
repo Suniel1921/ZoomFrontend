@@ -557,6 +557,9 @@
 
 
 
+
+
+
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Loader2, Trash2, Download, AlertCircle, FileText, PhoneCall, Search } from 'lucide-react';
 import axios from 'axios';
@@ -1233,3 +1236,11 @@ const CallLogs: React.FC = () => {
 };
 
 export default CallLogs;
+
+
+
+
+
+
+
+
