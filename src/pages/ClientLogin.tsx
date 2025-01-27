@@ -11,6 +11,7 @@ export default function ClientLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // New loading state
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [auth, setAuthGlobally] = useAuthGlobally();
@@ -34,6 +35,7 @@ export default function ClientLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true); // Set loading to true when the request starts
 
     try {
       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/auth/login`, { email, password });
@@ -53,6 +55,8 @@ export default function ClientLogin() {
       if (error.response) {
         toast.error(error.response.data.message);
       }
+    } finally {
+      setIsLoading(false); // Set loading to false when the request completes
     }
   };
 
@@ -124,9 +128,20 @@ export default function ClientLogin() {
 
             <button
               type="submit"
-              className="w-full bg-black text-yellow-400 py-3 px-4 rounded-lg font-medium hover:bg-gray-900 transition-colors duration-200"
+              className="w-full bg-black text-yellow-400 py-3 px-4 rounded-lg font-medium hover:bg-gray-900 transition-colors duration-200 flex justify-center items-center"
+              disabled={isLoading} // Disable the button when loading
             >
-              Sign In
+              {isLoading ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin h-5 w-5 mr-3 text-yellow-400" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </button>
 
             <p className="text-center text-sm text-gray-600">
