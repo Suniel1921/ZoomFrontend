@@ -129,7 +129,7 @@ const Campaign = () => {
           <button
             onClick={handleSendEmail}
             disabled={isLoading}
-            className="px-4 py-2 mt-9 bg-[#fedc00] text-black rounded-md hover:bg-[#f0d000] flex items-center justify-center"
+            className="px-4 py-2 mt-64 bg-[#fedc00] text-black rounded-md hover:bg-[#f0d000] flex items-center justify-center"
           >
             {isLoading ? (
               <>
