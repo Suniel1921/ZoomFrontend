@@ -1,56 +1,55 @@
-
-// ***********Note: data import from csv file without modal ***************
-
-import { useState, useRef } from "react"
-import { X, Upload } from "lucide-react"
-import Button from "../../components/Button"
-import axios from "axios"
-import Papa from "papaparse"
-import * as XLSX from "xlsx"
-import toast from "react-hot-toast"
+import { useState, useRef } from "react";
+import { X, Upload } from "lucide-react";
+import Button from "../../components/Button";
+import axios from "axios";
+import Papa from "papaparse";
+import toast from "react-hot-toast";
 
 export default function ImportClientsModal({
   isOpen,
   onClose,
   getAllClients,
 }: { isOpen: boolean; onClose: () => void; getAllClients: () => void }) {
-  const [loading, setLoading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    const file = e.target.files?.[0]
-
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+  
     if (!file) {
-      return toast.error("Please select a file")
+      return toast.error("Please select a file");
     }
-
-    const formData = new FormData()
-    formData.append("csvFile", file)
-
+  
     try {
-      setLoading(true)
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
+      Papa.parse(file, {
+        complete: async (results) => {
+          const csvData = results.data.map(row => row.join(',')).join('\n');
+          console.log("CSV Data:", csvData); // Debugging
+  
+          const response = await axios.post(
+            `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`,
+            { csvData },
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+              withCredentials: true,
+            }
+          );
+  
+          if (response.data.success) {
+            toast.success("CSV data imported successfully");
+          }
         },
-        withCredentials: true,
-      })
-
-      if (response.data.success) {
-        getAllClients()
-        toast.success("CSV data imported successfully")
-        onClose()
-      }
+        header: false,
+      });
     } catch (err) {
-      console.error("Error uploading CSV:", err)
-      toast.error("Error importing CSV data")
-    } finally {
-      setLoading(false)
+      console.error("Error uploading CSV:", err);
+      toast.error("Error importing CSV data");
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -82,6 +81,5 @@ export default function ImportClientsModal({
         </div>
       </div>
     </div>
-  )
+  );
 }
-
