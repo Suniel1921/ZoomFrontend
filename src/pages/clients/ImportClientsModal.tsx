@@ -38,6 +38,7 @@ export default function ImportClientsModal({
           );
   
           if (response.data.success) {
+            getAllClients();
             toast.success("CSV data imported successfully");
           }
         },
