@@ -12,6 +12,7 @@ const Campaign = () => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [pastCampaigns, setPastCampaigns] = useState([]);
 
   useEffect(() => {
     // Fetch categories from the backend
@@ -46,6 +47,8 @@ const Campaign = () => {
       );
 
       toast.success(response.data.message);
+      // Add the sent campaign to the past campaigns list
+      setPastCampaigns([...pastCampaigns, { category: selectedCategory, subject, message, date: new Date().toLocaleString() }]);
       // Clear the form after successful submission
       setSelectedCategory('');
       setSubject('');
@@ -118,7 +121,7 @@ const Campaign = () => {
                 ],
               }}
               placeholder="Write your email message here..."
-              className="bg-white rounded-md"
+              className="bg-white rounded-md h-64"
             />
           </div>
 
@@ -126,7 +129,7 @@ const Campaign = () => {
           <button
             onClick={handleSendEmail}
             disabled={isLoading}
-            className="px-4 py-2 bg-[#fedc00] text-black rounded-md hover:bg-[#f0d000] flex items-center justify-center"
+            className="px-4 py-2 mt-9 bg-[#fedc00] text-black rounded-md hover:bg-[#f0d000] flex items-center justify-center"
           >
             {isLoading ? (
               <>
@@ -138,6 +141,25 @@ const Campaign = () => {
             )}
           </button>
         </div>
+      </div>
+
+      {/* Past Campaigns Section */}
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Past Campaigns</h2>
+        {pastCampaigns.length > 0 ? (
+          <div className="space-y-4">
+            {pastCampaigns.map((campaign, index) => (
+              <div key={index} className="border-b border-gray-200 pb-4">
+                <div className="text-sm text-gray-500">{campaign.date}</div>
+                <div className="font-semibold text-gray-900">{campaign.subject}</div>
+                <div className="text-sm text-gray-700">{campaign.category}</div>
+                <div className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: campaign.message }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">No past campaigns to display.</div>
+        )}
       </div>
     </div>
   );

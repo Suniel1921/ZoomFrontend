@@ -1,64 +1,56 @@
-import { useState, useRef } from "react";
-import { X, Upload } from "lucide-react";
-import Button from "../../components/Button";
-import axios from "axios";
-import toast from "react-hot-toast";
+
+// ***********Note: data import from csv file without modal ***************
+
+import { useState, useRef } from "react"
+import { X, Upload } from "lucide-react"
+import Button from "../../components/Button"
+import axios from "axios"
+import Papa from "papaparse"
+import * as XLSX from "xlsx"
+import toast from "react-hot-toast"
 
 export default function ImportClientsModal({
   isOpen,
   onClose,
   getAllClients,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  getAllClients: () => void;
-}) {
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+}: { isOpen: boolean; onClose: () => void; getAllClients: () => void }) {
+  const [loading, setLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const file = e.target.files?.[0];
+    e.preventDefault()
+    const file = e.target.files?.[0]
 
     if (!file) {
-      return toast.error("Please select a file");
+      return toast.error("Please select a file")
     }
 
-    const formData = new FormData();
-    formData.append("csvFile", file);
+    const formData = new FormData()
+    formData.append("csvFile", file)
 
     try {
-      setLoading(true);
-      // Show loading toast and store its ID
-      const toastId = toast.loading("Please wait, CSV file is uploading...");
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        }
-      );
+      setLoading(true)
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      })
 
       if (response.data.success) {
-        getAllClients();
-        // Update the toast to show success message
-        toast.success("CSV data imported successfully", { id: toastId });
-        onClose();
+        getAllClients()
+        toast.success("CSV data imported successfully")
+        onClose()
       }
     } catch (err) {
-      console.error("Error uploading CSV:", err);
-      // Update the toast to show error message
-      toast.error("Error importing CSV data", { id: toastId });
+      console.error("Error uploading CSV:", err)
+      toast.error("Error importing CSV data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -90,5 +82,6 @@ export default function ImportClientsModal({
         </div>
       </div>
     </div>
-  );
+  )
 }
+
