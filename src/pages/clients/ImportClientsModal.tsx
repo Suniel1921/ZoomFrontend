@@ -24,7 +24,7 @@ export default function ImportClientsModal({
       Papa.parse(file, {
         complete: async (results) => {
           const csvData = results.data.map(row => row.join(',')).join('\n');
-          // console.log("CSV Data:", csvData); // Debugging
+          console.log("CSV Data:", csvData); // Debugging
   
           const response = await axios.post(
             `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`,
