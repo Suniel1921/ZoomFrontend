@@ -207,6 +207,8 @@ if (isCheckingAuth) {
 
 
 
+
+//optimze the code in this code sometime its trying to redirect on /dashbaord page and its automatice blinking 
         
 
 
