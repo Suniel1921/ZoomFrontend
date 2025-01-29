@@ -384,6 +384,7 @@
 
 
 
+
 //add pagination
 import { useState, useMemo, useEffect } from "react";
 import {
@@ -412,8 +413,8 @@ import { useAuthGlobally } from "../../context/AuthContext";
 
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState< ClientCategory | "all" >("all");
-  const [selectedStatus, setSelectedStatus] = useState< "all" | "active" | "inactive" >("all");
+  const [selectedCategory, setSelectedCategory] = useState<ClientCategory | "all">("all");
+  const [selectedStatus, setSelectedStatus] = useState<"all" | "active" | "inactive">("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -423,6 +424,7 @@ export default function ClientsPage() {
   const [error, setError] = useState<string | null>(null);
   const [auth] = useAuthGlobally();
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const clientsPerPage = 20;
 
   const categories: ClientCategory[] = [
@@ -435,16 +437,21 @@ export default function ClientsPage() {
     "General Consultation",
   ];
 
-  const getAllClients = async () => {
+  const getAllClients = async (page: number = 1) => {
     try {
+      setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`,
+        {
+          params: {
+            page,
+            limit: clientsPerPage,
+          },
+        }
       );
-      console.log("client data is ", response);
       if (response.data.success) {
         setClients(response.data.clients);
-        console.log("client data is", response);
-        // toast.success('client fetched successfully');
+        setTotalPages(response.data.pagination.totalPages);
       } else {
         throw new Error("Unexpected response format");
       }
@@ -453,12 +460,14 @@ export default function ClientsPage() {
         toast.error(error.response.data.message);
         setError("Failed to fetch clients.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    getAllClients();
-  }, []);
+    getAllClients(currentPage);
+  }, [currentPage]);
 
   const filteredClients = useMemo(() => {
     if (!Array.isArray(clients)) return [];
@@ -472,22 +481,14 @@ export default function ClientsPage() {
     );
   }, [clients, selectedCategory, selectedStatus, searchQuery]);
 
-  const paginatedClients = useMemo(() => {
-    const startIdx = (currentPage - 1) * clientsPerPage;
-    const endIdx = startIdx + clientsPerPage;
-    return filteredClients.slice(startIdx, endIdx);
-  }, [filteredClients, currentPage]);
-
   const handleDeletes = async (_id: string) => {
     if (window.confirm("Are you sure you want to delete this client?")) {
       try {
         const response = await axios.delete(
-          `${
-            import.meta.env.VITE_REACT_APP_URL
-          }/api/v1/client/deleteClient/${_id}`
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/deleteClient/${_id}`
         );
         toast.success(response.data.message);
-        getAllClients();
+        getAllClients(currentPage);
       } catch (error) {
         toast.error("Failed to delete client.");
       }
@@ -496,9 +497,9 @@ export default function ClientsPage() {
 
   const formatPhoneForViber = (phone: string) => {
     if (!phone) {
-      return ""; // Return an empty string if phone is undefined or null
+      return "";
     }
-    return phone.replace(/\D/g, ""); // Only apply .replace if phone is defined
+    return phone.replace(/\D/g, "");
   };
 
   const downloadClientDetails = (client: Client) => {
@@ -515,8 +516,6 @@ export default function ClientsPage() {
     link.download = `${client.name}_details.txt`;
     link.click();
   };
-
-  const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
 
   return (
     <div className="space-y-6">
@@ -547,9 +546,7 @@ export default function ClientsPage() {
             <select
               value={selectedStatus}
               onChange={(e) =>
-                setSelectedStatus(
-                  e.target.value as "all" | "active" | "inactive"
-                )
+                setSelectedStatus(e.target.value as "all" | "active" | "inactive")
               }
               className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
             >
@@ -595,11 +592,11 @@ export default function ClientsPage() {
           {error && (
             <div className="text-center py-4 text-red-500">{error}</div>
           )}
-          {!loading && !error && paginatedClients.length === 0 && (
+          {!loading && !error && filteredClients.length === 0 && (
             <div className="text-center py-4">No clients found.</div>
           )}
 
-          {!loading && !error && paginatedClients.length > 0 && (
+          {!loading && !error && filteredClients.length > 0 && (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -621,7 +618,7 @@ export default function ClientsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedClients.map((client) => (
+                {filteredClients.map((client) => (
                   <tr key={client._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -730,31 +727,28 @@ export default function ClientsPage() {
 
       {/* Pagination */}
       <div className="flex justify-center py-4">
-  <Button
-    onClick={() => setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))}
-    disabled={currentPage === 1}
-  >
-    Prev
-  </Button>
-  <span className="px-4 py-2 text-sm text-gray-500">
-    Page {currentPage} of {totalPages}
-  </span>
-  <Button
-    onClick={() =>
-      setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))
-    }
-    disabled={currentPage === totalPages}
-  >
-    Next
-  </Button>
-</div>
-
+        <Button
+          onClick={() => setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Prev
+        </Button>
+        <span className="px-4 py-2 text-sm text-gray-500">
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button
+          onClick={() => setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </Button>
+      </div>
 
       {/* Modals */}
       <AddClientModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        getAllClients={getAllClients}
+        getAllClients={() => getAllClients(currentPage)}
       />
 
       {selectedClient && (
@@ -764,7 +758,7 @@ export default function ClientsPage() {
             setIsEditModalOpen(false);
             setSelectedClient(null);
           }}
-          getAllClients={getAllClients}
+          getAllClients={() => getAllClients(currentPage)}
           client={selectedClient}
         />
       )}
@@ -772,9 +766,8 @@ export default function ClientsPage() {
       <ImportClientsModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        getAllClients={getAllClients}
+        getAllClients={() => getAllClients(currentPage)}
       />
     </div>
   );
 }
-
