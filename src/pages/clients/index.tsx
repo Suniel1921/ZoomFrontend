@@ -283,7 +283,7 @@ export default function ClientsPage() {
       href={`viber://chat?number=${formatPhoneForViber(client.phone)}`}
       className="text-brand-black hover:text-brand-yellow"
     >
-      {client.phone.length > 10 ? `${client.phone.slice(0, 10)}...` : client.phone}
+      {client.phone.length > 10 ? `${client.phone.slice(0, 11)}...` : client.phone}
     </a>
   </span>
 </div>
