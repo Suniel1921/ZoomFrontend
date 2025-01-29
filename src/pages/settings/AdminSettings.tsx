@@ -464,73 +464,67 @@ export default function AdminSettings() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {admins.map((admin) => (
-              <tr key={admin.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 bg-brand-yellow/10 rounded-full flex items-center justify-center">
-                      <span className="text-brand-black font-medium">{admin.name[0]}</span>
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{admin.name}</div>
-                      <div className="text-sm text-gray-500">{admin.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-brand-yellow/10 text-brand-black">
-                    {admin.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      admin.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {admin.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {admin.lastLogin ? new Date(admin.lastLogin).toLocaleString() : 'Never'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex justify-end gap-2">
-                    {/* <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedAdmin(admin);
-                        setIsPermissionsModalOpen(true);
-                      }}
-                    >
-                      <Shield className="h-4 w-4" />
-                    </Button> */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedAdmin(admin);
-                        setIsEditModalOpen(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {admin.role !== 'super_admin' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(admin)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  {admins.map((admin) => (
+    <tr key={admin.id}>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <div className="flex-shrink-0 h-10 w-10 bg-brand-yellow/10 rounded-full flex items-center justify-center">
+            {admin.superAdminPhoto ? (
+              <img src={admin.superAdminPhoto} alt={admin.name} className="h-10 w-10 rounded-full" />
+            ) : (
+              <span className="text-brand-black font-medium">{admin.name[0]}</span>
+            )}
+          </div>
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900">{admin.name}</div>
+            <div className="text-sm text-gray-500">{admin.email}</div>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-brand-yellow/10 text-brand-black">
+          {admin.role}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span
+          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+            admin.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {admin.status}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {admin.lastLogin ? new Date(admin.lastLogin).toLocaleString() : 'Never'}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedAdmin(admin);
+              setIsEditModalOpen(true);
+            }}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          {admin.role !== 'super_admin' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDelete(admin)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </td>
+    </tr>
+  ))}
+</tbody>
         </table>
       </div>
 
