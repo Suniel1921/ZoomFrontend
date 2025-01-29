@@ -297,42 +297,42 @@ export default function AuditLogSettings() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredLogs.map((log) => (
-                  <tr key={log._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(log.timestamp).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {log.userName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {log.userType}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          log.action === "login"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {actionLabels[log.action] || log.action}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {typeof log.details === "object"
-                        ? JSON.stringify(log.details)
-                        : log.details}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {log.ipAddress}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+<tbody className="bg-white divide-y divide-gray-200">
+  {filteredLogs.map((log) => (
+    <tr key={log._id} className="hover:bg-gray-50">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {new Date(log.timestamp).toLocaleString()}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm font-medium text-gray-900">
+          {log.userName}
+        </div>
+        <div className="text-sm text-gray-500">
+          {log.userType}
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span
+          className={`px-2 py-1 text-xs font-medium rounded-full ${
+            log.action === "login"
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {actionLabels[log.action] || log.action}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {typeof log.details === "object"
+          ? JSON.stringify(log.details)
+          : log.details}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {log.ipAddress} {/* Ensure this is displayed */}
+      </td>
+    </tr>
+  ))}
+</tbody>
             </table>
           </div>
         )}

@@ -277,18 +277,17 @@ export default function ClientsPage() {
                           <span>{client.email}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          <span>
-                            <a
-                              href={`viber://chat?number=${formatPhoneForViber(
-                                client.phone
-                              )}`}
-                              className="text-brand-black hover:text-brand-yellow"
-                            >
-                              {client.phone}
-                            </a>
-                          </span>
-                        </div>
+  <Phone className="h-4 w-4 text-gray-400" />
+  <span>
+    <a
+      href={`viber://chat?number=${formatPhoneForViber(client.phone)}`}
+      className="text-brand-black hover:text-brand-yellow"
+    >
+      {client.phone.length > 10 ? `${client.phone.slice(0, 10)}...` : client.phone}
+    </a>
+  </span>
+</div>
+
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
