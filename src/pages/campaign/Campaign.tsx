@@ -6,21 +6,29 @@ import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
+interface CampaignData {
+  category: string;
+  subject: string;
+  message: string;
+  date: string;
+}
+
 const Campaign = () => {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [pastCampaigns, setPastCampaigns] = useState([]);
+  const [pastCampaigns, setPastCampaigns] = useState<CampaignData[]>([]);
 
+  // Fetch categories on component mount
   useEffect(() => {
-    // Fetch categories from the backend
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getCategories`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/campaign/getCategories`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
         setCategories(response.data.categories);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -31,6 +39,25 @@ const Campaign = () => {
     fetchCategories();
   }, []);
 
+  // Fetch past campaigns on component mount
+  useEffect(() => {
+    const fetchPastCampaigns = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/campaign/getPastCampaigns`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+        setPastCampaigns(response.data);
+      } catch (error) {
+        console.error('Error fetching past campaigns:', error);
+        toast.error('Failed to fetch past campaigns.');
+      }
+    };
+
+    fetchPastCampaigns();
+  }, []);
+
+  // Handle sending email
   const handleSendEmail = async () => {
     if (!selectedCategory || !subject || !message) {
       toast.error('Please select a category, enter a subject, and write a message.');
@@ -41,15 +68,23 @@ const Campaign = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/V1/client/sendEmailByCategory`,
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/campaign/sendEmailByCategory`,
         { category: selectedCategory, subject, message },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
 
       toast.success(response.data.message);
-      // Add the sent campaign to the past campaigns list
-      setPastCampaigns([...pastCampaigns, { category: selectedCategory, subject, message, date: new Date().toLocaleString() }]);
-      // Clear the form after successful submission
+
+      // Save the campaign locally
+      const newCampaign = {
+        category: selectedCategory,
+        subject,
+        message,
+        date: new Date().toLocaleString(),
+      };
+      setPastCampaigns([...pastCampaigns, newCampaign]);
+
+      // Clear form fields
       setSelectedCategory('');
       setSubject('');
       setMessage('');
@@ -106,8 +141,8 @@ const Campaign = () => {
           </div>
 
           {/* Rich Text Editor for Message */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Message</label>
+          <div className="mt-10">
+            <label className="text-sm font-medium text-gray-700">Message</label>
             <ReactQuill
               value={message}
               onChange={setMessage}
@@ -121,7 +156,7 @@ const Campaign = () => {
                 ],
               }}
               placeholder="Write your email message here..."
-              className="bg-white rounded-md h-64"
+              className="bg-white rounded-md h-56 mb-20"
             />
           </div>
 
@@ -129,7 +164,7 @@ const Campaign = () => {
           <button
             onClick={handleSendEmail}
             disabled={isLoading}
-            className="px-4 py-2 mt-64 bg-[#fedc00] text-black rounded-md hover:bg-[#f0d000] flex items-center justify-center"
+            className="px-4 py-2 mt-4 bg-[#fedc00] text-black rounded-md hover:bg-[#f0d000] flex items-center justify-center"
           >
             {isLoading ? (
               <>
@@ -147,13 +182,18 @@ const Campaign = () => {
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Past Campaigns</h2>
         {pastCampaigns.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {pastCampaigns.map((campaign, index) => (
-              <div key={index} className="border-b border-gray-200 pb-4">
-                <div className="text-sm text-gray-500">{campaign.date}</div>
-                <div className="font-semibold text-gray-900">{campaign.subject}</div>
-                <div className="text-sm text-gray-700">{campaign.category}</div>
-                <div className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: campaign.message }} />
+              <div key={index} className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="text-xs text-gray-500 mb-2">{campaign.date}</div>
+                <div className="font-semibold text-gray-900 truncate mb-1">{campaign.subject}</div>
+                <div className="text-xs text-gray-700 bg-yellow-100 px-2 py-1 rounded-full inline-block mb-2">
+                  {campaign.category}
+                </div>
+                <div
+                  className="text-sm text-gray-700 line-clamp-3"
+                  dangerouslySetInnerHTML={{ __html: campaign.message }}
+                />
               </div>
             ))}
           </div>
@@ -166,9 +206,3 @@ const Campaign = () => {
 };
 
 export default Campaign;
-
-
-
-
-
-

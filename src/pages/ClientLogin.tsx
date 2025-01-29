@@ -97,8 +97,9 @@ if (isCheckingAuth) {
       <div className="w-full md:w-1/2 bg-black text-white flex flex-col justify-center items-center p-6 md:px-10">
         <div className="max-w-lg text-center py-8 md:py-0">
           <div className="flex justify-center items-center gap-4 mb-8 md:mb-14">
-            <span><Zap className="h-8 w-8 md:h-12 md:w-12 text-yellow-500" /></span>
-            <h1 className="text-3xl md:text-5xl font-bold text-yellow-500">Zoom CRM</h1>
+            {/* <span><Zap className="h-8 w-8 md:h-12 md:w-12 text-yellow-500" /></span> */}
+            <img className="w-96" src="./logo2.png" alt="" />
+            {/* <h1 className="text-3xl md:text-5xl font-bold text-yellow-500">Zoom CRM</h1> */}
           </div>
 
           <div className="hidden md:block">
