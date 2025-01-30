@@ -1,17 +1,4 @@
-
-
-
-
-
-
-
-
-
-
-
-
 // ***********add new layout ***********
-
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -66,7 +53,9 @@ const applicationSchema = z.object({
     )
     .default([]),
   handledBy: z.string().min(1, "Visa Application Handler is required"),
-  translationHandler: z.string().min(1, "Document Translation Handler is required"),
+  translationHandler: z
+    .string()
+    .min(1, "Document Translation Handler is required"),
 });
 
 type ApplicationFormData = z.infer<typeof applicationSchema>;
@@ -198,19 +187,21 @@ export default function AddApplicationModal({
 
   if (!isOpen) return null;
 
-
-    // Common input class for consistent styling
-    const inputClass = "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow";
-    const labelClass = "block text-sm font-medium text-gray-700 mb-1";
-    const errorClass = "text-red-500 text-sm mt-1";
-
+  // Common input class for consistent styling
+  const inputClass =
+    "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow";
+  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
+  const errorClass = "text-red-500 text-sm mt-1";
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">New Application</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -218,7 +209,9 @@ export default function AddApplicationModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* Client Information */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium border-b pb-2">Client Information</h3>
+            <h3 className="text-lg font-medium border-b pb-2">
+              Client Information
+            </h3>
             <div className="space-y-4">
               {/* <div>
                 <SearchableSelect
@@ -236,18 +229,20 @@ export default function AddApplicationModal({
               </div> */}
 
               <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">Client</label>
-                            <SearchableSelect
-                            options={clients.map((client) => ({
-                              value: client._id,
-                              label: client.name,
-                            }))}
-                            value={watch('clientId')}
-                            onChange={(value) => setValue('clientId', value)}
-                            placeholder="Select client"
-                            error={errors.clientId?.message}
-                            />
-                          </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Client
+                </label>
+                <SearchableSelect
+                  options={clients.map((client) => ({
+                    value: client._id,
+                    label: client.name,
+                  }))}
+                  value={watch("clientId")}
+                  onChange={(value) => setValue("clientId", value)}
+                  placeholder="Select client"
+                  error={errors.clientId?.message}
+                />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -255,10 +250,14 @@ export default function AddApplicationModal({
                   <select {...register("country")} className={inputClass}>
                     <option value="">Select country</option>
                     {countries.map((c) => (
-                      <option key={c.code} value={c.name}>{c.name}</option>
+                      <option key={c.code} value={c.name}>
+                        {c.name}
+                      </option>
                     ))}
                   </select>
-                  {errors.country && <p className={errorClass}>{errors.country.message}</p>}
+                  {errors.country && (
+                    <p className={errorClass}>{errors.country.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -274,13 +273,15 @@ export default function AddApplicationModal({
 
           {/* Application Details */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium border-b pb-2">Application Details</h3>
+            <h3 className="text-lg font-medium border-b pb-2">
+              Application Details
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className={labelClass}>Application Deadline</label>
                 <DatePicker
-                  selected={watch('deadline')}
-                  onChange={(date) => setValue('deadline', date as Date)}
+                  selected={watch("deadline")}
+                  onChange={(date) => setValue("deadline", date as Date)}
                   className={inputClass}
                   dateFormat="yyyy-MM-dd"
                 />
@@ -288,7 +289,7 @@ export default function AddApplicationModal({
 
               <div>
                 <label className={labelClass}>Document Status</label>
-                <select {...register('documentStatus')} className={inputClass}>
+                <select {...register("documentStatus")} className={inputClass}>
                   <option value="Not Yet">Not Yet</option>
                   <option value="Few Received">Few Received</option>
                   <option value="Fully Received">Fully Received</option>
@@ -297,11 +298,11 @@ export default function AddApplicationModal({
 
               <div>
                 <label className={labelClass}>Job Status</label>
-                <select {...register('visaStatus')} className={inputClass}>
-                <option value="Processing">Processing</option>
-                <option value="Waiting for Payment">Waiting for Payment</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
+                <select {...register("visaStatus")} className={inputClass}>
+                  <option value="Processing">Processing</option>
+                  <option value="Waiting for Payment">Waiting for Payment</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
 
@@ -309,7 +310,7 @@ export default function AddApplicationModal({
                 <label className={labelClass}>Documents to Translate</label>
                 <Input
                   type="number"
-                  {...register('documentsToTranslate', { valueAsNumber: true })}
+                  {...register("documentsToTranslate", { valueAsNumber: true })}
                   className={inputClass}
                   min="0"
                 />
@@ -319,35 +320,54 @@ export default function AddApplicationModal({
 
           {/* Document Handling */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium border-b pb-2">Document Handling</h3>
+            <h3 className="text-lg font-medium border-b pb-2">
+              Document Handling
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={labelClass}>Visa Application Handled By</label>
+                <label className={labelClass}>
+                  Visa Application Handled By
+                </label>
                 <select {...register("handledBy")} className={inputClass}>
                   <option value="">Select handler</option>
                   {handlers.map((handler) => (
-                    <option key={handler.id} value={handler.id}>{handler.name}</option>
+                    <option key={handler.id} value={handler.id}>
+                      {handler.name}
+                    </option>
                   ))}
                 </select>
-                {errors.handledBy && <p className={errorClass}>{errors.handledBy.message}</p>}
+                {errors.handledBy && (
+                  <p className={errorClass}>{errors.handledBy.message}</p>
+                )}
               </div>
 
               <div>
                 <label className={labelClass}>Translation Handled By</label>
-                <select {...register("translationHandler")} className={inputClass}>
+                <select
+                  {...register("translationHandler")}
+                  className={inputClass}
+                >
                   <option value="">Select handler</option>
                   {handlers.map((handler) => (
-                    <option key={handler.id} value={handler.id}>{handler.name}</option>
+                    <option key={handler.id} value={handler.id}>
+                      {handler.name}
+                    </option>
                   ))}
                 </select>
-                {errors.translationHandler && <p className={errorClass}>{errors.translationHandler.message}</p>}
+                {errors.translationHandler && (
+                  <p className={errorClass}>
+                    {errors.translationHandler.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Payment Section */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium border-b pb-2">Payment Details</h3>
+            <h3 className="text-lg font-medium border-b pb-2">
+              Payment Details
+            </h3>
             <PaymentDetails
               register={register}
               watch={watch}
@@ -361,7 +381,9 @@ export default function AddApplicationModal({
 
           {/* Family Members Section */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium border-b pb-2">Family Members</h3>
+            <h3 className="text-lg font-medium border-b pb-2">
+              Family Members
+            </h3>
             <FamilyMembersList
               familyMembers={familyMembers}
               onFamilyMembersChange={handleFamilyMembersChange}

@@ -93,7 +93,7 @@ export default function PaymentSection({ register, watch, setValue, errors }: Pa
             <label className="block text-sm font-medium text-gray-700">Payment Method</label>
             <select
               {...register('paymentMethod')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
             >
               <option value="Bank Furicomy">Bank Furicomy</option>
               <option value="Counter Cash">Counter Cash</option>

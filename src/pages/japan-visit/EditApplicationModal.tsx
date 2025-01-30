@@ -408,12 +408,13 @@ export default function EditApplicationModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Job Status</label>
                 <select
                   {...register('status')}
                   className={inputClass}
                 >
-                  <option value="In Progress">In Progress</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Waiting for Payment">Waiting for Payment</option>
                   <option value="Completed">Completed</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>

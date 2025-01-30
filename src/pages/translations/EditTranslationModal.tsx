@@ -251,10 +251,10 @@ export default function EditTranslationModal({
                 {...register('translationStatus')}
                 className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
-                <option value="Not Started">Not Started</option>
-                <option value="Processing">Processing</option>
-                <option value="Completed">Completed</option>
-                <option value="Delivered">Delivered</option>
+               <option value="Processing">Processing</option>
+                  <option value="Waiting for Payment">Waiting for Payment</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
               </select>
             </div>
 

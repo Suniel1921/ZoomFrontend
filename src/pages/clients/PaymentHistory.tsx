@@ -37,10 +37,6 @@ const PaymentHistory = ({ selectedClientId }) => {
       setPaymentHistory(allPayments);
     };
 
-
-
-
-
     if (selectedClientId && accountTaskData) {
       fetchPaymentHistory();
     }

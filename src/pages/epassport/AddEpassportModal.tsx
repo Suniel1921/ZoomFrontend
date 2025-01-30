@@ -59,7 +59,7 @@ export default function AddEpassportModal({
     defaultValues: {
       ghumtiService: false,
       paymentStatus: "Due",
-      applicationStatus: "Details Pending",
+      applicationStatus: "Processing",
       dataSentStatus: "Not Sent",
       amount: 0,
       paidAmount: 0,
@@ -137,21 +137,14 @@ export default function AddEpassportModal({
         dueAmount: amount - (paidAmount + discount),
       };
 
-      // console.log('Final Form Data:', formData);
-
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/createEpassport`, formData);
-      // console.log(response);
-
+        const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/createEpassport`, formData);
       if (response.data.success) {
         setEpassportApplications((prevApplications) => [
           ...prevApplications,
           response.data.data,
         ]);
-        console.log(
-          "Epassport application created successfully:",
-          response.data
-        );
-        toast.success(response.data. essage);
+        // console.log("Epassport application created successfully:", response.data);
+        toast.success(response.data.message);
         reset();
         onClose();
         getAllEPassportApplication();
@@ -287,17 +280,16 @@ export default function AddEpassportModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Application Status
+                Job Status
                 </label>
                 <select
                   {...register("applicationStatus")}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
-                  <option value="Details Pending">Details Pending</option>
-                  <option value="Ready to Process">Ready to Process</option>
-                  <option value="Under Progress">Under Progress</option>
-                  <option value="Cancelled">Cancelled</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Waiting for Payment">Waiting for Payment</option>
                   <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
 

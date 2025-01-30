@@ -65,7 +65,7 @@ const WorkloadDistribution = () => {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="workload" fill="#8884d8" />
+          <Bar dataKey="workload" fill="#FEDC00" />
         </BarChart>
       </ResponsiveContainer>
     </div>
