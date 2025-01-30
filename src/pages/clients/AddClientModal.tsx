@@ -597,7 +597,7 @@
 
 
 
-// *******************change genratl consulation to other services*******************
+// *******************change general consulation to other services*******************
 
 
 

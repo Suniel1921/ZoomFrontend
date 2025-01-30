@@ -592,28 +592,19 @@ export default function AddApplicationModal({
           <div className="space-y-6">
             <h3 className="text-lg font-medium border-b pb-2">Client Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <label className={labelStyles}>Client *</label>
-                <SearchableSelect
-                  options={clients.map((client) => ({
-                    value: client._id,
-                    label: client.name,
-                  }))}
-                  value={watch("clientId")}
-                  onChange={(value) => {
-                    setValue("clientId", value);
-                    const client = clients.find((c) => c._id === value);
-                    if (client) {
-                      setValue("mobileNo", client.phone);
-                    }
-                  }}
-                  placeholder="Select client"
-                  className={inputStyles}
-                />
-                {errors.clientId && (
-                  <p className={errorStyles}>{errors.clientId.message}</p>
-                )}
-              </div>
+              <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">Client</label>
+                            <SearchableSelect
+                            options={clients.map((client) => ({
+                              value: client._id,
+                              label: client.name,
+                            }))}
+                            value={watch('clientId')}
+                            onChange={(value) => setValue('clientId', value)}
+                            placeholder="Select client"
+                            error={errors.clientId?.message}
+                            />
+                          </div>
 
               <div className="space-y-1">
                 <label className={labelStyles}>Mobile No</label>

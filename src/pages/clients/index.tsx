@@ -386,7 +386,8 @@
 
 
 //add pagination
-import { useState, useMemo, useEffect } from "react";
+
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Users,
   Plus,
@@ -396,10 +397,11 @@ import {
   Phone,
   Upload,
   Eye,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-import { useAdminStore } from "../../store/adminStore";
 import AddClientModal from "./AddClientModal";
 import EditClientModal from "./EditClientModal";
 import ImportClientsModal from "./ImportClientsModal";
@@ -408,8 +410,9 @@ import CategoryBadge from "../../components/CategoryBadge";
 import axios from "axios";
 import type { Client, ClientCategory } from "../../types";
 import toast from "react-hot-toast";
-import CSVUpload from "./CSVUpload";
 import { useAuthGlobally } from "../../context/AuthContext";
+
+const ITEMS_PER_PAGE = 20;
 
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -419,13 +422,11 @@ export default function ClientsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [allClients, setAllClients] = useState<Client[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [auth] = useAuthGlobally();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const clientsPerPage = 20;
 
   const categories: ClientCategory[] = [
     "Visit Visa Applicant",
@@ -437,21 +438,14 @@ export default function ClientsPage() {
     "General Consultation",
   ];
 
-  const getAllClients = async (page: number = 1) => {
+  const getAllClients = async () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`,
-        {
-          params: {
-            page,
-            limit: clientsPerPage,
-          },
-        }
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`
       );
       if (response.data.success) {
-        setClients(response.data.clients);
-        setTotalPages(response.data.pagination.totalPages);
+        setAllClients(response.data.clients);
       } else {
         throw new Error("Unexpected response format");
       }
@@ -466,20 +460,33 @@ export default function ClientsPage() {
   };
 
   useEffect(() => {
-    getAllClients(currentPage);
-  }, [currentPage]);
+    getAllClients();
+  }, []);
 
+  // Memoized filtered clients based on search, category, and status
   const filteredClients = useMemo(() => {
-    if (!Array.isArray(clients)) return [];
-    return clients.filter(
-      (client) =>
-        (selectedCategory === "all" || client.category === selectedCategory) &&
-        (selectedStatus === "all" || client.status === selectedStatus) &&
-        (searchQuery === "" ||
-          client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          client.email.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }, [clients, selectedCategory, selectedStatus, searchQuery]);
+    return allClients.filter((client) => {
+      const matchesCategory = selectedCategory === "all" || client.category === selectedCategory;
+      const matchesStatus = selectedStatus === "all" || client.status === selectedStatus;
+      const matchesSearch = searchQuery === "" ||
+        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesCategory && matchesStatus && matchesSearch;
+    });
+  }, [allClients, selectedCategory, selectedStatus, searchQuery]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+  const paginatedClients = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredClients.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredClients, currentPage]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedStatus]);
 
   const handleDeletes = async (_id: string) => {
     if (window.confirm("Are you sure you want to delete this client?")) {
@@ -488,7 +495,7 @@ export default function ClientsPage() {
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/deleteClient/${_id}`
         );
         toast.success(response.data.message);
-        getAllClients(currentPage);
+        getAllClients();
       } catch (error) {
         toast.error("Failed to delete client.");
       }
@@ -496,26 +503,23 @@ export default function ClientsPage() {
   };
 
   const formatPhoneForViber = (phone: string) => {
-    if (!phone) {
-      return "";
-    }
+    if (!phone) return "";
     return phone.replace(/\D/g, "");
   };
 
-  const downloadClientDetails = (client: Client) => {
+  const downloadClientDetails = useCallback((client: Client) => {
     const clientDetails = `
     〒${client.postalCode}
     ${client.prefecture}, ${client.city}, ${client.street} ${client.building}
     ${client.name}様
     ${client.phone}
     `;
-
     const blob = new Blob([clientDetails], { type: "text/plain" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `${client.name}_details.txt`;
     link.click();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -524,15 +528,15 @@ export default function ClientsPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Users className="h-6 w-6 text-gray-400" />
-            <h1 className="text-xl font-semibold text-gray-900">Clients</h1>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Clients ({filteredClients.length} total)
+            </h1>
           </div>
 
           <div className="flex items-center gap-4">
             <select
               value={selectedCategory}
-              onChange={(e) =>
-                setSelectedCategory(e.target.value as ClientCategory | "all")
-              }
+              onChange={(e) => setSelectedCategory(e.target.value as ClientCategory | "all")}
               className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
             >
               <option value="all">All Categories</option>
@@ -545,9 +549,7 @@ export default function ClientsPage() {
 
             <select
               value={selectedStatus}
-              onChange={(e) =>
-                setSelectedStatus(e.target.value as "all" | "active" | "inactive")
-              }
+              onChange={(e) => setSelectedStatus(e.target.value as "all" | "active" | "inactive")}
               className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
             >
               <option value="all">All Status</option>
@@ -571,10 +573,7 @@ export default function ClientsPage() {
                 New Client
               </Button>
 
-              <Button
-                variant="outline"
-                onClick={() => setIsImportModalOpen(true)}
-              >
+              <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Import
               </Button>
@@ -597,158 +596,202 @@ export default function ClientsPage() {
           )}
 
           {!loading && !error && filteredClients.length > 0 && (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredClients.map((client) => (
-                  <tr key={client._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        {client.profilePhoto ? (
-                          <img
-                            src={client.profilePhoto}
-                            alt={client.name}
-                            className="h-10 w-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-brand-yellow/10 flex items-center justify-center">
-                            <span className="text-brand-black font-medium">
-                              {client.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
+            <>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedClients.map((client) => (
+                    <tr key={client._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          {client.profilePhoto ? (
+                            <img
+                              src={client.profilePhoto}
+                              alt={client.name}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-brand-yellow/10 flex items-center justify-center">
+                              <span className="text-brand-black font-medium">
+                                {client.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-brand-black">
+                              {client.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {client.nationality}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-gray-400" />
+                            <span>{client.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <span>
+                              <a
+                                href={`viber://chat?number=${formatPhoneForViber(
+                                  client.phone
+                                )}`}
+                                className="text-brand-black hover:text-brand-yellow"
+                              >
+                                {client.phone.length > 10
+                                  ? `${client.phone.slice(0, 11)}...`
+                                  : client.phone}
+                              </a>
                             </span>
                           </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-brand-black">
-                            {client.name}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {client.nationality}
-                          </p>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-gray-400" />
-                          <span>{client.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          <span>
-                            <a
-                              href={`viber://chat?number=${formatPhoneForViber(client.phone)}`}
-                              className="text-brand-black hover:text-brand-yellow"
-                            >
-                              {client.phone.length > 10
-                                ? `${client.phone.slice(0, 11)}...`
-                                : client.phone}
-                            </a>
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <CategoryBadge category={client.category || "import from CSV file"} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          client.status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {client.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        <PrintAddressButton client={client} />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => downloadClientDetails(client)}
-                          className="text-yellow-500 hover:text-yellow-700"
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <CategoryBadge
+                          category={client.category || "import from CSV file"}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            client.status === "active"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedClient(client);
-                            setIsEditModalOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-
-                        {auth.user.role === "superadmin" && (
+                          {client.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2">
+                          <PrintAddressButton client={client} />
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleDeletes(client._id)}
-                            className="text-red-500 hover:text-red-700"
+                            onClick={() => downloadClientDetails(client)}
+                            className="text-yellow-500 hover:text-yellow-700"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedClient(client);
+                              setIsEditModalOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+
+                          {auth.user.role === "superadmin" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeletes(client._id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <Button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                  >
+                    Next
+                  </Button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing{" "}
+                      <span className="font-medium">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-medium">
+                        {Math.min(currentPage * ITEMS_PER_PAGE, filteredClients.length)}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-medium">{filteredClients.length}</span>{" "}
+                      results
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center py-4">
-        <Button
-          onClick={() => setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          Prev
-        </Button>
-        <span className="px-4 py-2 text-sm text-gray-500">
-          Page {currentPage} of {totalPages}
-        </span>
-        <Button
-          onClick={() => setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </Button>
       </div>
 
       {/* Modals */}
       <AddClientModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        getAllClients={() => getAllClients(currentPage)}
+        getAllClients={getAllClients}
       />
 
       {selectedClient && (
@@ -758,7 +801,7 @@ export default function ClientsPage() {
             setIsEditModalOpen(false);
             setSelectedClient(null);
           }}
-          getAllClients={() => getAllClients(currentPage)}
+          getAllClients={getAllClients}
           client={selectedClient}
         />
       )}
@@ -766,8 +809,10 @@ export default function ClientsPage() {
       <ImportClientsModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        getAllClients={() => getAllClients(currentPage)}
+        getAllClients={getAllClients}
       />
     </div>
   );
 }
+
+// make sure while user also can usings phone number and name 

@@ -154,7 +154,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
               onChange={(value) => setValue('clientId', value)}
               placeholder="Select client"
               error={errors.clientId?.message}
-            />
+              />
             </div>
 
             <div>

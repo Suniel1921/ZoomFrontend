@@ -1374,3 +1374,5 @@ const CallLogs: React.FC = () => {
 };
 
 export default CallLogs;
+
+// make a button delete icon and edit icon i mean show this all edit and deelte icon in button with border 
