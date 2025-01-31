@@ -36,8 +36,6 @@ export default function ClientLogin() {
 
 
 
-
-
 useEffect(() => {
   const token = localStorage.getItem('token');
   if (token) {

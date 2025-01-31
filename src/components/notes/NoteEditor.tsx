@@ -36,8 +36,8 @@ export default function NoteEditor({ noteId, onClose, fetchNotes, initialData }:
   };
 
   const handleSaveNote = async () => {
-    if (!title.trim() || !content.trim()) {
-      toast.error('Title and content are required.');
+    if (!title.trim()) {
+      toast.error('Title are required.');
       return;
     }
 
