@@ -19,45 +19,53 @@ export default function ClientLogin() {
   const [modalVisible, setModalVisible] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Check if the user is already logged in
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (token) {
-  //     // Redirect based on the user's role
-  //     const user = JSON.parse(token).user;
-  //     if (user.role === 'admin' || user.role === 'superadmin') {
-  //       navigate('/dashboard');
-  //     } else {
-  //       navigate('/client-portal');
-  //     }
-  //   }
-  // }, [navigate]);
 
+
+
+// useEffect(() => {
+//   const token = localStorage.getItem('token');
+//   if (token) {
+//     try {
+//       const user = JSON.parse(token).user;
+//       if (user.role === 'admin' || user.role === 'superadmin') {
+//         navigate('/dashboard');
+//       } else {
+//         navigate('/client-portal');
+//       }
+//     } catch (err) {
+//       console.error("Error parsing token:", err);
+//     }
+//   }
+//   setIsCheckingAuth(false); // Ensure the page is rendered once the check is complete
+// }, [navigate]);
 
 
 
 useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (token) {
+  const tokenData = localStorage.getItem('token');
+  if (tokenData) {
     try {
-      const user = JSON.parse(token).user;
-      if (user.role === 'admin' || user.role === 'superadmin') {
-        navigate('/dashboard');
-      } else {
-        navigate('/client-portal');
+      const parsedToken = JSON.parse(tokenData);
+      if (parsedToken.user) {
+        if (parsedToken.user.role === 'admin' || parsedToken.user.role === 'superadmin') {
+          navigate('/dashboard');
+        } else {
+          navigate('/client-portal');
+        }
       }
     } catch (err) {
       console.error("Error parsing token:", err);
     }
   }
-  setIsCheckingAuth(false); // Ensure the page is rendered once the check is complete
+  setIsCheckingAuth(false);
 }, [navigate]);
+
+
+
 
 if (isCheckingAuth) {
   return <div>Loading...</div>; // Render a loading spinner or similar UI
 }
-
-
 
 
 
@@ -81,7 +89,7 @@ if (isCheckingAuth) {
         navigate(response.data.user.role === 'admin' || response.data.user.role === 'superadmin' ? '/dashboard' : '/client-portal');
       }
     } catch (error) {
-      if (error.response) {
+      if (error.response && error.response.data && error.response.data.message) {
         toast.error(error.response.data.message);
       }
     } finally {
@@ -207,7 +215,6 @@ if (isCheckingAuth) {
 
 
 
-//optimze the code in this code sometime its trying to redirect on /dashbaord page and its automatice blinking 
         
 
 
