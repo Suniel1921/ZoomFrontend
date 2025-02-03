@@ -57,6 +57,8 @@ export default function SortableNote({
             <PriorityIcon className={`h-4 w-4 ${priorityColor}`} />
           </div>
           <p className="text-sm text-gray-500 line-clamp-2 mt-1">{note.content}</p>
+          <p className="text-sm text-gray-500 line-clamp-2 mt-1">{note.reminders.date}</p>
+          <p className="text-sm text-gray-500 line-clamp-2 mt-1">{note.reminders.time}</p>
           
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
             {note.reminders && note.reminders.length > 0 && (
@@ -104,3 +106,4 @@ export default function SortableNote({
     </div>
   );
 }
+
