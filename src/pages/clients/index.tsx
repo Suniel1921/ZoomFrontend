@@ -76,13 +76,14 @@ export default function ClientsPage() {
   }, [getAllClients])
 
 
-
-
   // Helper function to calculate relevance score
   const calculateRelevanceScore = useCallback((client: Client, query: string) => {
     const lowercaseQuery = query.toLowerCase()
+    const normalizedPhone = client.phone.replace(/\D/g, "") 
+    const normalizedQuery = query.replace(/\D/g, "")
     let score = 0
 
+    // Name matching
     if (client.name.toLowerCase() === lowercaseQuery) {
       score += 100 // Exact match for name
     } else if (client.name.toLowerCase().startsWith(lowercaseQuery)) {
@@ -91,12 +92,22 @@ export default function ClientsPage() {
       score += 50 // Name contains query
     }
 
-    if (client.email.toLowerCase().includes(lowercaseQuery)) {
-      score += 25 // Email contains query
+    // Phone matching
+    if (normalizedPhone === normalizedQuery) {
+      score += 100 // Exact match for phone
+    } else if (normalizedPhone.startsWith(normalizedQuery)) {
+      score += 75 // Phone starts with query
+    } else if (normalizedPhone.includes(normalizedQuery)) {
+      score += 50 // Phone contains query
     }
 
-    if (client.phone.includes(query)) {
-      score += 25 // Phone contains query
+    // Email matching
+    if (client.email.toLowerCase() === lowercaseQuery) {
+      score += 90 // Exact match for email
+    } else if (client.email.toLowerCase().startsWith(lowercaseQuery)) {
+      score += 60 // Email starts with query
+    } else if (client.email.toLowerCase().includes(lowercaseQuery)) {
+      score += 30 // Email contains query
     }
 
     return score
@@ -108,11 +119,16 @@ export default function ClientsPage() {
       .filter((client) => {
         const matchesCategory = selectedCategory === "all" || client.category === selectedCategory
         const matchesStatus = selectedStatus === "all" || client.status === selectedStatus
+
+        if (searchQuery === "") return matchesCategory && matchesStatus
+
+        const normalizedPhone = client.phone.replace(/\D/g, "")
+        const normalizedQuery = searchQuery.replace(/\D/g, "")
+
         const matchesSearch =
-          searchQuery === "" ||
-          (client.name && client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (client.phone && client.phone.includes(searchQuery))
+          client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          normalizedPhone.includes(normalizedQuery)
 
         return matchesCategory && matchesStatus && matchesSearch
       })
@@ -134,7 +150,7 @@ export default function ClientsPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, selectedCategory, selectedStatus])
+  }, [selectedCategory, selectedStatus]) // Removed unnecessary dependencies
 
 
 
