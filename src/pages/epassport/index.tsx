@@ -24,6 +24,8 @@ import axios from "axios";
 import { EpassportApplication } from "../../types";
 import toast from "react-hot-toast";
 import { useAuthGlobally } from "../../context/AuthContext";
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 const APPLICATION_TYPES = [
   "Newborn Child",
@@ -102,10 +104,7 @@ export default function EpassportPage() {
         // Send the delete request
         const response = await axios.delete(
           `${
-            import.meta.env.VITE_REACT_APP_URL
-          }/api/v1/ePassport/deleteEpassport/${_id}`
-        );
-        // Check if the response was successful
+            import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/deleteEpassport/${_id}`);
         if (response?.data?.success) {
           // Remove the deleted application from the local state
           // setEpassportApplications((prev) => prev.filter((app) => app.id !== _id));
@@ -124,11 +123,66 @@ export default function EpassportPage() {
     }
   };
 
-  const handleDownloadPDF = (application: any) => {
-    if (application.pdfFile?.url) {
-      window.open(application.pdfFile.url, "_blank");
+  // const handleDownload = async () => {
+  //   try {
+  //     const zip = new JSZip();
+  
+  //     // Fetch all files and add them to the ZIP
+  //     const fetchPromises = fileUrls.map(async (fileUrl, index) => {
+  //       const response = await fetch(fileUrl);
+  //       if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}`);
+  
+  //       const blob = await response.blob();
+  //       const fileName = fileUrl.split("/").pop() || `file_${index + 1}.pdf`;
+  //       zip.file(fileName, blob);
+  //     });
+  
+  //     await Promise.all(fetchPromises);
+  
+  //     // Generate the ZIP file and trigger download
+  //     const zipBlob = await zip.generateAsync({ type: "blob" });
+  //     saveAs(zipBlob, "files.zip");
+  //   } catch (error) {
+  //     console.error("Download failed:", error);
+  //   }
+  // };
+
+
+
+
+
+  const handleDownload = async (clientFiles: string[]) => {
+    try {
+      if (!clientFiles || clientFiles.length === 0) {
+        toast.error("No files available for download.");
+        return;
+      }
+  
+      const zip = new JSZip();
+    
+      // Fetch all files and add them to the ZIP
+      const fetchPromises = clientFiles.map(async (fileUrl, index) => {
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}`);
+    
+        const blob = await response.blob();
+        const fileName = fileUrl.split("/").pop() || `file_${index + 1}.pdf`;
+        zip.file(fileName, blob);
+      });
+    
+      await Promise.all(fetchPromises);
+    
+      // Generate the ZIP file and trigger download
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, "documents.zip");
+      toast.success("Files downloaded successfully!");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Error downloading files.");
     }
   };
+  
+
 
   const columns = [
     {
@@ -214,27 +268,28 @@ export default function EpassportPage() {
       render: (_: string, item: any) => (
         <div className="flex justify-end gap-2">
           {item.clientFiles && item.clientFiles.length > 0 ? (
-            // Show the Download All button only if there are client files
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                // Loop through each file and trigger the download
-                item.clientFiles.forEach((fileUrls) => {
-                  const link = document.createElement("a");
-                  link.href = fileUrls;
-                  link.download = fileUrls.split("/").pop(); // Use the filename from URL
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                });
-              }}
-              title="Download All Files"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDownload(item.clientFiles)}
+                title="Download All Files"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedApplication(item);
+                  setIsPDFPreviewOpen(true);
+                }}
+                title="Preview File"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </>
           ) : (
-            // If no client files, show the Upload button
             <Button
               variant="outline"
               size="sm"
@@ -247,21 +302,8 @@ export default function EpassportPage() {
               <Upload className="h-4 w-4" />
             </Button>
           )}
-
-          {item.clientFiles && item.clientFiles.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                // Preview the first file (you can modify this to support multiple files)
-                setSelectedApplication(item);
-                setIsPDFPreviewOpen(true);
-              }}
-              title="Preview File"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          )}
+      
+   
 
           <Button
             variant="outline"
