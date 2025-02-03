@@ -1,7 +1,22 @@
 import { useState, useEffect } from 'react';
-import { X, Search, Plus, Pin, Archive, Tag, Calendar, Paperclip, StickyNote, Flag, Edit, Trash } from 'lucide-react';
-import axios from 'axios';
+import { X, Search, Plus, Pin, Archive, StickyNote } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import NoteEditor from './NoteEditor';
+import SortableNote from './SortableNote';
 import Button from '../Button';
 import Input from '../Input';
 import { Modal } from 'antd';
@@ -15,6 +30,11 @@ const priorityConfig: Record<NotePriority, { icon: typeof Flag; color: string }>
   low: { icon: Flag, color: 'text-green-500' }
 };
 
+interface NotesPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
 export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNote, setSelectedNote] = useState<string | null>(null);
@@ -24,8 +44,21 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
   const [auth] = useAuthGlobally();
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [editingNote, setEditingNote] = useState<any>(null); // Track the note being edited
+  const [editingNote, setEditingNote] = useState<any>(null);
 
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Fetch notes from the backend or localStorage
   const fetchNotes = async () => {
     if (auth?.user?.id && isOpen) {
       setLoading(true);
@@ -44,6 +77,20 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
     fetchNotes();
   }, [auth?.user?.id, isOpen]);
 
+  // Handle drag end event
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setNotes((items) => {
+        const oldIndex = items.findIndex((item) => item._id === active.id);
+        const newIndex = items.findIndex((item) => item._id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Filter notes based on search and filter
   const filteredNotes = notes.filter(note => {
     const matchesSearch = note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           note.content.toLowerCase().includes(searchQuery.toLowerCase());
@@ -53,33 +100,32 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
     return matchesSearch && matchesFilter;
   });
 
+  // Sort notes with pinned ones at the top
+  const sortedNotes = [...filteredNotes].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return 0;
+  });
+
   const handleNewNote = () => {
-    setEditingNote(null); // Clear editing note
-    setIsEditorOpen(true); // Open the NoteEditor modal
+    setEditingNote(null);
+    setIsEditorOpen(true);
   };
 
   const handleEditNote = (note: any) => {
-    setEditingNote(note); // Set the note to edit
-    setIsEditorOpen(true); // Open the NoteEditor modal
+    setEditingNote(note);
+    setIsEditorOpen(true);
   };
 
   const handleDeleteNote = async (noteId: string) => {
     try {
       await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/deleteNote/${noteId}`);
-      fetchNotes(); // Refresh the notes list
+      fetchNotes();
     } catch (error) {
       console.error('Error deleting note:', error);
     } finally {
-      setIsDeleting(null); // Close the confirmation modal
+      setIsDeleting(null);
     }
-  };
-
-  const confirmDeleteNote = (noteId: string) => {
-    setIsDeleting(noteId); // Open confirmation modal
-  };
-
-  const cancelDelete = () => {
-    setIsDeleting(null); // Close the confirmation modal
   };
 
   if (!isOpen) return null;
@@ -97,7 +143,6 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
           </button>
         </div>
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -109,7 +154,6 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
           />
         </div>
 
-        {/* Filters */}
         <div className="flex gap-2 mt-4">
           <Button
             variant={filter === 'all' ? 'primary' : 'outline'}
@@ -137,84 +181,39 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
         </div>
       </div>
 
-      {/* Notes List */}
       <div className="h-[calc(100vh-16rem)] overflow-y-auto">
         {loading ? (
           <div className="p-4 text-center text-gray-500">Loading notes...</div>
-        ) : filteredNotes.length === 0 ? (
+        ) : sortedNotes.length === 0 ? (
           <div className="p-4 text-center text-gray-500">No notes found</div>
         ) : (
-          <div className="divide-y divide-gray-200">
-            {filteredNotes.map((note) => {
-              const PriorityIcon = priorityConfig[note.priority].icon;
-              const priorityColor = priorityConfig[note.priority].color;
-
-              return (
-                <div
-                  key={note._id}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 ${selectedNote === note._id ? 'bg-brand-yellow/10' : ''}`}
-                  onClick={() => setSelectedNote(note._id)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{note.title}</h3>
-                        <PriorityIcon className={`h-4 w-4 ${priorityColor}`} />
-                        {note.isPinned && (
-                          <Pin className="h-4 w-4 text-brand-yellow" />
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 line-clamp-2 mt-1">{note.content}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent note selection
-                          handleEditNote(note);
-                        }}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent note selection
-                          confirmDeleteNote(note._id);
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                    {note.reminders && note.reminders.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {note.reminders.length} reminder{note.reminders.length !== 1 ? 's' : ''}
-                      </div>
-                    )}
-                    {note.subtasks && note.subtasks.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Tag className="h-3 w-3" />
-                        {note.subtasks.filter(st => st.isCompleted).length}/{note.subtasks.length} tasks
-                      </div>
-                    )}
-                    {note.attachments?.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Paperclip className="h-3 w-3" />
-                        {note.attachments.length}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sortedNotes.map(note => note._id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="divide-y divide-gray-200">
+                {sortedNotes.map((note) => (
+                  <SortableNote
+                    key={note._id}
+                    note={note}
+                    priorityConfig={priorityConfig}
+                    onEdit={handleEditNote}
+                    onDelete={(noteId) => setIsDeleting(noteId)}
+                    isSelected={selectedNote === note._id}
+                    onSelect={() => setSelectedNote(note._id)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
-      {/* Add Note Button */}
       <div className="absolute bottom-4 right-4">
         <Button onClick={handleNewNote}>
           <Plus className="h-4 w-4 mr-2" />
@@ -222,25 +221,23 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
         </Button>
       </div>
 
-      {/* Note Editor Modal */}
       {isEditorOpen && (
         <NoteEditor
           onClose={() => {
             setIsEditorOpen(false);
-            setEditingNote(null); // Clear editing note
+            setEditingNote(null);
           }}
           noteId={editingNote?._id}
           fetchNotes={fetchNotes}
-          initialData={editingNote} // Pass the note data to the editor
+          initialData={editingNote}
         />
       )}
 
-      {/* Delete Confirmation Modal */}
       <Modal
         title="Delete Note"
-        visible={isDeleting !== null}
+        open={isDeleting !== null}
         onOk={() => handleDeleteNote(isDeleting!)}
-        onCancel={cancelDelete}
+        onCancel={() => setIsDeleting(null)}
         okText="Yes, Delete"
         cancelText="Cancel"
       >
