@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Search, Plus, Pin, Archive, StickyNote } from 'lucide-react';
+import { X, Search, Plus, Pin, Archive, StickyNote, Flag } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -22,6 +22,7 @@ import Input from '../Input';
 import { Modal } from 'antd';
 import type { NotePriority } from '../../types/note';
 import { useAuthGlobally } from '../../context/AuthContext';
+import axios from 'axios';
 
 const priorityConfig: Record<NotePriority, { icon: typeof Flag; color: string }> = {
   urgent: { icon: Flag, color: 'text-red-500' },
