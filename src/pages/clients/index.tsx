@@ -75,32 +75,70 @@ export default function ClientsPage() {
     getAllClients()
   }, [getAllClients])
 
-  // Memoized filtered clients based on search, category, and status
-  const filteredClients = useMemo(() => {
-    return allClients.filter((client) => {
-      const matchesCategory = selectedCategory === "all" || client.category === selectedCategory
-      const matchesStatus = selectedStatus === "all" || client.status === selectedStatus
-      const matchesSearch =
-        searchQuery === "" ||
-        (client.name && client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (client.phone && client.phone.includes(searchQuery))
 
-      return matchesCategory && matchesStatus && matchesSearch
-    })
-  }, [allClients, selectedCategory, selectedStatus, searchQuery]) //Corrected dependencies
+
+
+  // Helper function to calculate relevance score
+  const calculateRelevanceScore = useCallback((client: Client, query: string) => {
+    const lowercaseQuery = query.toLowerCase()
+    let score = 0
+
+    if (client.name.toLowerCase() === lowercaseQuery) {
+      score += 100 // Exact match for name
+    } else if (client.name.toLowerCase().startsWith(lowercaseQuery)) {
+      score += 75 // Name starts with query
+    } else if (client.name.toLowerCase().includes(lowercaseQuery)) {
+      score += 50 // Name contains query
+    }
+
+    if (client.email.toLowerCase().includes(lowercaseQuery)) {
+      score += 25 // Email contains query
+    }
+
+    if (client.phone.includes(query)) {
+      score += 25 // Phone contains query
+    }
+
+    return score
+  }, [])
+
+  // Memoized filtered and sorted clients based on search, category, and status
+  const filteredAndSortedClients = useMemo(() => {
+    return allClients
+      .filter((client) => {
+        const matchesCategory = selectedCategory === "all" || client.category === selectedCategory
+        const matchesStatus = selectedStatus === "all" || client.status === selectedStatus
+        const matchesSearch =
+          searchQuery === "" ||
+          (client.name && client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (client.phone && client.phone.includes(searchQuery))
+
+        return matchesCategory && matchesStatus && matchesSearch
+      })
+      .sort((a, b) => {
+        if (searchQuery) {
+          return calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery)
+        }
+        return 0 // Don't change order if no search query
+      })
+  }, [allClients, selectedCategory, selectedStatus, searchQuery, calculateRelevanceScore])
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE)
   const paginatedClients = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredClients.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredClients, currentPage]);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredAndSortedClients.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [filteredAndSortedClients, currentPage])
 
   // Reset to first page when filters change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedStatus]);
+    setCurrentPage(1)
+  }, [searchQuery, selectedCategory, selectedStatus])
+
+
+
+
 
   const handleDeletes = async (_id: string) => {
     if (window.confirm("Are you sure you want to delete this client?")) {
@@ -143,7 +181,7 @@ export default function ClientsPage() {
           <div className="flex items-center gap-2">
             <Users className="h-6 w-6 text-gray-400" />
             <h1 className="text-xl font-semibold text-gray-900">
-              Clients ({filteredClients.length} total)
+              Clients ({filteredAndSortedClients.length} total)
             </h1>
           </div>
 
@@ -205,11 +243,11 @@ export default function ClientsPage() {
           {error && (
             <div className="text-center py-4 text-red-500">{error}</div>
           )}
-          {!loading && !error && filteredClients.length === 0 && (
+          {!loading && !error && filteredAndSortedClients.length === 0 && (
             <div className="text-center py-4">No clients found.</div>
           )}
 
-          {!loading && !error && filteredClients.length > 0 && (
+          {!loading && !error && filteredAndSortedClients.length > 0 && (
             <>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -367,10 +405,10 @@ export default function ClientsPage() {
                       </span>{" "}
                       to{" "}
                       <span className="font-medium">
-                        {Math.min(currentPage * ITEMS_PER_PAGE, filteredClients.length)}
+                        {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedClients.length)}
                       </span>{" "}
                       of{" "}
-                      <span className="font-medium">{filteredClients.length}</span>{" "}
+                      <span className="font-medium">{filteredAndSortedClients.length}</span>{" "}
                       results
                     </p>
                   </div>
@@ -429,4 +467,3 @@ export default function ClientsPage() {
   );
 }
 
-// make sure while user also can usings phone number and name 
