@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthGlobally } from '../../context/AuthContext';
-import Confetti from 'react-confetti'; // Import the Confetti component
+import Confetti from 'react-confetti';
 
 const PreviousTask = () => {
   const [tasks, setTasks] = useState([]);
