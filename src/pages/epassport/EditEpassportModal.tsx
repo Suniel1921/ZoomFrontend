@@ -251,7 +251,7 @@ export default function EditEpassportModal({
               </div>
 
               
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Payment Status
                 </label>
@@ -262,7 +262,7 @@ export default function EditEpassportModal({
                   <option value="Due">Due</option>
                   <option value="Paid">Paid</option>
                 </select>
-              </div>
+              </div> */}
 
               <div className="col-span-2">
                 <label className="flex items-center gap-2">
