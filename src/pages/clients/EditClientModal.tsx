@@ -38,8 +38,6 @@ export default function EditClientModal({
 }: EditClientModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postalCodeError, setPostalCodeError] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(client.profilePhoto || null);
 
   const parsedModeOfContact = client.modeOfContact?.[0] ? 
     client.modeOfContact[0].replace(/[\[\]"]/g, '').split(',') : 
@@ -60,6 +58,7 @@ export default function EditClientModal({
     defaultValues: {
       ...client,
       address: client.address || {},
+      // credentials: client.credentials || { password: '' },
       modeOfContact: parsedModeOfContact,
       socialMedia: parsedSocialMedia,
     },
@@ -106,14 +105,6 @@ export default function EditClientModal({
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
   const handleClickUpdate = async () => {
     if (postalCode && !validatePostalCode(postalCode)) {
       return;
@@ -129,10 +120,9 @@ export default function EditClientModal({
 
     setIsSubmitting(true);
     try {
-      let profilePhotoUrl = client.profilePhoto;
       const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/updateClient/${client._id}`,
-        { ...data, profilePhoto: profilePhotoUrl },
+        data,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -173,9 +163,9 @@ export default function EditClientModal({
           {/* Profile Photo Section */}
           <div className="flex flex-col items-center gap-4 mb-10">
             <div className="relative w-32 h-32">
-              {imagePreview ? (
+              {client.profilePhoto ? (
                 <img
-                  src={imagePreview}
+                  src={client.profilePhoto}
                   alt="Profile"
                   className="w-full h-full rounded-full object-cover border-4 border-brand-yellow"
                 />
@@ -184,12 +174,6 @@ export default function EditClientModal({
                   <Upload className="h-8 w-8 text-gray-400" />
                 </div>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
             </div>
           </div>
 
@@ -246,6 +230,11 @@ export default function EditClientModal({
                 <p className="text-sm text-red-600">{errors.phone.message as string}</p>
               )}
             </div>
+
+            {/* <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <Input {...register('password')} type="password" className="w-full" disabled />
+            </div> */}
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Nationality</label>
