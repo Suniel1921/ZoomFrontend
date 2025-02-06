@@ -48,9 +48,7 @@ export default function AddClientModal({
   const [addressError, setAddressError] = useState<string | null>(null);
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
-    null
-  );
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ClientCategory>(
     "Other Services"
   );

@@ -380,7 +380,3 @@ export default function AddApplicationModal({
   );
 }
 
-
-
-
-//check the deadline date if only remaining two day then send the notification to the createdBy user on there dashbaord when they are loggedin they see the notificaiton of deadline only two day remaining 
