@@ -27,10 +27,8 @@ const ClientOngoingTask = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllModelDataByID/${auth.user.id}`
-        );
-        console.log(response);
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllModelDataByID/${auth.user.id}`);
+        // console.log(response);
         setClientTasks(response.data.allData);
         setLoading(false);
       } catch (err) {

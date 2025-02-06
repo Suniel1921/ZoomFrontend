@@ -32,14 +32,11 @@ export default function OngoingTasks() {
     const fetchTasks = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          `${
-            import.meta.env.VITE_REACT_APP_URL
-          }/api/v1/appointment/fetchAllModelData`
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`
         );
-        console.log("API Response:", response.data); // Log the entire response
+        // console.log("API Response:", response.data); // Log the entire response
         if (response.data.success && response.data.allData) {
-          setTasks(response.data.allData); // Set tasks to the allData property
+          setTasks(response.data.allData); 
         } else {
           setError("No task data available");
         }
@@ -52,7 +49,7 @@ export default function OngoingTasks() {
     };
 
     fetchTasks();
-  }, []); // Empty dependency array ensures this runs once when the component mounts
+  }, []); 
 
   // Ensure all task arrays exist with defaults
   const {
@@ -335,3 +332,6 @@ export default function OngoingTasks() {
     </div>
   );
 }
+
+
+// show all data here for superadmin and admin can see all data each other
