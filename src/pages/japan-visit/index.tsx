@@ -98,21 +98,7 @@ export default function JapanVisitPage() {
       })
     : [];
 
-  // const filteredApplications = Array.isArray(applications)
-  // ? applications.filter((app) => {
-  //     // Ensure clientId exists
-  //     const hasClientId = app.clientId && app.clientId.name;  // Check if clientId is valid and has a name
 
-  //     // Safely access clientName and reasonForVisit
-  //     const clientName = app.clientId?.name || '';
-  //     const matchesSearch =
-  //       clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //       (app.reasonForVisit?.toLowerCase().includes(searchQuery.toLowerCase()));
-  //     const matchesPackage = !selectedPackage || app.package === selectedPackage;
-
-  //     return matchesSearch && matchesPackage && hasClientId;  // Include only applications with a valid clientId
-  //   })
-  // : [];
 
   const columns = [
     {

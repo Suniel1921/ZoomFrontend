@@ -23,12 +23,6 @@ export default function ForgotPassword() {
     // For client accounts
     const client = clients.find(c => c.email === email);
     if (client) {
-      // In a real application, you would:
-      // 1. Generate a reset token
-      // 2. Send an email with a reset link
-      // 3. Save the token in the database with an expiration
-      
-      // For this demo, we'll just show a success message
       setStatus('success');
     } else {
       setStatus('error');

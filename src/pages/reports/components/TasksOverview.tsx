@@ -11,7 +11,7 @@ interface TasksOverviewProps {
   };
 }
 
-const COLORS = ['#FEDC00', '#010101', '#666666', '#999999', '#CCCCCC', '#333333']; // Added color for otherServices
+const COLORS = ['#FEDC00', '#010101', '#666666', '#999999', '#CCCCCC', '#333333'];
 
 export default function TasksOverview({ tasks }: TasksOverviewProps) {
   // Ensure all task arrays exist with defaults

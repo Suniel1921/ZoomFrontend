@@ -47,17 +47,14 @@ export default function EditServiceModal({
   const { admins } = useAdminStore();
   const [clientsList, setClients] = useState<any[]>([]);
 
-  // const handlers = admins.filter(admin => admin.role !== 'super_admin');
-
-  // Use empty object as default value for service if it's undefined
   const formDefaultValues = service ? {
     ...service,
-    deadline: new Date(service.deadline),  // Make sure to parse the deadline properly
+    deadline: new Date(service.deadline),  
   } : {
     clientId: '',
     serviceTypes: [],
-    contactChannel: 'Viber', // Default value
-    deadline: new Date(), // Default to current date if no service provided
+    contactChannel: 'Viber', 
+    deadline: new Date(), 
     amount: 0,
     paidAmount: 0,
     discount: 0,
@@ -166,34 +163,6 @@ export default function EditServiceModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            {/* <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Client</label>
-              <SearchableSelect
-                  options={clientsList.map(client => ({
-                    value: client._id,
-                    label: client.name
-                  }))}
-                  value={watch('clientId')}
-                  onChange={(value) => {
-                    setValue('clientId', value);
-                    const client = clientsList.find(c => c._id === value);
-                    if (client) {
-                      setValue('mobileNo', client.phone);
-                    }
-                  }}
-                  placeholder="Select client"
-                />
-            </div> */}
-
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
-              <Input 
-                value={watch('mobileNo') || ''} 
-                className="mt-1 bg-gray-50" 
-                disabled 
-              />
-            </div> */}
-
             <div>
               <label className="block text-sm font-medium text-gray-700">Contact Channel</label>
               <select
