@@ -179,6 +179,22 @@ export default function EditTranslationModal({
               />
             </div>
 
+
+            {/* paid amount */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Paid Amount (¥)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  {...register("paidAmount", { valueAsNumber: true })}
+                  className="mt-1"
+                />
+              </div>
+
+            
+
             {/* Payment Status */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Payment Status</label>
@@ -246,7 +262,7 @@ export default function EditTranslationModal({
 
             {/* Translation Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Translation Status</label>
+              <label className="block text-sm font-medium text-gray-700">Job Status</label>
               <select
                 {...register('translationStatus')}
                 className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"

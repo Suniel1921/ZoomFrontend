@@ -19,6 +19,7 @@ const translationSchema = z.object({
   // nameInTargetScript: z.string().min(1, 'Name in target script is required'),
   pages: z.number().min(1, 'Number of pages must be at least 1'),
   amount: z.number().min(0, 'Amount must be positive'),
+  paidAmount: z.number().min(0, 'Paid amount must be positive'),
   paymentStatus: z.enum(['Due', 'Paid']),
   paymentMethod: z.enum(['Counter Cash', 'Bank Transfer', 'Credit Card', 'Paypay', 'Line Pay']).optional(),
   handledBy: z.string().min(1, 'Handler is required'),
@@ -85,6 +86,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
       targetLanguage: 'Japanese',
       pages: 1,
       amount: 0,
+      paidAmount: 0,
       paymentStatus: 'Due',
       translationStatus: 'Processing',
       deliveryType: 'Office Pickup',
@@ -227,6 +229,18 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
                 className="mt-1"
               />
             </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Paid Amount (¥)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  {...register("paidAmount", { valueAsNumber: true })}
+                  className="mt-1"
+                />
+              </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Payment Status</label>
