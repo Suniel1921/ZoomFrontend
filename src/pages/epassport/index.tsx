@@ -499,30 +499,34 @@ export default function EpassportPage() {
       .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/getAllePassports`)
       .then((response) => {
         if (response.data.success) {
-          console.log("epassport data is", response)
+          console.log("Fetched ePassport Data:", response.data.data) // Debugging log
           setEpassportApplications(response.data.data)
+        } else {
+          console.error("API responded with success false:", response.data)
         }
       })
       .catch((error) => {
         console.error("Error fetching ePassport applications:", error)
       })
   }
+  
 
   useEffect(() => {
     getAllEPassportApplication()
-  }, []) //Fixed: Added auth dependency
+  }, []) 
 
   const filteredApplications = epassportApplications.filter((app) => {
     const searchLower = searchQuery.toLowerCase()
     const matchesSearch =
-      (app.clientName?.toLowerCase().includes(searchLower) ?? false) ||
+      (app.clientId?.name?.toLowerCase().includes(searchLower) ?? false) ||  // Ensure client name is checked correctly
       (app.applicationType?.toLowerCase().includes(searchLower) ?? false)
-
+  
     const matchesType = !selectedType || app.applicationType === selectedType
     const matchesLocation = !selectedLocation || (app.ghumtiService && app.prefecture === selectedLocation)
-
+  
     return matchesSearch && matchesType && matchesLocation
   })
+  
 
   const formatPhoneForViber = (phone: string | undefined | null): string => {
     if (!phone) return ""
