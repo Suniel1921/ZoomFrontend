@@ -333,5 +333,3 @@ export default function OngoingTasks() {
   );
 }
 
-
-// show all data here for superadmin and admin can see all data each other

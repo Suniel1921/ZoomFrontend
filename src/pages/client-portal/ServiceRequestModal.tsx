@@ -63,9 +63,7 @@ export default function ServiceRequestModal({
     setIsSubmitting(true);
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/createServiceRequest`,
-        {
+      await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/createServiceRequest`,{
           clientId: auth.user.id,
           clientName: auth?.user?.fullName || '',
           // phoneNumber: phoneNumber.trim(),
@@ -167,3 +165,6 @@ export default function ServiceRequestModal({
     </div>
   );
 }
+
+
+// convert this code in react native and when user click on any icon then show then show the pop up modal and show the name email from auth global context  andn when req then call the api 

@@ -16,7 +16,6 @@ export default function AppointmentsSection() {
   // Fetch all appointments for the user
   const getAllAppointmentsByUser = async () => {
     try {
-      // const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`);
       const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointmentByID/${auth?.user?.id}`);
       // console.log('appoint res is', response) 
       if (response?.data?.success) {
