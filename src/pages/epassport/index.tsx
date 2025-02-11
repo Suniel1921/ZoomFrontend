@@ -148,20 +148,22 @@ export default function EpassportPage() {
     },
 
     {
-      key: "mobileNo",
+      key: "clientPhone",
       label: "Contact",
-      render: (value: string | undefined | null) => {
-        if (!value) return <span className="text-gray-400">No contact</span>
-        const formattedPhone = formatPhoneForViber(value)
+      render: (value: string | undefined | null, item: EpassportApplication) => {
+        const phone = item.clientId?.phone // Use clientId.phone
+        if (!phone) return <span className="text-gray-400">No contact</span>
+        const formattedPhone = formatPhoneForViber(phone)
         return formattedPhone ? (
           <a href={`viber://chat?number=${formattedPhone}`} className="text-brand-black hover:text-brand-yellow">
-            {value}
+            {phone}
           </a>
         ) : (
           <span className="text-gray-400">Invalid number</span>
         )
       },
     },
+    
 
     {
       key: "applicationType",

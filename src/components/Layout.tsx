@@ -27,6 +27,7 @@ import GlobalSearch from './GlobalSearch';
 import NotesPanel from './notes/NotesPanel';
 import toast from 'react-hot-toast';
 import { useAuthGlobally } from '../context/AuthContext';
+import NotificationBell from './notification/NotificationBell';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [auth] = useAuthGlobally();
@@ -112,6 +113,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <SearchIcon className="h-6 w-6" />
             </button>
+            <NotificationBell/>
             <button
               onClick={() => setShowNotes(!showNotes)}
               className="header-icon-button"
@@ -195,3 +197,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+
+
+
+
+
