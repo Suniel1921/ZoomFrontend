@@ -1,10 +1,8 @@
-import React from 'react';
-import '../../components/protectedRoutes/spinner.css'
-
 const Spinner = () => {
   return (
-    <span className="loader"></span>
-    
+    <div className="flex justify-center items-start mt-10">
+      <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+    </div>
   );
 };
 

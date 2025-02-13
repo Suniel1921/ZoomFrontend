@@ -12,6 +12,8 @@ import axios from "axios";
 import { OtherService } from "../../types/otherService";
 import toast from "react-hot-toast";
 import { useAuthGlobally } from "../../context/AuthContext";
+import Spinner from "../../components/protectedRoutes/Spinner";
+import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton";
 
 export default function OtherServicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -281,7 +283,8 @@ export default function OtherServicesPage() {
 
       <div className="mt-6">
         {loading ? (
-          <div>Loading services...</div>
+          // <Spinner/>
+          <ClientTableSkeleton/>
         ) : (
           <DataTable
             columns={columns}
