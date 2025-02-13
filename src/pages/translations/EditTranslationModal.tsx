@@ -289,6 +289,18 @@ export default function EditTranslationModal({
               </select>
             </div>
           </div>
+     {/* Notes */}
+     <div className="space-y-4">
+            <h3 className="font-medium border-b pb-3">Notes</h3>
+            <div>
+              <textarea
+                {...register("notes")}
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                placeholder="Add any additional notes..."
+              />
+            </div>
+          </div>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>

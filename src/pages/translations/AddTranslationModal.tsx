@@ -26,6 +26,7 @@ const translationSchema = z.object({
   deadline: z.date(),
   translationStatus: z.enum(["Processing", "Waiting for Payment", "Completed", "Cancelled"]),
   deliveryType: z.enum(['Office Pickup', 'Sent on Email', 'Sent on Viber', 'Sent on Facebook', 'By Post']),
+  notes: z.string() ,
 });
 
 type TranslationFormData = z.infer<typeof translationSchema>;
@@ -330,6 +331,19 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
             </div>
           </div>
 
+             {/* Notes */}
+          <div className="space-y-4">
+            <h3 className="font-medium border-b pb-3">Notes</h3>
+            <div>
+              <textarea
+                {...register("notes")}
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+                placeholder="Add any additional notes..."
+              />
+            </div>
+          </div>
+
           <div className="mt-6 flex justify-end">
             <Button type="submit" className="bg-black hover:bg-yellow-500 text-white">
               Create Document
@@ -340,3 +354,4 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
     </div>
   );
 }
+
