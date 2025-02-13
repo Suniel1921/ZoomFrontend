@@ -668,6 +668,12 @@
 
 
 
+
+
+
+
+
+
 import { useState, useEffect } from 'react';
 import { FileText, Plus, Search, Calculator, Import } from 'lucide-react';
 import Input from '../../components/Input';
@@ -691,6 +697,7 @@ export default function VisaApplicantsPage() {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [auth] = useAuthGlobally();
+  console.log(applications)
 
   // Fetch the applications from API
   const getAllApplication = () => {
@@ -748,7 +755,7 @@ const filteredApplications = (applications || []).filter((app) => {
       label: 'Client',
       render: (value: string, item: Application) => (
         <div>
-          <p className="font-medium">{value}</p>
+          <p className="font-medium">{item.clientId?.name || 'N/A'}</p> {/* Accessing the clientId.name */}
           <p className="text-sm text-gray-500">{item.type} - {item.country}</p>
         </div>
       ),

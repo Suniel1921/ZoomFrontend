@@ -264,12 +264,3 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
   );
 }
 
-
-
-
-// note: i added two notes 
-// 1. call the ram and visit the UK 
-// 2. today is my birthday
-// 3. make a crm software 
-// i added this notes i i drag 3. on the top then make sure its show always on the top 
-// when i refresh the page then its removed so make sure when i refresh page even 3. show on the first top using localStorage 
