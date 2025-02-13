@@ -65,7 +65,17 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
       setLoading(true);
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/note/getAllNotes`);
-        setNotes(response.data.notes);
+        const fetchedNotes = response.data.notes;
+  
+        // Retrieve the saved order from localStorage
+        const savedOrder = JSON.parse(localStorage.getItem('notesOrder') || '[]');
+  
+        // Reorder the notes based on the saved order
+        const orderedNotes = savedOrder.length
+          ? fetchedNotes.sort((a, b) => savedOrder.indexOf(a._id) - savedOrder.indexOf(b._id))
+          : fetchedNotes;
+  
+        setNotes(orderedNotes);
       } catch (error) {
         console.error('Error fetching notes:', error);
       } finally {
@@ -73,23 +83,29 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
       }
     }
   };
+  
 
   useEffect(() => {
     fetchNotes();
   }, [auth?.user?.id, isOpen]);
+  
 
   // Handle drag end event
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
+  
     if (over && active.id !== over.id) {
       setNotes((items) => {
         const oldIndex = items.findIndex((item) => item._id === active.id);
         const newIndex = items.findIndex((item) => item._id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const newNotes = arrayMove(items, oldIndex, newIndex);
+        // Save the updated notes order to localStorage
+        localStorage.setItem('notesOrder', JSON.stringify(newNotes.map(note => note._id)));
+        return newNotes;
       });
     }
   };
+  
 
   // Filter notes based on search and filter
   const filteredNotes = notes.filter(note => {
@@ -247,3 +263,13 @@ export default function NotesPanel({ isOpen, onClose }: NotesPanelProps) {
     </div>
   );
 }
+
+
+
+
+// note: i added two notes 
+// 1. call the ram and visit the UK 
+// 2. today is my birthday
+// 3. make a crm software 
+// i added this notes i i drag 3. on the top then make sure its show always on the top 
+// when i refresh the page then its removed so make sure when i refresh page even 3. show on the first top using localStorage 
