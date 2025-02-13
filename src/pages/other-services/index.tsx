@@ -54,11 +54,13 @@ export default function OtherServicesPage() {
   // Filter services based on search query and type
   const filteredServices = otherServices.filter((service) => {
     const matchesSearch =
-      service.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (service.serviceTypes &&
-        (service.serviceTypes as string[]).some((type) =>
-          type?.toLowerCase().includes(searchQuery.toLowerCase())
-        ));
+    service.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    service.clientId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || // Check inside clientId.name
+    (service.serviceTypes &&
+      (service.serviceTypes as string[]).some((type) =>
+        type?.toLowerCase().includes(searchQuery.toLowerCase())
+      ));
+  
     const matchesType =
       !selectedType || (service.serviceTypes || []).includes(selectedType);
     const hasClientId =
@@ -105,7 +107,7 @@ export default function OtherServicesPage() {
       render: (value: string, row: OtherService) => (
         <div>
           <p className="font-medium">
-            {row.clientId?.name || "Unknown Client"}
+            {row?.clientId?.name || row?.clientName || "Unknown Client"}
           </p>
         </div>
       ),
@@ -318,3 +320,7 @@ export default function OtherServicesPage() {
     </div>
   );
 }
+
+
+
+
