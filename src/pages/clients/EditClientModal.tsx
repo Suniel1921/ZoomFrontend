@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, Camera } from 'lucide-react';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
-import ImageUpload from '../../components/ImageUpload';
 import { useStore } from '../../store';
 import { fetchJapaneseAddress } from '../../services/addressService';
 import { countries } from '../../utils/countries';
@@ -38,6 +37,8 @@ export default function EditClientModal({
 }: EditClientModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postalCodeError, setPostalCodeError] = useState('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>(client.profilePhoto || '');
 
   const parsedModeOfContact = client.modeOfContact?.[0] ? 
     client.modeOfContact[0].replace(/[\[\]"]/g, '').split(',') : 
@@ -58,14 +59,22 @@ export default function EditClientModal({
     defaultValues: {
       ...client,
       address: client.address || {},
-      // credentials: client.credentials || { password: '' },
       modeOfContact: parsedModeOfContact,
       socialMedia: parsedSocialMedia,
     },
   });
 
-  const postalCode = watch('address.postalCode');
+  const postalCode = watch('postalCode');
   const selectedModes = watch('modeOfContact') || [];
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const fileUrl = URL.createObjectURL(file);
+      setPreviewUrl(fileUrl);
+    }
+  };
 
   const validatePostalCode = (value: string) => {
     const cleanValue = value.replace(/[^0-9]/g, '');
@@ -79,15 +88,15 @@ export default function EditClientModal({
 
   const handlePostalCodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
-    register('address.postalCode').onChange(e);
+    register('postalCode').onChange(e);
     
     if (validatePostalCode(value) && value.length === 7) {
       try {
         const address = await fetchJapaneseAddress(value);
         if (address) {
-          setValue('address.prefecture', address.prefecture);
-          setValue('address.city', address.city);
-          setValue('address.street', address.town);
+          setValue('prefecture', address.prefecture);
+          setValue('city', address.city);
+          setValue('street', address.town);
         }
       } catch (error) {
         toast.error('Failed to fetch address. Please check the postal code.');
@@ -110,22 +119,50 @@ export default function EditClientModal({
       return;
     }
 
-    const formData = watch();
+    const formData = new FormData();
+    const watchedData = watch();
     
-    const data = {
-      ...formData,
-      modeOfContact: [JSON.stringify(formData.modeOfContact)],
-      socialMedia: [JSON.stringify(formData.socialMedia)],
-    };
+    // Show loading toast for profile photo update
+    let loadingToast;
+    if (selectedImage) {
+      loadingToast = toast.loading('Updating profile photo...');
+    }
 
-    setIsSubmitting(true);
     try {
+      // Append basic fields
+      const basicFields = [
+        'name', 'category', 'status', 'email', 'phone', 'nationality',
+        'postalCode', 'prefecture', 'city', 'street', 'building'
+      ];
+
+      basicFields.forEach(field => {
+        if (watchedData[field] !== undefined && watchedData[field] !== null) {
+          formData.append(field, watchedData[field].toString());
+        }
+      });
+
+      // Handle special fields
+      if (watchedData.modeOfContact) {
+        formData.append('modeOfContact', JSON.stringify([JSON.stringify(watchedData.modeOfContact)]));
+      }
+
+      if (watchedData.socialMedia) {
+        formData.append('socialMedia', JSON.stringify([JSON.stringify(watchedData.socialMedia)]));
+      }
+
+      // Append the profile photo if selected
+      if (selectedImage) {
+        formData.append('profilePhoto', selectedImage);
+      }
+
+      setIsSubmitting(true);
+
       const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/updateClient/${client._id}`,
-        data,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
@@ -134,11 +171,20 @@ export default function EditClientModal({
         throw new Error('Failed to update client');
       }
 
+      // Dismiss loading toast if it exists
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
+
       toast.success('Client updated successfully!');
       onClose();
       getAllClients();
     } catch (error) {
       console.error('Error updating client:', error);
+      // Dismiss loading toast if it exists
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
       toast.error('Failed to update client. Please try again later.');
     } finally {
       setIsSubmitting(false);
@@ -162,10 +208,10 @@ export default function EditClientModal({
         <form className="space-y-10">
           {/* Profile Photo Section */}
           <div className="flex flex-col items-center gap-4 mb-10">
-            <div className="relative w-32 h-32">
-              {client.profilePhoto ? (
+            <div className="relative w-32 h-32 group">
+              {previewUrl ? (
                 <img
-                  src={client.profilePhoto}
+                  src={previewUrl}
                   alt="Profile"
                   className="w-full h-full rounded-full object-cover border-4 border-brand-yellow"
                 />
@@ -174,6 +220,15 @@ export default function EditClientModal({
                   <Upload className="h-8 w-8 text-gray-400" />
                 </div>
               )}
+              <label className="absolute bottom-0 right-0 bg-brand-yellow rounded-full p-2 cursor-pointer group-hover:bg-brand-yellow/90 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <Camera className="h-5 w-5 text-white" />
+              </label>
             </div>
           </div>
 
@@ -230,11 +285,6 @@ export default function EditClientModal({
                 <p className="text-sm text-red-600">{errors.phone.message as string}</p>
               )}
             </div>
-
-            {/* <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <Input {...register('password')} type="password" className="w-full" disabled />
-            </div> */}
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Nationality</label>

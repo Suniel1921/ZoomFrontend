@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { CreditCard, Plus, Search, Calculator, Upload, Eye, Download } from "lucide-react"
+import { CreditCard, Plus, Search, Calculator, Upload, Eye, Download, Calendar } from "lucide-react"
 import Input from "../../components/Input"
 import Button from "../../components/Button"
 import AddEpassportModal from "./AddEpassportModal"
@@ -15,6 +15,8 @@ import toast from "react-hot-toast"
 import { useAuthGlobally } from "../../context/AuthContext"
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 
 const APPLICATION_TYPES = [
   "Newborn Child",
@@ -43,8 +45,11 @@ export default function EpassportPage() {
       .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/getAllePassports`)
       .then((response) => {
         if (response.data.success) {
-          console.log("Fetched ePassport Data:", response.data.data) // Debugging log
-          setEpassportApplications(response.data.data)
+          // Sort applications by createdAt date (latest first)
+          const sortedApplications = response.data.data.sort((a: EpassportApplication, b: EpassportApplication) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          })
+          setEpassportApplications(sortedApplications)
         } else {
           console.error("API responded with success false:", response.data)
         }
@@ -53,24 +58,22 @@ export default function EpassportPage() {
         console.error("Error fetching ePassport applications:", error)
       })
   }
-  
 
   useEffect(() => {
     getAllEPassportApplication()
-  }, []) 
+  }, [])
 
   const filteredApplications = epassportApplications.filter((app) => {
     const searchLower = searchQuery.toLowerCase()
     const matchesSearch =
-      (app.clientId?.name?.toLowerCase().includes(searchLower) ?? false) ||  
+      (app.clientId?.name?.toLowerCase().includes(searchLower) ?? false) ||
       (app.applicationType?.toLowerCase().includes(searchLower) ?? false)
-  
+
     const matchesType = !selectedType || app.applicationType === selectedType
     const matchesLocation = !selectedLocation || (app.ghumtiService && app.prefecture === selectedLocation)
-  
+
     return matchesSearch && matchesType && matchesLocation
   })
-  
 
   const formatPhoneForViber = (phone: string | undefined | null): string => {
     if (!phone) return ""
@@ -133,6 +136,24 @@ export default function EpassportPage() {
     return totalDue <= 0 ? "Paid" : "Due"
   }
 
+  const handleDateChange = async (deadline: deadline, application: EpassportApplication) => {
+    try {
+      const response = await axios.put(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/updateEpassport/${application._id}`,
+        { createdAt: deadline.toISOString() },
+      )
+      if (response.data.success) {
+        toast.success("Date updated successfully!")
+        getAllEPassportApplication() // Refresh data
+      } else {
+        toast.error("Failed to update the date.")
+      }
+    } catch (error) {
+      console.error("Error updating date:", error)
+      toast.error("An error occurred while updating the date.")
+    }
+  }
+
   const columns = [
     {
       key: "clientName",
@@ -146,12 +167,11 @@ export default function EpassportPage() {
         )
       },
     },
-
     {
       key: "clientPhone",
       label: "Contact",
       render: (value: string | undefined | null, item: EpassportApplication) => {
-        const phone = item.clientId?.phone // Use clientId.phone
+        const phone = item.clientId?.phone
         if (!phone) return <span className="text-gray-400">No contact</span>
         const formattedPhone = formatPhoneForViber(phone)
         return formattedPhone ? (
@@ -163,8 +183,6 @@ export default function EpassportPage() {
         )
       },
     },
-    
-
     {
       key: "applicationType",
       label: "Type",
@@ -210,7 +228,32 @@ export default function EpassportPage() {
         )
       },
     },
-
+    {
+      key: "deadline",
+      label: "Deadline",
+      render: (value: string, item: EpassportApplication) => {
+        const date = new Date(value);
+        const formattedDate = date.toLocaleDateString("en-CA"); // "yy/mm/dd" format
+    
+        return (
+          <div className="flex items-center gap-2">
+            <span>{formattedDate}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedApplication(item);
+                setIsEditModalOpen(true);
+                handleDateChange;
+              }}
+            >
+              <Calendar className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+    
     {
       key: "id",
       label: "Actions",
@@ -401,4 +444,8 @@ export default function EpassportPage() {
     </div>
   )
 }
+
+
+
+
 

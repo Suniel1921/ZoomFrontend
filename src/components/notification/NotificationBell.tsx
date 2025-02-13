@@ -133,7 +133,7 @@ export default function NotificationBell() {
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
           <div className="p-4 border-b">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Notifications</h3>
+              <h3 className="text-lg font-semibold">Notifications **</h3>
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
