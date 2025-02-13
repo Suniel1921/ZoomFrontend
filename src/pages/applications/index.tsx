@@ -697,7 +697,6 @@ export default function VisaApplicantsPage() {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [auth] = useAuthGlobally();
-  console.log(applications)
 
   // Fetch the applications from API
   const getAllApplication = () => {

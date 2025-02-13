@@ -167,7 +167,9 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                             {getIcon(key)}
                             <div className="text-left">
                               <p className="font-medium">
-                                {item.clientName || item.name}
+                                {/* {item.clientName || item.name} */}
+                                {item.clientId?.name || item.clientName || item.name || "No Name"}
+
                               </p>
                               <p className="text-sm text-gray-500">
                                 {item.details || item.type || ""}
