@@ -39,6 +39,14 @@ export const createClientSchema = (category: ClientCategory, isEditing = false) 
       ? z.string().optional().or(z.literal(''))
       : z.string().min(1, 'Nationality is required');
 
+
+      //Base userName schema - 
+      const facebookUrlSchema = isEditing
+      ? z.string().optional().or(z.literal(''))
+      : isOptionalCategory
+        ? z.string().optional().or(z.literal(''))
+        : z.string().min(1, 'userName is required');
+
   // Base address schema - make all fields optional when editing
   const addressSchema = isEditing
     ? z.object({
@@ -67,6 +75,7 @@ export const createClientSchema = (category: ClientCategory, isEditing = false) 
   return z.object({
     name: isEditing ? z.string().optional() : z.string().min(1, 'Name is required'),
     email: emailSchema,
+    facebookUrl: facebookUrlSchema,
     phone: phoneSchema,
     nationality: nationalitySchema,
     category: z.enum([
@@ -81,9 +90,6 @@ export const createClientSchema = (category: ClientCategory, isEditing = false) 
     status: z.enum(['active', 'inactive']),
     profilePhoto: z.string().optional(),
     address: addressSchema,
-    socialMedia: z.object({
-      facebook: z.string().optional(),
-    }),
     modeOfContact: z.array(z.enum(['Direct Call', 'Viber', 'WhatsApp', 'Facebook Messenger'])),
     password: passwordSchema,
   });

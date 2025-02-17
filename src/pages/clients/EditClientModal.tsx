@@ -40,13 +40,36 @@ export default function EditClientModal({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(client.profilePhoto || '');
 
-  const parsedModeOfContact = client.modeOfContact?.[0] ? 
-    client.modeOfContact[0].replace(/[\[\]"]/g, '').split(',') : 
-    [];
-    
-  const parsedSocialMedia = client.socialMedia?.[0] ? 
-    JSON.parse(client.socialMedia[0]) : 
-    { facebook: '' };
+  // Parse modeOfContact with error handling
+  const parseModeOfContact = () => {
+    try {
+      if (Array.isArray(client.modeOfContact)) {
+        return client.modeOfContact;
+      }
+      if (typeof client.modeOfContact === 'string') {
+        return JSON.parse(client.modeOfContact.replace(/\\/g, ''));
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing modeOfContact:', error);
+      return [];
+    }
+  };
+
+  const parseSocialMedia = () => {
+    try {
+      if (typeof client.socialMedia === 'object') {
+        return client.socialMedia;
+      }
+      if (Array.isArray(client.facebookUrl) && client.facebookUrl[0]) {
+        return JSON.parse(client.facebookUrl[0]);
+      }
+      return { facebook: '' };
+    } catch (error) {
+      console.error('Error parsing socialMedia:', error);
+      return { facebook: '' };
+    }
+  };
 
   const {
     register,
@@ -58,9 +81,8 @@ export default function EditClientModal({
     resolver: zodResolver(createClientSchema(client.category, true)),
     defaultValues: {
       ...client,
-      address: client.address || {},
-      modeOfContact: parsedModeOfContact,
-      socialMedia: parsedSocialMedia,
+      modeOfContact: parseModeOfContact(),
+      socialMedia: parseSocialMedia(),
     },
   });
 
@@ -107,11 +129,10 @@ export default function EditClientModal({
 
   const handleModeOfContactChange = (mode: string) => {
     const currentModes = watch('modeOfContact') || [];
-    if (currentModes.includes(mode)) {
-      setValue('modeOfContact', currentModes.filter((m) => m !== mode));
-    } else {
-      setValue('modeOfContact', [...currentModes, mode]);
-    }
+    const newModes = currentModes.includes(mode)
+      ? currentModes.filter((m) => m !== mode)
+      : [...currentModes, mode];
+    setValue('modeOfContact', newModes);
   };
 
   const handleClickUpdate = async () => {
@@ -121,41 +142,41 @@ export default function EditClientModal({
 
     const formData = new FormData();
     const watchedData = watch();
-    
-    // Show loading toast for profile photo update
     let loadingToast;
+
     if (selectedImage) {
       loadingToast = toast.loading('Updating profile photo...');
     }
 
     try {
-      // Append basic fields
+      setIsSubmitting(true);
+
+      // Handle basic fields
       const basicFields = [
-        'name', 'category', 'status', 'email', 'phone', 'nationality',
+        'name', 'category', 'status', 'email', 'phone', 'nationality', 'facebookUrl',
         'postalCode', 'prefecture', 'city', 'street', 'building'
       ];
 
       basicFields.forEach(field => {
-        if (watchedData[field] !== undefined && watchedData[field] !== null) {
+        if (watchedData[field]) {
           formData.append(field, watchedData[field].toString());
         }
       });
 
-      // Handle special fields
-      if (watchedData.modeOfContact) {
-        formData.append('modeOfContact', JSON.stringify([JSON.stringify(watchedData.modeOfContact)]));
+      // Handle modeOfContact - send as simple array
+      if (Array.isArray(watchedData.modeOfContact)) {
+        formData.append('modeOfContact', JSON.stringify(watchedData.modeOfContact));
       }
 
+      // Handle socialMedia - send as object
       if (watchedData.socialMedia) {
-        formData.append('socialMedia', JSON.stringify([JSON.stringify(watchedData.socialMedia)]));
+        formData.append('socialMedia', JSON.stringify(watchedData.socialMedia));
       }
 
-      // Append the profile photo if selected
+      // Handle profile photo
       if (selectedImage) {
         formData.append('profilePhoto', selectedImage);
       }
-
-      setIsSubmitting(true);
 
       const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/updateClient/${client._id}`,
@@ -171,7 +192,6 @@ export default function EditClientModal({
         throw new Error('Failed to update client');
       }
 
-      // Dismiss loading toast if it exists
       if (loadingToast) {
         toast.dismiss(loadingToast);
       }
@@ -181,7 +201,6 @@ export default function EditClientModal({
       getAllClients();
     } catch (error) {
       console.error('Error updating client:', error);
-      // Dismiss loading toast if it exists
       if (loadingToast) {
         toast.dismiss(loadingToast);
       }
@@ -302,14 +321,25 @@ export default function EditClientModal({
               )}
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Facebook Profile</label>
               <Input
                 {...register('socialMedia.facebook')}
                 placeholder="Facebook profile URL"
                 className="w-full"
               />
+            </div> */}
+
+
+
+<div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">facebook profile URL</label>
+              <Input {...register('facebookUrl')} className="w-full" />
             </div>
+
+
+
+
           </div>
 
           {/* Address Section */}

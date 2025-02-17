@@ -63,6 +63,7 @@ export default function AddClientModal({
   } = useForm({
     resolver: zodResolver(createClientSchema(selectedCategory)),
     defaultValues: {
+      facebookUrl : "",
       status: "active",
       category: selectedCategory,
       address: {
@@ -71,9 +72,6 @@ export default function AddClientModal({
         city: "",
         street: "",
         building: "",
-      },
-      socialMedia: {
-        facebook: "",
       },
       modeOfContact: [],
       password: "",
@@ -113,12 +111,6 @@ export default function AddClientModal({
     }
   }, [postalCode, setValue, selectedCategory]);
 
-  const handleGeneratePassword = () => {
-    if (optionalCategories.includes(selectedCategory)) return;
-    const password = generateStrongPassword();
-    setGeneratedPassword(password);
-    setValue("password", password);
-  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -192,14 +184,9 @@ export default function AddClientModal({
       formData.append("city", data.address.city);
       formData.append("street", data.address.street);
       formData.append("building", data.address.building);
-      // formData.append("modeOfContact", data.modeOfContact);
-      // formData.append("socialMedia", data.socialMedia);
-      // formData.append("timeline", data.address.timeline);
+      formData.append('facebookUrl', data.facebookUrl);
 
-
-      // Stringify modeOfContact and socialMedia before appending
     formData.append("modeOfContact", JSON.stringify(data.modeOfContact));
-    formData.append("socialMedia", JSON.stringify(data.socialMedia));
     formData.append("timeline", JSON.stringify(data.address.timeline));
   
 
@@ -371,13 +358,9 @@ export default function AddClientModal({
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Facebook Profile</label>
-            <Input
-              {...register("socialMedia.facebook")}
-              placeholder="Facebook profile URL"
-              className="w-full"
-            />
+           <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">facebook Profile URL</label>
+            <Input {...register("facebookUrl")} className="w-full" />
           </div>
         </div>
 
