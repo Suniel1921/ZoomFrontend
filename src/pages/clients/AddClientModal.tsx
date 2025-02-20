@@ -20,7 +20,7 @@ const categories: ClientCategory[] = [
   "Student Visa Applicant",
   "Epassport Applicant",
   "Japan Visa",
-  "Other Services",
+  "General Consultation",
   // "Graphic Desing",
 ];
 
@@ -28,7 +28,7 @@ const optionalCategories: ClientCategory[] = [
   "Document Translation",
   "Epassport Applicant",
   "Japan Visa",
-  "Other Services",
+  "General Consultation",
   // "Graphic Desing",
 ];
 
@@ -49,9 +49,7 @@ export default function AddClientModal({
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<ClientCategory>(
-    "Other Services"
-  );
+  const [selectedCategory, setSelectedCategory] = useState<ClientCategory>();
 
   const {
     register,
@@ -301,6 +299,7 @@ export default function AddClientModal({
               onChange={(e) => handleCategoryChange(e.target.value as ClientCategory)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow h-10 px-3"
             >
+              <option>Select Category</option>
               {categories.map((category) => (
                 <option key={category} value={category}>{category}</option>
               ))}
@@ -452,6 +451,17 @@ export default function AddClientModal({
   </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

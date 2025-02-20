@@ -1,45 +1,33 @@
+// import { useState, useMemo, useEffect, useCallback } from "react"
+// import { Users, Plus, Pencil, Trash2, Mail, Phone, Upload, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+// import Input from "../../components/Input"
+// import Button from "../../components/Button"
+// import AddClientModal from "./AddClientModal"
+// import EditClientModal from "./EditClientModal"
+// import ImportClientsModal from "./ImportClientsModal"
+// import PrintAddressButton from "../../components/PrintAddressButton"
+// import CategoryBadge from "../../components/CategoryBadge"
+// import axios from "axios"
+// import type { Client, ClientCategory } from "../../types"
+// import toast from "react-hot-toast"
+// import { useAuthGlobally } from "../../context/AuthContext"
+// import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton"
 
-// import React, { useState, useMemo, useEffect, useCallback } from "react";
-// import {
-//   Users,
-//   Plus,
-//   Pencil,
-//   Trash2,
-//   Mail,
-//   Phone,
-//   Upload,
-//   Eye,
-//   ChevronLeft,
-//   ChevronRight,
-// } from "lucide-react";
-// import Input from "../../components/Input";
-// import Button from "../../components/Button";
-// import AddClientModal from "./AddClientModal";
-// import EditClientModal from "./EditClientModal";
-// import ImportClientsModal from "./ImportClientsModal";
-// import PrintAddressButton from "../../components/PrintAddressButton";
-// import CategoryBadge from "../../components/CategoryBadge";
-// import axios from "axios";
-// import type { Client, ClientCategory } from "../../types";
-// import toast from "react-hot-toast";
-// import { useAuthGlobally } from "../../context/AuthContext";
-// import Spinner from "../../components/protectedRoutes/Spinner";
-
-// const ITEMS_PER_PAGE = 20;
+// const ITEMS_PER_PAGE = 20
 
 // export default function ClientsPage() {
-//   const [searchQuery, setSearchQuery] = useState("");
-//   const [selectedCategory, setSelectedCategory] = useState<ClientCategory | "all">("all");
-//   const [selectedStatus, setSelectedStatus] = useState<"all" | "active" | "inactive">("all");
-//   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-//   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-//   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-//   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-//   const [allClients, setAllClients] = useState<Client[]>([]);
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-//   const [auth] = useAuthGlobally();
+//   const [searchQuery, setSearchQuery] = useState("")
+//   const [selectedCategory, setSelectedCategory] = useState<ClientCategory | "all">("all")
+//   const [selectedStatus, setSelectedStatus] = useState<"all" | "active" | "inactive">("all")
+//   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+//   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+//   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+//   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+//   const [allClients, setAllClients] = useState<Client[]>([])
+//   const [currentPage, setCurrentPage] = useState(1)
+//   const [loading, setLoading] = useState(false)
+//   const [error, setError] = useState<string | null>(null)
+//   const [auth] = useAuthGlobally()
 
 //   const categories: ClientCategory[] = [
 //     "Visit Visa Applicant",
@@ -49,7 +37,7 @@
 //     "Epassport Applicant",
 //     "Japan Visa",
 //     "General Consultation",
-//   ];
+//   ]
 
 //   const getAllClients = useCallback(async (forceRefresh = false) => {
 //     try {
@@ -63,10 +51,8 @@
 //         throw new Error("Unexpected response format")
 //       }
 //     } catch (error: any) {
-//       if (error.response) {
-//         toast.error(error.response.data.message)
-//         setError("Failed to fetch clients.")
-//       }
+//       toast.error(error.response?.data?.message || "Failed to fetch clients.")
+//       setError("Failed to fetch clients.")
 //     } finally {
 //       setLoading(false)
 //     }
@@ -76,56 +62,36 @@
 //     getAllClients()
 //   }, [getAllClients])
 
-
-//   // Helper function to calculate relevance score
 //   const calculateRelevanceScore = useCallback((client: Client, query: string) => {
 //     const lowercaseQuery = query.toLowerCase()
-//     const normalizedPhone = client.phone.replace(/\D/g, "") 
+//     const normalizedPhone = client.phone.replace(/\D/g, "")
 //     const normalizedQuery = query.replace(/\D/g, "")
 //     let score = 0
 
-//     // Name matching
-//     if (client.name.toLowerCase() === lowercaseQuery) {
-//       score += 100 // Exact match for name
-//     } else if (client.name.toLowerCase().startsWith(lowercaseQuery)) {
-//       score += 75 // Name starts with query
-//     } else if (client.name.toLowerCase().includes(lowercaseQuery)) {
-//       score += 50 // Name contains query
-//     }
+//     if (client.name.toLowerCase() === lowercaseQuery) score += 100
+//     else if (client.name.toLowerCase().startsWith(lowercaseQuery)) score += 75
+//     else if (client.name.toLowerCase().includes(lowercaseQuery)) score += 50
 
-//     // Phone matching
-//     if (normalizedPhone === normalizedQuery) {
-//       score += 100 // Exact match for phone
-//     } else if (normalizedPhone.startsWith(normalizedQuery)) {
-//       score += 75 // Phone starts with query
-//     } else if (normalizedPhone.includes(normalizedQuery)) {
-//       score += 50 // Phone contains query
-//     }
+//     if (normalizedPhone === normalizedQuery) score += 100
+//     else if (normalizedPhone.startsWith(normalizedQuery)) score += 75
+//     else if (normalizedPhone.includes(normalizedQuery)) score += 50
 
-//     // Email matching
-//     if (client.email.toLowerCase() === lowercaseQuery) {
-//       score += 90 // Exact match for email
-//     } else if (client.email.toLowerCase().startsWith(lowercaseQuery)) {
-//       score += 60 // Email starts with query
-//     } else if (client.email.toLowerCase().includes(lowercaseQuery)) {
-//       score += 30 // Email contains query
-//     }
+//     if (client.email.toLowerCase() === lowercaseQuery) score += 90
+//     else if (client.email.toLowerCase().startsWith(lowercaseQuery)) score += 60
+//     else if (client.email.toLowerCase().includes(lowercaseQuery)) score += 30
 
 //     return score
 //   }, [])
 
-//   // Memoized filtered and sorted clients based on search, category, and status
 //   const filteredAndSortedClients = useMemo(() => {
 //     return allClients
 //       .filter((client) => {
 //         const matchesCategory = selectedCategory === "all" || client.category === selectedCategory
 //         const matchesStatus = selectedStatus === "all" || client.status === selectedStatus
-
 //         if (searchQuery === "") return matchesCategory && matchesStatus
 
 //         const normalizedPhone = client.phone.replace(/\D/g, "")
 //         const normalizedQuery = searchQuery.replace(/\D/g, "")
-
 //         const matchesSearch =
 //           client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 //           client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -133,48 +99,34 @@
 
 //         return matchesCategory && matchesStatus && matchesSearch
 //       })
-//       .sort((a, b) => {
-//         if (searchQuery) {
-//           return calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery)
-//         }
-//         return 0 // Don't change order if no search query
-//       })
+//       .sort((a, b) =>
+//         searchQuery ? calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery) : 0,
+//       )
 //   }, [allClients, selectedCategory, selectedStatus, searchQuery, calculateRelevanceScore])
 
-//   // Calculate pagination
 //   const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE)
 //   const paginatedClients = useMemo(() => {
 //     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
 //     return filteredAndSortedClients.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 //   }, [filteredAndSortedClients, currentPage])
 
-//   // Reset to first page when filters change
 //   useEffect(() => {
 //     setCurrentPage(1)
-//   }, [selectedCategory, selectedStatus]) // Removed unnecessary dependencies
+//   }, [allClients])
 
-
-
-
-
-//   const handleDeletes = async (_id: string) => {
+//   const handleDelete = async (_id: string) => {
 //     if (window.confirm("Are you sure you want to delete this client?")) {
 //       try {
-//         const response = await axios.delete(
-//           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/deleteClient/${_id}`
-//         );
-//         toast.success(response.data.message);
-//         getAllClients();
+//         const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/deleteClient/${_id}`)
+//         toast.success(response.data.message)
+//         getAllClients()
 //       } catch (error) {
-//         toast.error("Failed to delete client.");
+//         toast.error("Failed to delete client.")
 //       }
 //     }
-//   };
+//   }
 
-//   const formatPhoneForViber = (phone: string) => {
-//     if (!phone) return "";
-//     return phone.replace(/\D/g, "");
-//   };
+//   const formatPhoneForViber = (phone: string) => phone.replace(/\D/g, "")
 
 //   const downloadClientDetails = useCallback((client: Client) => {
 //     const clientDetails = `
@@ -182,13 +134,13 @@
 //     ${client.prefecture}, ${client.city}, ${client.street} ${client.building}
 //     ${client.name}様
 //     ${client.phone}
-//     `;
-//     const blob = new Blob([clientDetails], { type: "text/plain" });
-//     const link = document.createElement("a");
-//     link.href = URL.createObjectURL(blob);
-//     link.download = `${client.name}_details.txt`;
-//     link.click();
-//   }, []);
+//     `
+//     const blob = new Blob([clientDetails], { type: "text/plain" })
+//     const link = document.createElement("a")
+//     link.href = URL.createObjectURL(blob)
+//     link.download = `${client.name}_details.txt`
+//     link.click()
+//   }, [])
 
 //   return (
 //     <div className="space-y-6">
@@ -197,9 +149,7 @@
 //         <div className="flex items-center justify-between gap-4">
 //           <div className="flex items-center gap-2">
 //             <Users className="h-6 w-6 text-gray-400" />
-//             <h1 className="text-xl font-semibold text-gray-900">
-//               Clients ({filteredAndSortedClients.length} total)
-//             </h1>
+//             <h1 className="text-xl font-semibold text-gray-900">Clients ({filteredAndSortedClients.length} total)</h1>
 //           </div>
 
 //           <div className="flex items-center gap-4">
@@ -254,17 +204,13 @@
 //       {/* Clients List */}
 //       <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
 //         <div className="overflow-x-auto">
-//           {loading && (
-//             <Spinner/>
-//           )}
-//           {error && (
+//           {loading ? (
+//             <ClientTableSkeleton />
+//           ) : error ? (
 //             <div className="text-center py-4 text-red-500">{error}</div>
-//           )}
-//           {!loading && !error && filteredAndSortedClients.length === 0 && (
+//           ) : filteredAndSortedClients.length === 0 ? (
 //             <div className="text-center py-4">No clients found.</div>
-//           )}
-
-//           {!loading && !error && filteredAndSortedClients.length > 0 && (
+//           ) : (
 //             <>
 //               <table className="min-w-full divide-y divide-gray-200">
 //                 <thead className="bg-gray-50">
@@ -293,7 +239,7 @@
 //                         <div className="flex items-center gap-3">
 //                           {client.profilePhoto ? (
 //                             <img
-//                               src={client.profilePhoto}
+//                               src={client.profilePhoto || "/placeholder.svg"}
 //                               alt={client.name}
 //                               className="h-10 w-10 rounded-full object-cover"
 //                             />
@@ -308,12 +254,8 @@
 //                             </div>
 //                           )}
 //                           <div>
-//                             <p className="font-medium text-brand-black">
-//                               {client.name}
-//                             </p>
-//                             <p className="text-sm text-gray-500">
-//                               {client.nationality}
-//                             </p>
+//                             <p className="font-medium text-brand-black">{client.name}</p>
+//                             <p className="text-sm text-gray-500">{client.nationality}</p>
 //                           </div>
 //                         </div>
 //                       </td>
@@ -327,30 +269,22 @@
 //                             <Phone className="h-4 w-4 text-gray-400" />
 //                             <span>
 //                               <a
-//                                 href={`viber://chat?number=${formatPhoneForViber(
-//                                   client.phone
-//                                 )}`}
+//                                 href={`viber://chat?number=${formatPhoneForViber(client.phone)}`}
 //                                 className="text-brand-black hover:text-brand-yellow"
 //                               >
-//                                 {client.phone.length > 10
-//                                   ? `${client.phone.slice(0, 11)}...`
-//                                   : client.phone}
+//                                 {client.phone.length > 10 ? `${client.phone.slice(0, 11)}...` : client.phone}
 //                               </a>
 //                             </span>
 //                           </div>
 //                         </div>
 //                       </td>
 //                       <td className="px-6 py-4 whitespace-nowrap">
-//                         <CategoryBadge
-//                           category={client.category || "import from CSV file"}
-//                         />
+//                         <CategoryBadge category={client.category || "import from CSV file"} />
 //                       </td>
 //                       <td className="px-6 py-4 whitespace-nowrap">
 //                         <span
 //                           className={`px-3 py-1 rounded-full text-sm font-medium ${
-//                             client.status === "active"
-//                               ? "bg-green-100 text-green-700"
-//                               : "bg-gray-100 text-gray-700"
+//                             client.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
 //                           }`}
 //                         >
 //                           {client.status}
@@ -371,8 +305,8 @@
 //                             size="sm"
 //                             variant="outline"
 //                             onClick={() => {
-//                               setSelectedClient(client);
-//                               setIsEditModalOpen(true);
+//                               setSelectedClient(client)
+//                               setIsEditModalOpen(true)
 //                             }}
 //                           >
 //                             <Pencil className="h-4 w-4" />
@@ -382,7 +316,7 @@
 //                             <Button
 //                               size="sm"
 //                               variant="outline"
-//                               onClick={() => handleDeletes(client._id)}
+//                               onClick={() => handleDelete(client._id)}
 //                               className="text-red-500 hover:text-red-700"
 //                             >
 //                               <Trash2 className="h-4 w-4" />
@@ -416,17 +350,11 @@
 //                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
 //                   <div>
 //                     <p className="text-sm text-gray-700">
-//                       Showing{" "}
-//                       <span className="font-medium">
-//                         {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-//                       </span>{" "}
-//                       to{" "}
+//                       Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{" "}
 //                       <span className="font-medium">
 //                         {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedClients.length)}
 //                       </span>{" "}
-//                       of{" "}
-//                       <span className="font-medium">{filteredAndSortedClients.length}</span>{" "}
-//                       results
+//                       of <span className="font-medium">{filteredAndSortedClients.length}</span> results
 //                     </p>
 //                   </div>
 //                   <div className="flex gap-2">
@@ -457,18 +385,14 @@
 //       </div>
 
 //       {/* Modals */}
-//       <AddClientModal
-//         isOpen={isAddModalOpen}
-//         onClose={() => setIsAddModalOpen(false)}
-//         getAllClients={getAllClients}
-//       />
+//       <AddClientModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} getAllClients={getAllClients} />
 
 //       {selectedClient && (
 //         <EditClientModal
 //           isOpen={isEditModalOpen}
 //           onClose={() => {
-//             setIsEditModalOpen(false);
-//             setSelectedClient(null);
+//             setIsEditModalOpen(false)
+//             setSelectedClient(null)
 //           }}
 //           getAllClients={getAllClients}
 //           client={selectedClient}
@@ -481,7 +405,7 @@
 //         getAllClients={getAllClients}
 //       />
 //     </div>
-//   );
+//   )
 // }
 
 
@@ -490,8 +414,10 @@
 
 
 
+// **************showing latest added created data first **********
 
 
+"use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { Users, Plus, Pencil, Trash2, Mail, Phone, Upload, Eye, ChevronLeft, ChevronRight } from "lucide-react"
@@ -594,9 +520,23 @@ export default function ClientsPage() {
 
         return matchesCategory && matchesStatus && matchesSearch
       })
-      .sort((a, b) =>
-        searchQuery ? calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery) : 0,
-      )
+      .sort((a, b) => {
+        if (searchQuery) {
+          // If there's a search query, prioritize relevance
+          return calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery)
+        }
+
+        // Get timestamps or fallback dates for comparison
+        const dateA = a.createdAt || a.dateJoined || new Date(0)
+        const dateB = b.createdAt || b.dateJoined || new Date(0)
+
+        // Convert to timestamps for comparison
+        const timeA = new Date(dateA).getTime()
+        const timeB = new Date(dateB).getTime()
+
+        // Sort newest first
+        return timeB - timeA
+      })
   }, [allClients, selectedCategory, selectedStatus, searchQuery, calculateRelevanceScore])
 
   const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE)
@@ -607,7 +547,7 @@ export default function ClientsPage() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [allClients])
+  }, [])
 
   const handleDelete = async (_id: string) => {
     if (window.confirm("Are you sure you want to delete this client?")) {
@@ -703,8 +643,14 @@ export default function ClientsPage() {
             <ClientTableSkeleton />
           ) : error ? (
             <div className="text-center py-4 text-red-500">{error}</div>
-          ) : filteredAndSortedClients.length === 0 ? (
-            <div className="text-center py-4">No clients found.</div>
+          ) : allClients.length === 0 || filteredAndSortedClients.length === 0 ? (
+            <div className="text-center py-4">
+              {allClients.length === 0
+                ? "No clients found."
+                : searchQuery
+                  ? "No clients found matching your search."
+                  : "No clients found matching the selected filters."}
+            </div>
           ) : (
             <>
               <table className="min-w-full divide-y divide-gray-200">
