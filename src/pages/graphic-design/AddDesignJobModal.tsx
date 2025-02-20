@@ -155,6 +155,7 @@ export default function AddDesignJobModal({
                 options={clientsList.map(client => ({
                   value: client._id,
                   label: client.name,
+                  clientData: { ...client, profilePhoto: client.profilePhoto }, 
                 }))}
                 value={watch('clientId')}
                 onChange={(value) => {

@@ -212,20 +212,7 @@ export default function AddApplicationModal({
               Client Information
             </h3>
             <div className="space-y-4">
-              {/* <div>
-                <SearchableSelect
-                  options={clients.map((client) => ({
-                    value: client._id,
-                    label: client.name,
-                  }))}
-                  value={watch("clientId")}
-                  onChange={(value) => setValue("clientId", value)}
-                  placeholder="Select client"
-                  error={errors.clientId?.message}
-                  className={inputClass}
-                  />
-                {errors.clientId && <p className={errorClass}>{errors.clientId.message}</p>}
-              </div> */}
+              
 
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -235,7 +222,8 @@ export default function AddApplicationModal({
                   options={clients.map((client) => ({
                     value: client._id,
                     label: client.name,
-                  }))}
+                    clientData: { ...client, profilePhoto: client.profilePhoto }, 
+                  }))}                  
                   value={watch("clientId")}
                   onChange={(value) => setValue("clientId", value)}
                   placeholder="Select client"

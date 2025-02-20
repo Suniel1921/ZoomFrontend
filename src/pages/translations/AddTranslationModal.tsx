@@ -152,6 +152,7 @@ export default function AddTranslationModal({ isOpen, onClose,getAllTranslations
               options={clients.map((client) => ({
                 value: client._id,
                 label: client.name,
+                clientData: { ...client, profilePhoto: client.profilePhoto }, 
               }))}
               value={watch('clientId')}
               onChange={(value) => setValue('clientId', value)}

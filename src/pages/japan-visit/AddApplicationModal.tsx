@@ -202,6 +202,7 @@ export default function AddApplicationModal({
                   options={clients.map((client) => ({
                     value: client._id,
                     label: client.name,
+                    clientData: { ...client, profilePhoto: client.profilePhoto }, 
                   }))}
                   value={watch("clientId")}
                   onChange={(value) => {
