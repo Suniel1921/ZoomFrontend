@@ -16,15 +16,24 @@ const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onClose }) 
         {/* Header */}
         <div className="flex justify-between items-center p-6 bg-gradient-to-r from-brand-yellow to-brand-black">
           <h2 className="text-2xl font-bold text-brand-black">Download Our App</h2>
-          <button onClick={onClose} className="text-brand-black hover:text-gray-800 transition-colors">
-            <X className="h-6 w-6" />
+          <button onClick={onClose} className="text-white hover:text-gray-200 transition-colors">
+            <X className="h-6 w-6 font-bold" strokeWidth={3} />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           <p className="text-foreground text-lg">
-            Get exclusive access to our services and enjoy a 10% discount on your first purchase!
+            Download our app now and unlock a world of convenience! Get exclusive access to our services and enjoy these amazing benefits:
+          </p>
+          <ul className="list-disc list-inside text-foreground space-y-2">
+            <li>10% discount on all our services for app users</li>
+            <li>Easy booking and management of all services</li>
+            <li>Real-time updates and notifications</li>
+            <li>24/7 customer support through the app</li>
+          </ul>
+          <p className="text-foreground text-lg font-semibold">
+            Don't miss out on this opportunity to simplify your life and save money!
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -98,18 +107,6 @@ const AppDownloadModal: React.FC<AppDownloadModalProps> = ({ isOpen, onClose }) 
                 www.zoomcreatives.jp
               </a>
             </div>
-          </div>
-
-          {/* Close Button - Always Visible, White, Bold */}
-          <div className="flex justify-center mt-6">
-            <Button
-              variant="default"
-              onClick={onClose}
-              className="flex items-center px-4 py-2 bg-red-600 text-white font-bold rounded-lg"
-            >
-              <X className="h-5 w-5 mr-2" />
-              Close
-            </Button>
           </div>
         </div>
       </div>
