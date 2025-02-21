@@ -414,38 +414,45 @@
 
 
 
-// **************showing latest added created data first **********
+// **************showing latest added/created data first **********
 
-import { useState, useMemo, useEffect, useCallback } from "react"
-import { Users, Plus, Pencil, Trash2, Mail, Phone, Upload, Eye, ChevronLeft, ChevronRight } from "lucide-react"
-import Input from "../../components/Input"
-import Button from "../../components/Button"
-import AddClientModal from "./AddClientModal"
-import EditClientModal from "./EditClientModal"
-import ImportClientsModal from "./ImportClientsModal"
-import PrintAddressButton from "../../components/PrintAddressButton"
-import CategoryBadge from "../../components/CategoryBadge"
-import axios from "axios"
-import type { Client, ClientCategory } from "../../types"
-import toast from "react-hot-toast"
-import { useAuthGlobally } from "../../context/AuthContext"
-import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton"
 
-const ITEMS_PER_PAGE = 20
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Users, Plus, Pencil, Trash2, Mail, Phone, Upload, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import AddClientModal from "./AddClientModal";
+import EditClientModal from "./EditClientModal";
+import ImportClientsModal from "./ImportClientsModal";
+import PrintAddressButton from "../../components/PrintAddressButton";
+import CategoryBadge from "../../components/CategoryBadge";
+import axios from "axios";
+import type { Client, ClientCategory } from "../../types";
+import toast from "react-hot-toast";
+import { useAuthGlobally } from "../../context/AuthContext";
+import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton";
+import ProfilePhotoModal from "../../components/profilePhotoPreviewModal/ProfilePhotoModal";
+import DeleteConfirmationModal from "../../components/deleteConfirmationModal/DeleteConfirmationModal";
+
+const ITEMS_PER_PAGE = 20;
 
 export default function ClientsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<ClientCategory | "all">("all")
-  const [selectedStatus, setSelectedStatus] = useState<"all" | "active" | "inactive">("all")
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [allClients, setAllClients] = useState<Client[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [auth] = useAuthGlobally()
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<ClientCategory | "all">("all");
+  const [selectedStatus, setSelectedStatus] = useState<"all" | "active" | "inactive">("all");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | undefined>(undefined);
+  const [allClients, setAllClients] = useState<Client[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [auth] = useAuthGlobally();
 
   const categories: ClientCategory[] = [
     "Visit Visa Applicant",
@@ -455,110 +462,124 @@ export default function ClientsPage() {
     "Epassport Applicant",
     "Japan Visa",
     "General Consultation",
-  ]
+  ];
 
   const getAllClients = useCallback(async (forceRefresh = false) => {
     try {
-      setLoading(true)
+      setLoading(true);
       const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`, {
         params: { forceRefresh },
-      })
+      });
       if (response.data.success) {
-        setAllClients(response.data.clients)
+        setAllClients(response.data.clients);
       } else {
-        throw new Error("Unexpected response format")
+        throw new Error("Unexpected response format");
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to fetch clients.")
-      setError("Failed to fetch clients.")
+      toast.error(error.response?.data?.message || "Failed to fetch clients.");
+      setError("Failed to fetch clients.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    getAllClients()
-  }, [getAllClients])
+    getAllClients();
+  }, [getAllClients]);
 
   const calculateRelevanceScore = useCallback((client: Client, query: string) => {
-    const lowercaseQuery = query.toLowerCase()
-    const normalizedPhone = client.phone.replace(/\D/g, "")
-    const normalizedQuery = query.replace(/\D/g, "")
-    let score = 0
+    const lowercaseQuery = query.toLowerCase();
+    const normalizedPhone = client.phone.replace(/\D/g, "");
+    const normalizedQuery = query.replace(/\D/g, "");
+    let score = 0;
 
-    if (client.name.toLowerCase() === lowercaseQuery) score += 100
-    else if (client.name.toLowerCase().startsWith(lowercaseQuery)) score += 75
-    else if (client.name.toLowerCase().includes(lowercaseQuery)) score += 50
+    if (client.name.toLowerCase() === lowercaseQuery) score += 100;
+    else if (client.name.toLowerCase().startsWith(lowercaseQuery)) score += 75;
+    else if (client.name.toLowerCase().includes(lowercaseQuery)) score += 50;
 
-    if (normalizedPhone === normalizedQuery) score += 100
-    else if (normalizedPhone.startsWith(normalizedQuery)) score += 75
-    else if (normalizedPhone.includes(normalizedQuery)) score += 50
+    if (normalizedPhone === normalizedQuery) score += 100;
+    else if (normalizedPhone.startsWith(normalizedQuery)) score += 75;
+    else if (normalizedPhone.includes(normalizedQuery)) score += 50;
 
-    if (client.email.toLowerCase() === lowercaseQuery) score += 90
-    else if (client.email.toLowerCase().startsWith(lowercaseQuery)) score += 60
-    else if (client.email.toLowerCase().includes(lowercaseQuery)) score += 30
+    if (client.email.toLowerCase() === lowercaseQuery) score += 90;
+    else if (client.email.toLowerCase().startsWith(lowercaseQuery)) score += 60;
+    else if (client.email.toLowerCase().includes(lowercaseQuery)) score += 30;
 
-    return score
-  }, [])
+    return score;
+  }, []);
 
   const filteredAndSortedClients = useMemo(() => {
     return allClients
       .filter((client) => {
-        const matchesCategory = selectedCategory === "all" || client.category === selectedCategory
-        const matchesStatus = selectedStatus === "all" || client.status === selectedStatus
-        if (searchQuery === "") return matchesCategory && matchesStatus
+        const matchesCategory = selectedCategory === "all" || client.category === selectedCategory;
+        const matchesStatus = selectedStatus === "all" || client.status === selectedStatus;
+        if (searchQuery === "") return matchesCategory && matchesStatus;
 
-        const normalizedPhone = client.phone.replace(/\D/g, "")
-        const normalizedQuery = searchQuery.replace(/\D/g, "")
+        const normalizedPhone = client.phone.replace(/\D/g, "");
+        const normalizedQuery = searchQuery.replace(/\D/g, "");
         const matchesSearch =
           client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          normalizedPhone.includes(normalizedQuery)
+          normalizedPhone.includes(normalizedQuery);
 
-        return matchesCategory && matchesStatus && matchesSearch
+        return matchesCategory && matchesStatus && matchesSearch;
       })
       .sort((a, b) => {
         if (searchQuery) {
           // If there's a search query, prioritize relevance
-          return calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery)
+          return calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery);
         }
 
         // Get timestamps or fallback dates for comparison
-        const dateA = a.createdAt || a.dateJoined || new Date(0)
-        const dateB = b.createdAt || b.dateJoined || new Date(0)
+        const dateA = a.createdAt || a.dateJoined || new Date(0);
+        const dateB = b.createdAt || b.dateJoined || new Date(0);
 
         // Convert to timestamps for comparison
-        const timeA = new Date(dateA).getTime()
-        const timeB = new Date(dateB).getTime()
+        const timeA = new Date(dateA).getTime();
+        const timeB = new Date(dateB).getTime();
 
         // Sort newest first
-        return timeB - timeA
-      })
-  }, [allClients, selectedCategory, selectedStatus, searchQuery, calculateRelevanceScore])
+        return timeB - timeA;
+      });
+  }, [allClients, selectedCategory, selectedStatus, searchQuery, calculateRelevanceScore]);
 
-  const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE)
+  const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE);
   const paginatedClients = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    return filteredAndSortedClients.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-  }, [filteredAndSortedClients, currentPage])
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedClients.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAndSortedClients, currentPage]);
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [])
+    setCurrentPage(1);
+  }, []);
 
-  const handleDelete = async (_id: string) => {
-    if (window.confirm("Are you sure you want to delete this client?")) {
-      try {
-        const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/deleteClient/${_id}`)
-        toast.success(response.data.message)
-        getAllClients()
-      } catch (error) {
-        toast.error("Failed to delete client.")
-      }
+  const initiateDelete = (client: Client) => {
+    setClientToDelete(client);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!clientToDelete) return;
+
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/deleteClient/${clientToDelete._id}`
+      );
+      toast.success(response.data.message);
+      setIsDeleteModalOpen(false);
+      setClientToDelete(null);
+      getAllClients();
+    } catch (error) {
+      toast.error("Failed to delete client.");
     }
-  }
+  };
 
-  const formatPhoneForViber = (phone: string) => phone.replace(/\D/g, "")
+  const handlePhotoClick = (photoUrl: string | undefined) => {
+    setSelectedPhotoUrl(photoUrl);
+    setIsPhotoModalOpen(true);
+  };
+
+  const formatPhoneForViber = (phone: string) => phone.replace(/\D/g, "");
 
   const downloadClientDetails = useCallback((client: Client) => {
     const clientDetails = `
@@ -566,13 +587,13 @@ export default function ClientsPage() {
     ${client.prefecture}, ${client.city}, ${client.street} ${client.building}
     ${client.name}様
     ${client.phone}
-    `
-    const blob = new Blob([clientDetails], { type: "text/plain" })
-    const link = document.createElement("a")
-    link.href = URL.createObjectURL(blob)
-    link.download = `${client.name}_details.txt`
-    link.click()
-  }, [])
+    `;
+    const blob = new Blob([clientDetails], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${client.name}_details.txt`;
+    link.click();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -679,7 +700,8 @@ export default function ClientsPage() {
                             <img
                               src={client.profilePhoto || "/placeholder.svg"}
                               alt={client.name}
-                              className="h-10 w-10 rounded-full object-cover"
+                              className="h-10 w-10 rounded-full object-cover cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                              onClick={() => handlePhotoClick(client.profilePhoto)}
                             />
                           ) : (
                             <div className="h-10 w-10 rounded-full bg-brand-yellow/10 flex items-center justify-center">
@@ -743,18 +765,17 @@ export default function ClientsPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              setSelectedClient(client)
-                              setIsEditModalOpen(true)
+                              setSelectedClient(client);
+                              setIsEditModalOpen(true);
                             }}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-
                           {auth.user.role === "superadmin" && (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleDelete(client._id)}
+                              onClick={() => initiateDelete(client)}
                               className="text-red-500 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -823,14 +844,18 @@ export default function ClientsPage() {
       </div>
 
       {/* Modals */}
-      <AddClientModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} getAllClients={getAllClients} />
+      <AddClientModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        getAllClients={getAllClients}
+      />
 
       {selectedClient && (
         <EditClientModal
           isOpen={isEditModalOpen}
           onClose={() => {
-            setIsEditModalOpen(false)
-            setSelectedClient(null)
+            setIsEditModalOpen(false);
+            setSelectedClient(null);
           }}
           getAllClients={getAllClients}
           client={selectedClient}
@@ -842,12 +867,20 @@ export default function ClientsPage() {
         onClose={() => setIsImportModalOpen(false)}
         getAllClients={getAllClients}
       />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        applicationName={clientToDelete?.name || "Unknown"}
+      />
+
+      <ProfilePhotoModal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        photoUrl={selectedPhotoUrl}
+        clientName={selectedClient?.name || clientToDelete?.name || "Unknown"}
+      />
     </div>
-  )
+  );
 }
-
-
-
-
-
-
