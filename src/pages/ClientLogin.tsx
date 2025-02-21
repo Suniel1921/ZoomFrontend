@@ -21,7 +21,7 @@ export default function ClientLogin() {
   const navigate = useNavigate();
   const [auth, setAuthGlobally] = useAuthGlobally();
 
-  // Check authentication and redirect based on role
+  // Check authentication and handle redirects
   useEffect(() => {
     const checkAuth = () => {
       const tokenData = localStorage.getItem("token");
@@ -29,34 +29,29 @@ export default function ClientLogin() {
         try {
           const { user } = JSON.parse(tokenData);
           if (user && user.role) {
-            console.log("Token found with role:", user.role); // Debug log
-            switch (user.role) {
-              case "admin":
-              case "superadmin":
-                navigate("/dashboard");
-                break;
-              case "user":
-                navigate("/client-portal");
-                break;
-              default:
-                console.warn("Unknown role:", user.role);
-                // Do not redirect; allow login page to render
-                setIsCheckingAuth(false);
-                break;
+            console.log("Token role on /client-login:", user.role); // Debugging
+            if (user.role === "user") {
+              // If user is already logged in as a client, go to client portal
+              navigate("/client-portal");
+              return;
+            } else {
+              // If token exists but role is not "user" (e.g., admin), clear it
+              console.log("Clearing non-user token to allow client login");
+              localStorage.removeItem("token");
+              setAuthGlobally({ user: null, role: null, token: null }); // Reset global auth state
             }
-            return; // Exit if navigation occurs
           }
         } catch (err) {
           console.error("Error parsing token:", err);
           localStorage.removeItem("token"); // Clear invalid token
         }
       }
-      setIsCheckingAuth(false); // Allow login page to render if no valid token or role
+      setIsCheckingAuth(false); // Render login page in all other cases
     };
 
     checkAuth();
 
-    // Fallback timeout to ensure page renders on mobile
+    // Fallback timeout to ensure page renders
     const timeout = setTimeout(() => {
       if (isCheckingAuth) {
         console.warn("Auth check timed out, showing login page");
@@ -65,7 +60,7 @@ export default function ClientLogin() {
     }, 3000);
 
     return () => clearTimeout(timeout);
-  }, [navigate]);
+  }, [navigate, setAuthGlobally]);
 
   // Handle login form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,12 +103,6 @@ export default function ClientLogin() {
       </div>
     );
   }
-
-  // Handle profile photo click (unused here but included for clarity)
-  const handlePhotoClick = (photoUrl: string | undefined) => {
-    setSelectedPhotoUrl(photoUrl);
-    setIsPhotoModalOpen(true);
-  };
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
