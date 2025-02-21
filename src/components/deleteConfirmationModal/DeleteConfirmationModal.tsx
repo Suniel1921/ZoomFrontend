@@ -33,12 +33,13 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
           Are you sure you want to delete the application for "{applicationName}"? This action cannot be undone.
         </p>
         <div className="flex justify-end gap-4">
+        <Button variant="danger" onClick={onConfirm}>
+            Delete
+          </Button>
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={onConfirm}>
-            Delete
-          </Button>
+        
         </div>
       </div>
     </div>
