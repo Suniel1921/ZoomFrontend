@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Plane, Plus, Search, Calculator, Printer } from "lucide-react";
+import { Plane, Plus, Search, Calculator } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import { useStore } from "../../store";
@@ -12,6 +12,8 @@ import PrintAddressButton from "../../components/PrintAddressButton";
 import type { JapanVisitApplication } from "../../types";
 import toast from "react-hot-toast";
 import { useAuthGlobally } from "../../context/AuthContext";
+import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton";
+import DeleteConfirmationModal from "../../components/deleteConfirmationModal/DeleteConfirmationModal";
 
 export default function JapanVisitPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,60 +21,61 @@ export default function JapanVisitPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
-  const [selectedApplication, setSelectedApplication] =
-    useState<JapanVisitApplication | null>(null);
-  const [applications, setApplications] = useState<JapanVisitApplication[]>([]); // Ensure it's initialized as an empty array
-  const clients = useStore((state) => state.clients); // Assuming clients are fetched/stored in the global state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<JapanVisitApplication | null>(null);
+  const [applicationToDelete, setApplicationToDelete] = useState<JapanVisitApplication | null>(null);
+  const [applications, setApplications] = useState<JapanVisitApplication[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const clients = useStore((state) => state.clients);
   const [auth] = useAuthGlobally();
 
-  // Fetch Japan visit applications data from the API using Axios
+  // Fetch Japan visit applications, sorted by createdAt ascending (oldest first)
   const fetchApplications = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get(
-        `${
-          import.meta.env.VITE_REACT_APP_URL
-        }/api/v1/japanVisit/getAllJapanVisitApplication`
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/japanVisit/getAllJapanVisitApplication`
       );
-      console.log("japan visa status", response);
       const applicationsData = response.data?.data;
-      if (Array.isArray(applicationsData)) {
-        setApplications(applicationsData);
-      } else {
-        setApplications([]);
-      }
+      setApplications(Array.isArray(applicationsData) ? applicationsData : []);
     } catch (error) {
-      // console.error('Error fetching applications:', error);
-      setApplications([]); // Fallback to an empty array
+      console.error('Error fetching applications:', error);
+      toast.error('Failed to fetch applications');
+      setApplications([]);
+    } finally {
+      setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchApplications();
   }, []);
 
-  const handleDelete = async (_id: any) => {
-    if (window.confirm("Are you sure you want to delete this application?")) {
-      try {
-        // Sending a DELETE request to the API endpoint
-        const response = await axios.delete(
-          `${
-            import.meta.env.VITE_REACT_APP_URL
-          }/api/v1/japanVisit/deleteJapanVisitApplication/${_id}`
-        );
-        // Check if the deletion was successful
-        if (response.data.success) {
-          // Remove the application from the state
-          setApplications((prevApplications) =>
-            prevApplications.filter((app) => app.id !== _id)
-          );
-          fetchApplications();
-          toast.success("Application deleted successfully!");
-        } else {
-          toast.error("Failed to delete application.");
-        }
-      } catch (error) {
-        console.error("Error deleting application:", error);
-        toast.error("Error deleting application. Please try again.");
+  // Handle initiating deletion
+  const initiateDelete = (application: JapanVisitApplication) => {
+    setApplicationToDelete(application);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle confirmed deletion
+  const handleDelete = async () => {
+    if (!applicationToDelete) return;
+
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/japanVisit/deleteJapanVisitApplication/${applicationToDelete._id}`
+      );
+      if (response.data.success) {
+        toast.success("Application deleted successfully!");
+        setIsDeleteModalOpen(false);
+        setApplicationToDelete(null);
+        fetchApplications(); // Refresh list, oldest first
+      } else {
+        toast.error("Failed to delete application.");
       }
+    } catch (error) {
+      console.error("Error deleting application:", error);
+      toast.error("Error deleting application. Please try again.");
     }
   };
 
@@ -87,25 +90,22 @@ export default function JapanVisitPage() {
 
   const filteredApplications = Array.isArray(applications)
     ? applications.filter((app) => {
-        const clientName = app.clientId?.name || ""; // Safely access clientName
+        const clientName = app.clientId?.name || "";
         const matchesSearch =
           clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           app.reasonForVisit?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesPackage =
-          !selectedPackage || app.package === selectedPackage;
-        const hasClientId = app.clientId !== null && app.clientId !== undefined; // Check for clientId
+        const matchesPackage = !selectedPackage || app.package === selectedPackage;
+        const hasClientId = app.clientId !== null && app.clientId !== undefined;
         return matchesSearch && matchesPackage && hasClientId;
       })
     : [];
-
-
 
   const columns = [
     {
       key: "clientName",
       label: "Client",
       render: (value: string, item: JapanVisitApplication) => {
-        const clientName = item.clientId?.name || "Unknown Name"; // Fallback if clientName is undefined
+        const clientName = item.clientId?.name || "Unknown Name";
         return (
           <div>
             <p className="font-medium">{clientName}</p>
@@ -113,7 +113,6 @@ export default function JapanVisitPage() {
         );
       },
     },
-
     {
       key: "mobileNo",
       label: "Contact",
@@ -172,7 +171,7 @@ export default function JapanVisitPage() {
       key: "id",
       label: "Actions",
       render: (_: string, item: JapanVisitApplication) => {
-        const client = getClientData(item.clientId);
+        const client = getClientData(item.clientId as string);
         return (
           <div className="flex justify-end gap-2">
             {client && <PrintAddressButton client={client} />}
@@ -197,21 +196,11 @@ export default function JapanVisitPage() {
             >
               Edit
             </Button>
-
-            {/* <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDelete(item._id)}
-              className="text-red-500 hover:text-red-700"
-            >
-              Delete
-            </Button> */}
-
             {auth.user.role === "superadmin" && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleDelete(item._id)}
+                onClick={() => initiateDelete(item)}
                 className="text-red-500 hover:text-red-700"
               >
                 Delete
@@ -264,11 +253,11 @@ export default function JapanVisitPage() {
       </div>
 
       <div className="mt-6">
-        <DataTable
-          columns={columns}
-          data={filteredApplications}
-          searchable={false}
-        />
+        {isLoading ? (
+          <ClientTableSkeleton />
+        ) : (
+          <DataTable columns={columns} data={filteredApplications} searchable={false} />
+        )}
       </div>
 
       <AddApplicationModal
@@ -299,6 +288,14 @@ export default function JapanVisitPage() {
           />
         </>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        applicationName={applicationToDelete?.clientId?.name || "Unknown"}
+      />
     </div>
   );
 }
+

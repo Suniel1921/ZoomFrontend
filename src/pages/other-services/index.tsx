@@ -12,8 +12,8 @@ import axios from "axios";
 import { OtherService } from "../../types/otherService";
 import toast from "react-hot-toast";
 import { useAuthGlobally } from "../../context/AuthContext";
-import Spinner from "../../components/protectedRoutes/Spinner";
 import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton";
+import DeleteConfirmationModal from "../../components/deleteConfirmationModal/DeleteConfirmationModal";
 
 export default function OtherServicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,29 +21,30 @@ export default function OtherServicesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
-  const [otherServices, setOtherServices] = useState<any[]>([]); // Initialize as an empty array
-  const [loading, setLoading] = useState(true); // Loading state for API request
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<OtherService | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<OtherService | null>(null);
+  const [otherServices, setOtherServices] = useState<OtherService[]>([]);
+  const [loading, setLoading] = useState(true);
   const [auth] = useAuthGlobally();
 
+  // Fetch services, sorted by createdAt ascending (oldest first)
   const fetchServices = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(
-        `${
-          import.meta.env.VITE_REACT_APP_URL
-        }/api/v1/otherServices/getAllOtherServices`
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/otherServices/getAllOtherServices`
       );
-
-      // Check if the response contains a valid 'data' property that is an array
       if (Array.isArray(response.data.data)) {
-        setOtherServices(response.data.data); // Set the 'data' array into the state
+        setOtherServices(response.data.data);
       } else {
-        console.error("Unexpected data format:", response.data); // Log the unexpected response
-        setOtherServices([]); // If the data format is wrong, set to empty array
+        console.error("Unexpected data format:", response.data);
+        setOtherServices([]);
       }
     } catch (error) {
       console.error("Error fetching services:", error);
-      setOtherServices([]); // On error, set to empty array
+      toast.error("Failed to fetch services");
+      setOtherServices([]);
     } finally {
       setLoading(false);
     }
@@ -56,47 +57,45 @@ export default function OtherServicesPage() {
   // Filter services based on search query and type
   const filteredServices = otherServices.filter((service) => {
     const matchesSearch =
-    service.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.clientId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || // Check inside clientId.name
-    (service.serviceTypes &&
-      (service.serviceTypes as string[]).some((type) =>
-        type?.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
-  
-    const matchesType =
-      !selectedType || (service.serviceTypes || []).includes(selectedType);
-    const hasClientId =
-      service.clientId !== null && service.clientId !== undefined; // Check for clientId
+      (service.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (service.clientId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (service.serviceTypes &&
+        (service.serviceTypes as string[]).some((type) =>
+          type?.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+    const matchesType = !selectedType || (service.serviceTypes || []).includes(selectedType);
+    const hasClientId = service.clientId !== null && service.clientId !== undefined;
     return matchesSearch && matchesType && hasClientId;
   });
 
-  const handleDelete = async (_id: string) => {
-    if (window.confirm("Are you sure you want to delete this application?")) {
-      try {
-        // Send the delete request
-        const response = await axios.delete(
-          `${
-            import.meta.env.VITE_REACT_APP_URL
-          }/api/v1/otherServices/deleteOtherServices/${_id}`
-        );
-        // Check if the response was successful
-        if (response?.data?.success) {
-          // Remove the deleted application from the local state
-          // setEpassportApplications((prev) => prev.filter((app) => app.id !== _id));
-          toast.success("Application deleted successfully!");
+  // Handle initiating deletion
+  const initiateDelete = (service: OtherService) => {
+    setServiceToDelete(service);
+    setIsDeleteModalOpen(true);
+  };
 
-          // Fetch the updated list of applications
-          fetchServices(); // <-- This will refresh the list after delete
-        } else {
-          toast.error("Failed to delete the application.");
-        }
-      } catch (error) {
-        // Catch and handle any errors during the delete operation
-        console.error("Error deleting application:", error);
-        toast.error("An error occurred while deleting the application.");
+  // Handle confirmed deletion
+  const handleDelete = async () => {
+    if (!serviceToDelete) return;
+
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/otherServices/deleteOtherServices/${serviceToDelete._id}`
+      );
+      if (response?.data?.success) {
+        toast.success("Service deleted successfully!");
+        setIsDeleteModalOpen(false);
+        setServiceToDelete(null);
+        fetchServices(); // Refresh list, oldest first
+      } else {
+        toast.error("Failed to delete the service.");
       }
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      toast.error("An error occurred while deleting the service.");
     }
   };
+
   const formatPhoneForViber = (phone: string | undefined | null): string => {
     if (!phone) return "";
     return phone.replace(/\D/g, "");
@@ -118,9 +117,7 @@ export default function OtherServicesPage() {
       key: "clientId",
       label: "Contact",
       render: (value: string, row: OtherService) => {
-        // console.log('row.clientId:', row.clientId);
         const phone = row.clientId?.phone;
-        // console.log('phone is:', phone);
         if (!phone) {
           return <span className="text-gray-400">No contact</span>;
         }
@@ -137,11 +134,11 @@ export default function OtherServicesPage() {
     {
       key: "serviceTypes",
       label: "Service Types",
-      render: (value: string[], item: any) => (
+      render: (value: string[], item: OtherService) => (
         <div className="space-y-1">
           {(value || []).map((type, index) => (
             <span
-              key={`${item.id}-${index}`}
+              key={`${item._id}-${index}`}
               className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-brand-yellow/10 text-brand-black mr-1 mb-1"
             >
               {type}
@@ -195,7 +192,7 @@ export default function OtherServicesPage() {
     {
       key: "id",
       label: "Actions",
-      render: (_: string, item: any) => (
+      render: (_: string, item: OtherService) => (
         <div className="flex justify-end gap-2">
           <Button
             variant="outline"
@@ -218,15 +215,11 @@ export default function OtherServicesPage() {
           >
             Edit
           </Button>
-          {/* <Button variant="outline" size="sm" onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700">
-            Delete
-          </Button> */}
-
           {auth.user.role === "superadmin" && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleDelete(item._id)}
+              onClick={() => initiateDelete(item)}
               className="text-red-500 hover:text-red-700"
             >
               Delete
@@ -283,8 +276,7 @@ export default function OtherServicesPage() {
 
       <div className="mt-6">
         {loading ? (
-          // <Spinner/>
-          <ClientTableSkeleton/>
+          <ClientTableSkeleton />
         ) : (
           <DataTable
             columns={columns}
@@ -320,10 +312,13 @@ export default function OtherServicesPage() {
           />
         </>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        applicationName={serviceToDelete?.clientId?.name || serviceToDelete?.clientName || "Unknown"}
+      />
     </div>
   );
 }
-
-
-
-

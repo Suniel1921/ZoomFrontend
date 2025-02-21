@@ -10,6 +10,9 @@ import type { Translation } from '../../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useAuthGlobally } from '../../context/AuthContext';
+import ClientTableSkeleton from '../../components/skeletonEffect/ClientTableSkeleton'; // Assuming this path is correct
+import DeleteConfirmationModal from '../../components/deleteConfirmationModal/DeleteConfirmationModal'; // Assuming this path is correct
+import 'react-loading-skeleton/dist/skeleton.css';
 
 export default function TranslationsPage() {
   const [translations, setTranslations] = useState<Translation[]>([]);
@@ -19,81 +22,86 @@ export default function TranslationsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedTranslation, setSelectedTranslation] = useState<Translation | null>(null);
+  const [translationToDelete, setTranslationToDelete] = useState<Translation | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const[auth] = useAuthGlobally();
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [auth] = useAuthGlobally();
 
-  // Fetch translations from API
-   // Fetch the Tanslation from API
-   const getAllTranslations = () => {
-    axios
-      .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/getAllDocumentTranslation`)
-      .then((response) => {
-        // Ensure response data is an array
-        const data = Array.isArray(response.data.translations) ? response.data.translations : [];
-        setTranslations(data); // Set to translations state, not clients
-      })
-      .catch((error) => {
-        console.error('Error fetching document Translation:', error);
-      });
+  // Fetch translations from API, sorted by createdAt ascending (oldest first)
+  const getAllTranslations = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/getAllDocumentTranslation`
+      );
+      const data = Array.isArray(response.data.translations) ? response.data.translations : [];
+      setTranslations(data);
+    } catch (error) {
+      console.error('Error fetching document translations:', error);
+      toast.error('Failed to fetch translations');
+      setTranslations([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
+
   useEffect(() => {
     getAllTranslations();
   }, []);
 
-
   // Filter translations based on search query and status
   const filteredTranslations = translations.filter((trans) => {
-    const clientName = trans.clientId?.name?.toLowerCase() || ''; // Ensure safe access
+    const clientName = trans.clientId?.name?.toLowerCase() || '';
     const matchesSearch = clientName.includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || trans.translationStatus === statusFilter;
-    const hasClientId = trans.clientId !== null && trans.clientId !== undefined;  // Check for clientId
+    const hasClientId = trans.clientId !== null && trans.clientId !== undefined;
     return matchesSearch && matchesStatus && hasClientId;
   });
-  
-  
 
   const formatPhoneForViber = (phone: string | undefined | null): string => {
     if (!phone) return '';
     return phone.replace(/\D/g, '');
   };
 
-  
-
-  const getClientPhone = (clientId: string): string | undefined => {
-    return clients.find((c: any) => c.id === clientId)?.phone;
-  };
-
   const handleCopyName = (translation: Translation) => {
     navigator.clipboard.writeText(translation.nameInTargetScript);
-    setCopiedId(translation._id); // Set the ID of the clicked row
-    setTimeout(() => setCopiedId(null), 2000); // Reset the state after 2 seconds
+    setCopiedId(translation._id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
+  // Handle initiating deletion
+  const initiateDelete = (translation: Translation) => {
+    setTranslationToDelete(translation);
+    setIsDeleteModalOpen(true);
+  };
 
-  
-
-  const handleDelete = async (_id: string) => {
-    if (!window.confirm('Are you sure you want to delete this translation?')) return;
+  // Handle confirmed deletion
+  const handleDelete = async () => {
+    if (!translationToDelete) return;
 
     toast.loading('Deleting translation...');
     try {
-      await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/deleteDocumentTranslation/${_id}`);
-      setTranslations((prev) => prev.filter((trans) => trans.id !== _id));
-      toast.dismiss(); // Remove the loading toast
-      toast.success('Translation deleted successfully!');
-      getAllTranslations();
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/deleteDocumentTranslation/${translationToDelete._id}`
+      );
+      if (response.data.success) {
+        toast.dismiss();
+        toast.success('Translation deleted successfully!');
+        setIsDeleteModalOpen(false);
+        setTranslationToDelete(null);
+        getAllTranslations();
+      } else {
+        toast.dismiss();
+        toast.error('Failed to delete translation.');
+      }
     } catch (error) {
-      toast.dismiss(); // Remove the loading toast
+      toast.dismiss();
       toast.error('Failed to delete translation.');
       console.error('Error deleting translation:', error);
     }
   };
-
-
-
-
 
   const columns = [
     {
@@ -109,9 +117,7 @@ export default function TranslationsPage() {
       key: 'clientId',
       label: 'Contact',
       render: (value: string, row: Translation) => {
-        // console.log('row.clientId:', row.clientId);
-        const phone = row.clientId?.phone; 
-        // console.log('phone is:', phone);
+        const phone = row.clientId?.phone;
         if (!phone) {
           return <span className="text-gray-400">No contact</span>;
         }
@@ -138,11 +144,15 @@ export default function TranslationsPage() {
       key: 'translationStatus',
       label: 'Status',
       render: (value: string) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'Completed' ? 'bg-green-100 text-green-700' :
-          value === 'Delivered' ? 'bg-blue-100 text-blue-700' :
-          'bg-yellow-100 text-yellow-700'
-        }`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            value === 'Completed'
+              ? 'bg-green-100 text-green-700'
+              : value === 'Delivered'
+              ? 'bg-blue-100 text-blue-700'
+              : 'bg-yellow-100 text-yellow-700'
+          }`}
+        >
           {value}
         </span>
       ),
@@ -151,9 +161,7 @@ export default function TranslationsPage() {
       key: 'deadline',
       label: 'Deadline',
       render: (value: string) => (
-        <span className="text-sm">
-          {new Date(value).toLocaleDateString()}
-        </span>
+        <span className="text-sm">{new Date(value).toLocaleDateString()}</span>
       ),
     },
     {
@@ -167,9 +175,11 @@ export default function TranslationsPage() {
       key: 'paymentStatus',
       label: 'Payment',
       render: (value: string) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-        }`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            value === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+          }`}
+        >
           {value}
         </span>
       ),
@@ -179,20 +189,18 @@ export default function TranslationsPage() {
       label: 'Actions',
       render: (_: string, item: Translation) => (
         <div className="flex justify-end gap-2">
-              <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleCopyName(item)} // Pass the specific row data
-          title="Copy Name in Target Script"
-        >
-          {copiedId === item._id ? ( // Only show the check icon for the clicked row
-            <Check className="h-4 w-4 text-green-500" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-        </Button>
-
-
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleCopyName(item)}
+            title="Copy Name in Target Script"
+          >
+            {copiedId === item._id ? (
+              <Check className="h-4 w-4 text-green-500" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -214,23 +222,15 @@ export default function TranslationsPage() {
           >
             Edit
           </Button>
-          {/* <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleDelete(item._id)}
-            className="text-red-500 hover:text-red-700"
-          >
-            Delete
-          </Button> */}
           {auth.user.role === 'superadmin' && (
-             <Button
-             variant="outline"
-             size="sm"
-             onClick={() => handleDelete(item._id)}
-             className="text-red-500 hover:text-red-700"
-           >
-             Delete
-           </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => initiateDelete(item)}
+              className="text-red-500 hover:text-red-700"
+            >
+              Delete
+            </Button>
           )}
         </div>
       ),
@@ -254,9 +254,9 @@ export default function TranslationsPage() {
             >
               <option value="all">All Status</option>
               <option value="Processing">Processing</option>
-                  <option value="Waiting for Payment">Waiting for Payment</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
+              <option value="Waiting for Payment">Waiting for Payment</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
 
             <div className="relative flex-1">
@@ -279,17 +279,17 @@ export default function TranslationsPage() {
       </div>
 
       <div className="mt-6">
-        <DataTable
-          columns={columns}
-          data={filteredTranslations}
-          searchable={false}
-        />
+        {isLoading ? (
+          <ClientTableSkeleton />
+        ) : (
+          <DataTable columns={columns} data={filteredTranslations} searchable={false} />
+        )}
       </div>
 
       <AddTranslationModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-      getAllTranslations={getAllTranslations}
+        getAllTranslations={getAllTranslations}
       />
 
       {selectedTranslation && (
@@ -300,7 +300,7 @@ export default function TranslationsPage() {
               setIsEditModalOpen(false);
               setSelectedTranslation(null);
             }}
-          getAllTranslations={getAllTranslations}
+            getAllTranslations={getAllTranslations}
             translation={selectedTranslation}
           />
 
@@ -314,8 +314,13 @@ export default function TranslationsPage() {
           />
         </>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        applicationName={translationToDelete?.clientId?.name || 'Unknown'}
+      />
     </div>
   );
 }
-
-

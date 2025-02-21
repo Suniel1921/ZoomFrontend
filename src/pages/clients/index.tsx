@@ -416,9 +416,6 @@
 
 // **************showing latest added created data first **********
 
-
-
-
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { Users, Plus, Pencil, Trash2, Mail, Phone, Upload, Eye, ChevronLeft, ChevronRight } from "lucide-react"
 import Input from "../../components/Input"
@@ -848,4 +845,9 @@ export default function ClientsPage() {
     </div>
   )
 }
+
+
+
+
+
 

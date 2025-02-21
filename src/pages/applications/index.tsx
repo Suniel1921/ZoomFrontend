@@ -667,26 +667,42 @@
 
 
 
-
-
-
-
+// ************************optimzed and refactor code****************************
 
 
 
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Search, Calculator, Import } from 'lucide-react';
+import { FileText, Plus, Search, Calculator } from 'lucide-react';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import AddApplicationModal from './AddApplicationModal';
 import EditApplicationModal from './EditApplicationModal';
 import HisabKitabModal from '../../components/HisabKitabModal';
 import DataTable from '../../components/DataTable';
+import DeleteConfirmationModal from '../../components/deleteConfirmationModal/DeleteConfirmationModal';
 import { countries } from '../../utils/countries';
 import { Application } from '../../types';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuthGlobally } from '../../context/AuthContext';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+
+// Skeleton Loading Component
+const ClientTableSkeleton = () => {
+  return (
+    <div>
+      {/* Skeleton for table header */}
+      <Skeleton height={50} width="100%" className="mb-4" />
+      {/* Skeleton for table rows */}
+      {[...Array(12)].map((_, i) => (
+        <div key={i} className="mb-2">
+          <Skeleton height={50} />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function VisaApplicantsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -694,68 +710,81 @@ export default function VisaApplicantsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [auth] = useAuthGlobally();
 
-  // Fetch the applications from API
-  const getAllApplication = () => {
-    axios
-      .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/getAllVisaApplication`)
-      .then((response) => {
-        // Ensure response data is an array
-        setApplications(Array.isArray(response.data.data) ? response.data.data : []);
-      })
-      .catch((error) => {
-        console.error('Error fetching applications:', error);
-      });
+  // Fetch all visa applications, sorted by createdAt descending (newest first)
+  const getAllApplication = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/getAllVisaApplication`
+      );
+      setApplications(Array.isArray(response.data.data) ? response.data.data : []);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      toast.error('Failed to fetch applications');
+      setApplications([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     getAllApplication();
   }, []);
 
- 
+  // Filter applications based on search query, country, and valid clientId
+  const filteredApplications = (applications || []).filter((app) => {
+    const matchesSearch =
+      (app.clientName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (app.type?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const matchesCountry = !selectedCountry || app.country === selectedCountry;
+    const hasClientId = app.clientId !== null && app.clientId !== undefined;
+    return matchesSearch && matchesCountry && hasClientId;
+  });
 
-  // Filter applications based on search query, selected country, and ensure clientId is not null
-const filteredApplications = (applications || []).filter((app) => {
-  const matchesSearch =
-    app.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    app.type.toLowerCase().includes(searchQuery.toLowerCase());
-  const matchesCountry = !selectedCountry || app.country === selectedCountry;
-  const hasClientId = app.clientId !== null && app.clientId !== undefined;  // Check for clientId
-  return matchesSearch && matchesCountry && hasClientId;  // Filter by clientId
-});
+  // Handle initiating deletion
+  const initiateDelete = (application: Application) => {
+    setApplicationToDelete(application);
+    setIsDeleteModalOpen(true);
+  };
 
+  // Handle confirmed deletion
+  const handleDelete = async () => {
+    if (!applicationToDelete) return;
 
-  // Function to delete an application
-  const handleDelete = async (_id: string) => {
-    if (window.confirm('Are you sure you want to delete this application?')) {
-      try {
-        const response = await axios.delete(
-          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/deleteVisaApplication/${_id}`
-        );
-        if (response.data.success) {
-          // Update state after successful deletion
-          toast.success(response.data.message);
-          getAllApplication();
-        }
-      } catch (error: any) {
-        if (error.response) {
-          toast.error(error.response.data.message);
-        }
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/deleteVisaApplication/${applicationToDelete._id}`
+      );
+      if (response.data.success) {
+        toast.success(response.data.message);
+        setIsDeleteModalOpen(false);
+        setApplicationToDelete(null);
+        getAllApplication();
       }
+    } catch (error: any) {
+      console.error('Error deleting application:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete application');
     }
   };
 
+  // Table columns configuration
   const columns = [
     {
       key: 'clientName',
       label: 'Client',
       render: (value: string, item: Application) => (
         <div>
-          <p className="font-medium">{item.clientId?.name || 'N/A'}</p> {/* Accessing the clientId.name */}
-          <p className="text-sm text-gray-500">{item.type} - {item.country}</p>
+          <p className="font-medium">{item.clientId?.name || 'N/A'}</p>
+          <p className="text-sm text-gray-500">
+            {item.type} - {item.country}
+          </p>
         </div>
       ),
     },
@@ -765,9 +794,9 @@ const filteredApplications = (applications || []).filter((app) => {
       render: (value: string) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            value === 'Approved'
+            value === 'Completed'
               ? 'bg-green-100 text-green-700'
-              : value === 'Rejected'
+              : value === 'Cancelled'
               ? 'bg-red-100 text-red-700'
               : 'bg-blue-100 text-blue-700'
           }`}
@@ -821,24 +850,20 @@ const filteredApplications = (applications || []).filter((app) => {
           >
             Edit
           </Button>
-
-         {
-          auth.user.role === 'superadmin' && (
+          {auth.user.role === 'superadmin' && (
             <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleDelete(item._id)}
-            className="text-red-500 hover:text-red-700"
-          >
-            Delete
-          </Button>
-          )
-         }
+              variant="outline"
+              size="sm"
+              onClick={() => initiateDelete(item)}
+              className="text-red-500 hover:text-red-700"
+            >
+              Delete
+            </Button>
+          )}
         </div>
       ),
     },
   ];
-
 
   return (
     <div>
@@ -883,7 +908,11 @@ const filteredApplications = (applications || []).filter((app) => {
       </div>
 
       <div className="mt-6">
-        <DataTable columns={columns} data={filteredApplications} searchable={false} />
+        {isLoading ? (
+          <ClientTableSkeleton />
+        ) : (
+          <DataTable columns={columns} data={filteredApplications} searchable={false} />
+        )}
       </div>
 
       <AddApplicationModal
@@ -914,6 +943,13 @@ const filteredApplications = (applications || []).filter((app) => {
           />
         </>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        applicationName={applicationToDelete?.clientId?.name || 'Unknown'}
+      />
     </div>
   );
 }

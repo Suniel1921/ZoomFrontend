@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Palette, Plus, Search, Calculator } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
@@ -11,6 +11,8 @@ import type { GraphicDesignJob } from "../../types/graphicDesign";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useAuthGlobally } from "../../context/AuthContext";
+import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton";
+import DeleteConfirmationModal from "../../components/deleteConfirmationModal/DeleteConfirmationModal";
 
 const API_URL = import.meta.env.VITE_REACT_APP_URL;
 
@@ -21,31 +23,33 @@ const STATUS_CLASSES = {
 };
 
 export default function GraphicDesignPage() {
-  const [graphicDesignJobs, setGraphicDesignJobs] = useState<
-    GraphicDesignJob[]
-  >([]);
+  const [graphicDesignJobs, setGraphicDesignJobs] = useState<GraphicDesignJob[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<GraphicDesignJob | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<GraphicDesignJob | null>(null);
+  const [loading, setLoading] = useState(true); // Changed to true initially
   const [auth] = useAuthGlobally();
 
-  // Fetch graphic design jobs from the API
-  const fetchGraphicDesignJobs = () => {
-    axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/graphicDesign/getAllGraphicDesign`)
-      .then((response) => {
-        // Ensure response data is an array
-        setGraphicDesignJobs(
-          Array.isArray(response.data.designJobs)
-            ? response.data.designJobs
-            : []
-        );
-      })
-      .catch((error) => {
-        console.error("Error fetching applications:", error);
-      });
+  // Fetch graphic design jobs from the API, sorted by createdAt ascending (oldest first)
+  const fetchGraphicDesignJobs = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/v1/graphicDesign/getAllGraphicDesign`
+      );
+      const data = Array.isArray(response.data.designJobs) ? response.data.designJobs : [];
+      setGraphicDesignJobs(data);
+    } catch (error) {
+      console.error("Error fetching graphic design jobs:", error);
+      toast.error("Failed to fetch graphic design jobs");
+      setGraphicDesignJobs([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -53,16 +57,8 @@ export default function GraphicDesignPage() {
   }, []);
 
   // Filter jobs based on search query
-  // const filteredJobs = graphicDesignJobs.filter((job) =>
-  //   [job.clientId?.name, job.businessName, job.designType]
-  //     .some((field) => field?.toLowerCase().includes(searchQuery.toLowerCase()))
-  // );
-
-  // Filter jobs based on search query
   const filteredJobs = graphicDesignJobs.filter((job) => {
-    const hasClientId = job.clientId !== null && job.clientId !== undefined; // Check for clientId
-
-    // Return true if the job matches the search query and has a clientId
+    const hasClientId = job.clientId !== null && job.clientId !== undefined;
     return (
       hasClientId &&
       [job.clientId?.name, job.businessName, job.designType].some((field) =>
@@ -71,23 +67,31 @@ export default function GraphicDesignPage() {
     );
   });
 
-  // Delete job handler
-  const handleDelete = async (_id: string) => {
-    if (window.confirm("Are you sure you want to delete this application?")) {
-      try {
-        const response = await axios.delete(
-          `${API_URL}/api/v1/graphicDesign/deleteGraphicDesign/${_id}`
-        );
-        if (response?.data?.success) {
-          toast.success("Application deleted successfully!");
-          fetchGraphicDesignJobs(); // Refresh the list after delete
-        } else {
-          toast.error("Failed to delete the application.");
-        }
-      } catch (error) {
-        console.error("Error deleting application:", error);
-        toast.error("An error occurred while deleting the application.");
+  // Handle initiating deletion
+  const initiateDelete = (job: GraphicDesignJob) => {
+    setJobToDelete(job);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle confirmed deletion
+  const handleDelete = async () => {
+    if (!jobToDelete) return;
+
+    try {
+      const response = await axios.delete(
+        `${API_URL}/api/v1/graphicDesign/deleteGraphicDesign/${jobToDelete._id}`
+      );
+      if (response?.data?.success) {
+        toast.success("Job deleted successfully!");
+        setIsDeleteModalOpen(false);
+        setJobToDelete(null);
+        fetchGraphicDesignJobs(); // Refresh list, oldest first
+      } else {
+        toast.error("Failed to delete the job.");
       }
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      toast.error("An error occurred while deleting the job.");
     }
   };
 
@@ -96,7 +100,7 @@ export default function GraphicDesignPage() {
       key: "clientName",
       label: "Client",
       render: (value: string, item: GraphicDesignJob) => {
-        const clientName = item.clientId?.name || "Unknown Name"; // Fallback if clientName is undefined
+        const clientName = item.clientId?.name || "Unknown Name";
         return (
           <div>
             <p className="font-medium">{clientName}</p>
@@ -110,7 +114,7 @@ export default function GraphicDesignPage() {
       render: (value: string) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            STATUS_CLASSES[value] || STATUS_CLASSES.Pending
+            STATUS_CLASSES[value as keyof typeof STATUS_CLASSES] || STATUS_CLASSES.Pending
           }`}
         >
           {value}
@@ -134,7 +138,6 @@ export default function GraphicDesignPage() {
         />
       ),
     },
-
     {
       key: "id",
       label: "Actions",
@@ -161,14 +164,11 @@ export default function GraphicDesignPage() {
           >
             Edit
           </Button>
-          {/* <Button variant="outline" size="sm" onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700">
-            Delete
-          </Button> */}
           {auth.user.role === "superadmin" && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleDelete(item._id)}
+              onClick={() => initiateDelete(item)}
               className="text-red-500 hover:text-red-700"
             >
               Delete
@@ -211,7 +211,7 @@ export default function GraphicDesignPage() {
 
       <div className="mt-6">
         {loading ? (
-          <p>Loading...</p>
+          <ClientTableSkeleton />
         ) : (
           <DataTable columns={columns} data={filteredJobs} searchable={false} />
         )}
@@ -245,6 +245,13 @@ export default function GraphicDesignPage() {
           />
         </>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        applicationName={jobToDelete?.clientId?.name || "Unknown"}
+      />
     </div>
   );
 }
