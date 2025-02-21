@@ -29,16 +29,16 @@ export default function ClientLogin() {
         try {
           const { user } = JSON.parse(tokenData);
           if (user && user.role) {
-            console.log("Token role on /client-login:", user.role); // Debugging
+            // console.log("Token role on /client-login:", user.role); // Debugging
             if (user.role === "user") {
               // If user is already logged in as a client, go to client portal
               navigate("/client-portal");
               return;
             } else {
               // If token exists but role is not "user" (e.g., admin), clear it
-              console.log("Clearing non-user token to allow client login");
+              // console.log("Clearing non-user token to allow client login");
               localStorage.removeItem("token");
-              setAuthGlobally({ user: null, role: null, token: null }); // Reset global auth state
+              setAuthGlobally({ user: null, role: null, token: null });
             }
           }
         } catch (err) {
