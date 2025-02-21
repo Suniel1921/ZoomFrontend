@@ -1,131 +1,198 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Users as UsersIcon, FileText, Clock, DollarSign } from "lucide-react";
+import StatsCard from "./components/StatsCard";
+import OngoingTasks from "./components/OngoingTasks";
+import WorkloadDistribution from "./components/WorkloadDistribution";
+import SalesReport from "./components/SalesReport";
+import axios from "axios";
 
-//*******************showing total amount***************
+// Inline CSS for the Google-style three-dot spinner with custom size and colors
+const spinnerStyles = `
+  .spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px; /* Adjusted gap for smaller dots */
+    margin-top: 24px;
+  }
 
-//Note : The ongoing task used in report component 
+  .dot {
+    width: 6px; /* Decreased size */
+    height: 6px; /* Decreased size */
+    border-radius: 50%;
+    animation: bounce 1.2s infinite ease-in-out;
+  }
 
+  .dot:nth-child(1),
+  .dot:nth-child(3) {
+    background-color: #000; /* Black for first and third dots */
+  }
 
-import React from 'react';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Users as UsersIcon, FileText, Clock, Bell, DollarSign } from 'lucide-react';
-import StatsCard from './components/StatsCard';
-import OngoingTasks from './components/OngoingTasks';
-import WorkloadDistribution from './components/WorkloadDistribution';
-import SalesReport from './components/SalesReport';
-import ServiceRequestsList from './components/ServiceRequestsList';
-import axios from 'axios';
+  .dot:nth-child(2) {
+    background-color: #fedc00; /* Yellow for middle dot */
+    animation-delay: 0.2s;
+  }
+
+  .dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes bounce {
+    0%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-8px); /* Adjusted distance for smaller dots */
+    }
+  }
+`;
 
 export default function ReportsPage() {
   const navigate = useNavigate();
   const [totalSalesAmount, setTotalSalesAmount] = useState(0);
-
-  // State for holding API data
   const [clients, setClients] = useState([]);
-  const [totalTask, setTotalTask] = useState([]);
+  const [totalTask, setTotalTask] = useState<any>({}); // Adjust type if you have a specific interface
   const [appointments, setAppointments] = useState([]);
-  const [serviceRequested, setServiceRequested] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch clients, tasks, appointments, and service requests from the API
+  // Fetch all data and calculate lifetime earnings
   useEffect(() => {
-    const fetchClients = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`);
-        setClients(response.data.clients || []);
+        setLoading(true);
+
+        // Fetch clients
+        const clientsResponse = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`
+        );
+        setClients(clientsResponse.data.clients || []);
+
+        // Fetch all tasks (applications, translations, etc.)
+        const tasksResponse = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`
+        );
+        const allData = tasksResponse.data.allData || {};
+        setTotalTask(allData);
+
+        // Fetch appointments
+        const appointmentsResponse = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`
+        );
+        setAppointments(appointmentsResponse.data.appointments || []);
+
+        // Calculate lifetime total earnings from all models
+        const calculateLifetimeEarnings = () => {
+          let total = 0;
+
+          const applications = allData.application || [];
+          applications.forEach((app) => {
+            total += app.payment?.total || 0; // Use total field
+          });
+
+          const translations = allData.documentTranslation || [];
+          translations.forEach((trans) => {
+            total += trans.amount || 0;
+          });
+
+          const epassports = allData.epassports || [];
+          epassports.forEach((ep) => {
+            total += ep.amount || 0;
+          });
+
+          const designs = allData.graphicDesigns || [];
+          designs.forEach((design) => {
+            total += design.amount || 0;
+          });
+
+          const japanVisits = allData.japanVisit || [];
+          japanVisits.forEach((jv) => {
+            total += jv.amount || 0;
+          });
+
+          const otherServices = allData.otherServices || [];
+          otherServices.forEach((service) => {
+            total += service.amount || 0;
+          });
+
+          return total;
+        };
+
+        setTotalSalesAmount(calculateLifetimeEarnings());
       } catch (error) {
-        console.error("Failed to fetch clients:", error);
+        console.error("Failed to fetch data:", error);
         setClients([]);
-      }
-    };
-
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`);
-        console.log('all model dat is', response)
-        setTotalTask(response.data.allData || []);
-      } catch (error) {
-        console.error("Failed to fetch tasks:", error);
-        setTotalTask([]);
-      }
-    };
-
-    const fetchAppointments = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`);
-        setAppointments(response.data.appointments || []);
-      } catch (error) {
-        console.error("Failed to fetch appointments:", error);
+        setTotalTask({});
         setAppointments([]);
+        setTotalSalesAmount(0);
+      } finally {
+        setLoading(false);
       }
     };
 
-    const fetchServiceRequested = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/getAllRequestedService`);
-        setServiceRequested(response.data.data || []);
-      } catch (error) {
-        console.error("Failed to fetch service requests:", error);
-        setServiceRequested([]);
-      }
-    };
-
-    fetchClients();
-    fetchTasks();
-    fetchAppointments();
-    fetchServiceRequested();
+    fetchData();
   }, []);
 
   // Calculate active clients percentage change
-  const activeClients = clients.filter(c => c?.status === 'active');
+  const activeClients = clients.filter((c) => c?.status === "active");
   const totalClients = clients.length;
-  const activeClientsPercentage = totalClients > 0 
-    ? ((activeClients.length / totalClients) * 100).toFixed(1)
-    : '0';
+  const activeClientsPercentage =
+    totalClients > 0 ? ((activeClients.length / totalClients) * 100).toFixed(1) : "0";
 
-  // Calculate the total ongoing tasks (from various task categories)
-  const totalTasksLength = Object.values(totalTask)
-    .reduce((sum, taskArray) => sum + (taskArray?.length || 0), 0);
+  // Calculate total ongoing tasks
+  const totalTasksLength = Object.values(totalTask).reduce(
+    (sum, taskArray) => sum + (taskArray?.length || 0),
+    0
+  );
 
-  // Filter out ongoing tasks (applications, translations, etc.)
+  // Filter out ongoing tasks
   const activeTasks = {
-    applications: totalTask.applications?.filter(app => !['Completed', 'Approved'].includes(app.visaStatus)),
-    translations: totalTask.translations?.filter(t => !['Completed', 'Delivered'].includes(t.translationStatus)),
-    otherServices: totalTask.otherServices?.filter(service => service.jobStatus !== 'Completed')
+    applications:
+      totalTask.application?.filter((app) => !["Completed", "Approved"].includes(app.visaStatus)) || [],
+    translations:
+      totalTask.documentTranslation?.filter((t) =>
+        !["Completed", "Delivered"].includes(t.translationStatus)
+      ) || [],
+    otherServices:
+      totalTask.otherServices?.filter((service) => service.jobStatus !== "Completed") || [],
   };
 
-  // Handler for updating total sales amount
-  const handleTotalSalesUpdate = (total) => {
-    setTotalSalesAmount(total);
-  };
+  // Google-style three-dot spinner JSX
+  const ThreeDotSpinner = () => (
+    <div className="spinner-container">
+      <div className="dot"></div>
+      <div className="dot"></div>
+      <div className="dot"></div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
+      {/* Inject spinner styles */}
+      <style>{spinnerStyles}</style>
+
       {/* Quick Stats */}
       <div className="grid md:grid-cols-4 gap-6">
         <StatsCard
           label="Active Clients"
-          value={activeClients.length}
+          value={loading ? <ThreeDotSpinner /> : activeClients.length}
           icon={UsersIcon}
           trend="up"
           trendValue={`${activeClientsPercentage}% of total`}
         />
         <StatsCard
           label="Ongoing Tasks"
-          value={totalTasksLength}
+          value={loading ? <ThreeDotSpinner /> : totalTasksLength}
           icon={Clock}
         />
         <StatsCard
           label="Upcoming Appointments"
-          value={appointments.length}
+          value={loading ? <ThreeDotSpinner /> : appointments.length}
           icon={FileText}
         />
-        {/* <StatsCard
-          label="Service Requested"
-          value={serviceRequested.length}
-          icon={Bell}
-        /> */}
         <StatsCard
-          label="Total Sales"
-          value={`¥${totalSalesAmount.toLocaleString()}`}
+          label="Lifetime Total Earnings"
+          value={loading ? <ThreeDotSpinner /> : `¥${totalSalesAmount.toLocaleString()}`}
           icon={DollarSign}
           className="text-green-600"
         />
@@ -145,13 +212,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Sales Report */}
-      <SalesReport onTotalSalesUpdate={handleTotalSalesUpdate} />
-
-      {/* Service Requests */}
-      {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold mb-4">Recent Service Requests</h2>
-        <ServiceRequestsList itemsPerPage={2} requests={serviceRequested} />
-      </div> */}
+      <SalesReport onTotalSalesUpdate={() => {}} />
     </div>
   );
 }

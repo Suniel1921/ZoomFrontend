@@ -1,14 +1,65 @@
+import { useState, useEffect, useMemo } from "react";
+import axios from "axios";
+import { startOfDay, subDays, subMonths, startOfYear, isAfter } from "date-fns";
+import { safeParse } from "../../../utils/dateUtils";
 
-// **************showing total amount in card (index ()ReportsPage component)******
+// Types
+interface Task {
+  [key: string]: any; // Generic task type, adjust based on actual schema
+}
 
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { startOfDay, subDays, subMonths, startOfYear, isAfter } from 'date-fns';
-import { safeParse } from '../../../utils/dateUtils';
+interface SalesData {
+  total: number;
+  paid: number;
+  pending: number;
+}
 
-export default function SalesReport({ onTotalSalesUpdate }) {
-  const [period, setPeriod] = useState('daily');
-  const [tasks, setTasks] = useState({
+interface Tasks {
+  applications: Task[];
+  japanVisit: Task[];
+  translations: Task[];
+  designs: Task[];
+  epassport: Task[];
+  otherServices: Task[];
+}
+
+interface Props {
+  onTotalSalesUpdate: (total: number) => void;
+}
+
+// Helper function to calculate totals for a category
+const calculateCategorySales = (
+  tasks: Task[],
+  dateField: string | null, // Null for lifetime totals
+  dateRange: { start: Date; end: Date } | null, // Null for lifetime totals
+  totalField: string | ((task: Task) => number),
+  paidField: string | ((task: Task) => number),
+  pendingField: string | ((task: Task) => number)
+): SalesData => {
+  const filteredTasks = dateField && dateRange
+    ? tasks.filter((task) => {
+        const taskDate = safeParse(task[dateField]);
+        return taskDate && isAfter(taskDate, dateRange.start);
+      })
+    : tasks; // No filtering for lifetime totals
+
+  const totalReducer = (sum: number, task: Task) =>
+    sum + (typeof totalField === "function" ? totalField(task) : task[totalField] || 0);
+  const paidReducer = (sum: number, task: Task) =>
+    sum + (typeof paidField === "function" ? paidField(task) : task[paidField] || 0);
+  const pendingReducer = (sum: number, task: Task) =>
+    sum + (typeof pendingField === "function" ? pendingField(task) : task[pendingField] || 0);
+
+  return {
+    total: filteredTasks.reduce(totalReducer, 0),
+    paid: filteredTasks.reduce(paidReducer, 0),
+    pending: filteredTasks.reduce(pendingReducer, 0),
+  };
+};
+
+export default function SalesReport({ onTotalSalesUpdate }: Props) {
+  const [period, setPeriod] = useState<"daily" | "weekly" | "monthly" | "yearly" | "lifetime">("daily");
+  const [tasks, setTasks] = useState<Tasks>({
     applications: [],
     japanVisit: [],
     translations: [],
@@ -19,14 +70,15 @@ export default function SalesReport({ onTotalSalesUpdate }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch data from the API
+  // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`);
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`
+        );
         if (response.data.success) {
-          const data = response.data.allData;
-          console.log('sale report data is', data)
+          const data = response.data.allData || {};
           setTasks({
             applications: data.application || [],
             japanVisit: data.japanVisit || [],
@@ -34,13 +86,13 @@ export default function SalesReport({ onTotalSalesUpdate }) {
             designs: data.graphicDesigns || [],
             epassport: data.epassports || [],
             otherServices: data.otherServices || [],
-          }); 
+          });
         } else {
-          setError('Failed to fetch data from the API.');
+          setError("Failed to fetch data from the API.");
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('An error occurred while fetching data.');
+        console.error("Error fetching data:", err);
+        setError("An error occurred while fetching sales data. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -49,121 +101,99 @@ export default function SalesReport({ onTotalSalesUpdate }) {
     fetchData();
   }, []);
 
-  // Get date range based on selected period
-  const getDateRange = () => {
+  // Calculate date range based on selected period (null for lifetime)
+  const dateRange = useMemo(() => {
+    if (period === "lifetime") return null;
     const end = startOfDay(new Date());
-    let start = end;
+    const ranges: Record<string, Date> = {
+      daily: end,
+      weekly: subDays(end, 7),
+      monthly: subMonths(end, 1),
+      yearly: startOfYear(end),
+    };
+    return { start: ranges[period], end };
+  }, [period]);
 
-    switch (period) {
-      case 'daily':
-        start = end;
-        break;
-      case 'weekly':
-        start = subDays(end, 7);
-        break;
-      case 'monthly':
-        start = subMonths(end, 1);
-        break;
-      case 'yearly':
-        start = startOfYear(end);
-        break;
-      default:
-        start = end;
-    }
+  // Calculate sales data for all categories
+  const salesData = useMemo(() => {
+    return {
+      applications: calculateCategorySales(
+        tasks.applications,
+        period === "lifetime" ? null : "submissionDate",
+        dateRange,
+        (task) => task.payment?.total || 0, // Align with ReportsPage
+        (task) => task.payment?.paidAmount || 0,
+        (task) => {
+          const total = task.payment?.total || 0;
+          const paid = task.payment?.paidAmount || 0;
+          const discount = task.payment?.discount || 0;
+          return total - paid - discount;
+        }
+      ),
+      japanVisit: calculateCategorySales(
+        tasks.japanVisit,
+        period === "lifetime" ? null : "date",
+        dateRange,
+        "amount",
+        "paidAmount",
+        "dueAmount"
+      ),
+      translations: calculateCategorySales(
+        tasks.translations,
+        period === "lifetime" ? null : "createdAt",
+        dateRange,
+        "amount",
+        "paidAmount",
+        "dueAmount"
+      ),
+      designs: calculateCategorySales(
+        tasks.designs,
+        period === "lifetime" ? null : "createdAt",
+        dateRange,
+        "amount",
+        "advancePaid",
+        "dueAmount"
+      ),
+      epassport: calculateCategorySales(
+        tasks.epassport,
+        period === "lifetime" ? null : "date",
+        dateRange,
+        "amount",
+        "paidAmount",
+        "dueAmount"
+      ),
+      otherServices: calculateCategorySales(
+        tasks.otherServices,
+        period === "lifetime" ? null : "createdAt",
+        dateRange,
+        "amount",
+        "paidAmount",
+        "dueAmount"
+      ),
+    };
+  }, [tasks, dateRange, period]);
 
-    return { start, end };
-  };
+  // Calculate aggregate totals
+  const { totalSales, totalPaid, totalPending } = useMemo(() => {
+    const totals = Object.values(salesData).reduce(
+      (acc, data) => ({
+        totalSales: acc.totalSales + data.total,
+        totalPaid: acc.totalPaid + data.paid,
+        totalPending: acc.totalPending + data.pending,
+      }),
+      { totalSales: 0, totalPaid: 0, totalPending: 0 }
+    );
+    return totals;
+  }, [salesData]);
 
-  const dateRange = getDateRange();
-
-  // Filter tasks by date range
-  const filterTasksByDate = (tasks: any[], dateField: string) => {
-    if (!Array.isArray(tasks)) return [];
-    return tasks.filter(task => {
-      const taskDate = safeParse(task[dateField]);
-      return taskDate && isAfter(taskDate, dateRange.start);
-    });
-  };
-
-  // Calculate total sales and pending payments for each category
-  const salesData = {
-    applications: {
-      total: filterTasksByDate(tasks.applications, 'submissionDate')
-        .reduce((sum, app) => sum + (app.payment?.visaApplicationFee || 0), 0),
-      paid: filterTasksByDate(tasks.applications, 'submissionDate')
-        .reduce((sum, app) => sum + (app.payment?.paidAmount || 0), 0),
-      pending: filterTasksByDate(tasks.applications, 'submissionDate')
-        .reduce((sum, app) => {
-          const total = app.payment?.visaApplicationFee || 0;
-          const paid = app.payment?.paidAmount || 0;
-          const discount = app.payment?.discount || 0;
-          return sum + (total - paid - discount);
-        }, 0),
-    },
-    japanVisit: {
-      total: filterTasksByDate(tasks.japanVisit, 'date')
-        .reduce((sum, app) => sum + (app.amount || 0), 0),
-      paid: filterTasksByDate(tasks.japanVisit, 'date')
-        .filter(app => app.paymentStatus === 'Paid')
-        .reduce((sum, app) => sum + (app.paidAmount || 0), 0),
-      pending: filterTasksByDate(tasks.japanVisit, 'date')
-        .reduce((sum, app) => sum + (app.dueAmount || 0), 0),
-    },
-    translations: {
-      total: filterTasksByDate(tasks.translations, 'createdAt')
-        .reduce((sum, trans) => sum + (trans.amount || 0), 0),
-      paid: filterTasksByDate(tasks.translations, 'createdAt')
-        .filter(trans => trans.paymentStatus === 'Paid')
-        .reduce((sum, trans) => sum + (trans.amount || 0), 0),
-      pending: filterTasksByDate(tasks.translations, 'createdAt')
-        .filter(trans => trans.paymentStatus === 'Due')
-        .reduce((sum, trans) => sum + (trans.amount || 0), 0),
-    },
-    designs: {
-      total: filterTasksByDate(tasks.designs, 'createdAt')
-        .reduce((sum, job) => sum + (job.amount || 0), 0),
-      paid: filterTasksByDate(tasks.designs, 'createdAt')
-        .reduce((sum, job) => sum + (job.advancePaid || 0), 0),
-      pending: filterTasksByDate(tasks.designs, 'createdAt')
-        .filter(job => job.paymentStatus === 'Due')
-        .reduce((sum, job) => sum + (job.dueAmount || 0), 0),
-    },
-    epassport: {
-      total: filterTasksByDate(tasks.epassport, 'date')
-        .reduce((sum, app) => sum + (app.amount || 0), 0),
-      paid: filterTasksByDate(tasks.epassport, 'date')
-        .reduce((sum, app) => sum + (app.paidAmount || 0), 0),
-      pending: filterTasksByDate(tasks.epassport, 'date')
-        .filter(app => app.paymentStatus === 'Due')
-        .reduce((sum, app) => sum + (app.dueAmount || 0), 0),
-    },
-    otherServices: {
-      total: filterTasksByDate(tasks.otherServices, 'createdAt')
-        .reduce((sum, service) => sum + (service.amount || 0), 0),
-      paid: filterTasksByDate(tasks.otherServices, 'createdAt')
-        .reduce((sum, service) => sum + (service.paidAmount || 0), 0),
-      pending: filterTasksByDate(tasks.otherServices, 'createdAt')
-        .filter(service => service.paymentStatus === 'Due')
-        .reduce((sum, service) => sum + (service.dueAmount || 0), 0),
-    },
-  };
-
-  const totalSales = Object.values(salesData).reduce((sum, data) => sum + data.total, 0);
-  const totalPaid = Object.values(salesData).reduce((sum, data) => sum + data.paid, 0);
-  const totalPending = Object.values(salesData).reduce((sum, data) => sum + data.pending, 0);
-
-  // Update parent component with total sales whenever it changes
+  // Notify parent component of total sales
   useEffect(() => {
     onTotalSalesUpdate(totalSales);
   }, [totalSales, onTotalSalesUpdate]);
 
-  if (loading) {
-    return <div className="text-center py-10">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-10 text-red-500">{error}</div>;
-  }
+  // Render loading or error states
+  if (loading) return <div className="text-center py-10">Loading sales data...</div>;
+  if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -173,17 +203,19 @@ export default function SalesReport({ onTotalSalesUpdate }) {
           <span className="text-sm text-gray-500">Period:</span>
           <select
             value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow text-sm"
+            onChange={(e) =>
+              setPeriod(e.target.value as "daily" | "weekly" | "monthly" | "yearly" | "lifetime")
+            }
+            className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 w-40"
           >
             <option value="daily">Today</option>
             <option value="weekly">Last 7 Days</option>
             <option value="monthly">Last 30 Days</option>
             <option value="yearly">This Year</option>
+            <option value="lifetime">Lifetime</option>
           </select>
         </div>
       </div>
-
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -205,36 +237,26 @@ export default function SalesReport({ onTotalSalesUpdate }) {
           <tbody className="bg-white divide-y divide-gray-200">
             {Object.entries(salesData).map(([category, data]) => (
               <tr key={category} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm font-medium text-gray-900">
-                    {category
-                      .charAt(0)
-                      .toUpperCase() +
-                      category.slice(1)
-                        .replace(/([A-Z])/g, ' $1')}
-                  </span>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {category.charAt(0).toUpperCase() +
+                    category
+                      .slice(1)
+                      .replace(/([A-Z])/g, " $1")
+                      .trim()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-900">
-                    ¥{data.total.toLocaleString()}
-                  </span>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  ¥{data.total.toLocaleString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-green-600">
-                    ¥{data.paid.toLocaleString()}
-                  </span>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                  ¥{data.paid.toLocaleString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-red-600">
-                    ¥{data.pending.toLocaleString()}
-                  </span>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                  ¥{data.pending.toLocaleString()}
                 </td>
               </tr>
             ))}
             <tr className="bg-gray-50 font-medium">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Total
-              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Total</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 ¥{totalSales.toLocaleString()}
               </td>
@@ -251,6 +273,3 @@ export default function SalesReport({ onTotalSalesUpdate }) {
     </div>
   );
 }
-
-
-
