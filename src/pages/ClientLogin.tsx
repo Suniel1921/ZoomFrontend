@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Mail, Eye, EyeOff, Zap } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuthGlobally } from "../context/AuthContext";
@@ -23,29 +23,48 @@ export default function ClientLogin() {
 
   // Check authentication and redirect based on role
   useEffect(() => {
-    const tokenData = localStorage.getItem("token");
-    if (tokenData) {
-      try {
-        const { user } = JSON.parse(tokenData);
-        if (user) {
-          switch (user.role) {
-            case "admin":
-            case "superadmin":
-              navigate("/dashboard");
-              break;
-            case "user":
-              navigate("/client-portal");
-              break;
-            default:
-              console.warn("Unknown role:", user.role);
+    const checkAuth = () => {
+      const tokenData = localStorage.getItem("token");
+      if (tokenData) {
+        try {
+          const { user } = JSON.parse(tokenData);
+          if (user && user.role) {
+            console.log("Token found with role:", user.role); // Debug log
+            switch (user.role) {
+              case "admin":
+              case "superadmin":
+                navigate("/dashboard");
+                break;
+              case "user":
+                navigate("/client-portal");
+                break;
+              default:
+                console.warn("Unknown role:", user.role);
+                // Do not redirect; allow login page to render
+                setIsCheckingAuth(false);
+                break;
+            }
+            return; // Exit if navigation occurs
           }
+        } catch (err) {
+          console.error("Error parsing token:", err);
+          localStorage.removeItem("token"); // Clear invalid token
         }
-      } catch (err) {
-        console.error("Error parsing token:", err);
-        localStorage.removeItem("token"); // Clear invalid token
       }
-    }
-    setIsCheckingAuth(false);
+      setIsCheckingAuth(false); // Allow login page to render if no valid token or role
+    };
+
+    checkAuth();
+
+    // Fallback timeout to ensure page renders on mobile
+    const timeout = setTimeout(() => {
+      if (isCheckingAuth) {
+        console.warn("Auth check timed out, showing login page");
+        setIsCheckingAuth(false);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeout);
   }, [navigate]);
 
   // Handle login form submission
@@ -66,8 +85,8 @@ export default function ClientLogin() {
         localStorage.setItem("token", JSON.stringify(authData));
         axios.defaults.headers.common["Authorization"] = authData.token;
 
-        const redirectPath = authData.role === "admin" || authData.role === "superadmin" 
-          ? "/dashboard" 
+        const redirectPath = authData.role === "admin" || authData.role === "superadmin"
+          ? "/dashboard"
           : "/client-portal";
         navigate(redirectPath);
       }
@@ -81,7 +100,7 @@ export default function ClientLogin() {
   // Loading state during auth check
   if (isCheckingAuth) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <svg className="animate-spin h-8 w-8 text-yellow-500" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -89,6 +108,12 @@ export default function ClientLogin() {
       </div>
     );
   }
+
+  // Handle profile photo click (unused here but included for clarity)
+  const handlePhotoClick = (photoUrl: string | undefined) => {
+    setSelectedPhotoUrl(photoUrl);
+    setIsPhotoModalOpen(true);
+  };
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
