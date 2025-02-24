@@ -341,12 +341,14 @@
 //Note : make sure paymentstatus === 'paid' and  visastatus || translationstatus || applicationstatus || status || jobstatus  === 'completed'
 //and role === 'admin' then dont show those data
 
-
-
-
-
-
 // filter admin in wrong way in task there is no any admin role so use auth you can find the role from auth context auth.user.role 
+
+
+
+
+
+
+
 
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
