@@ -341,7 +341,11 @@
 //Note : make sure paymentstatus === 'paid' and  visastatus || translationstatus || applicationstatus || status || jobstatus  === 'completed'
 //and role === 'admin' then dont show those data
 
+
 // filter admin in wrong way in task there is no any admin role so use auth you can find the role from auth context auth.user.role 
+
+
+
 
 
 
@@ -374,6 +378,7 @@ interface Task {
   translationStatus?: string;
   applicationStatus?: string;
   jobStatus?: string;
+  documentStatus?: string;
 }
 
 interface TasksProps {
@@ -529,17 +534,40 @@ export default function OngoingTasks() {
         const matchesPaymentFilter =
           paymentFilter === "all" || task.paymentStatus.toLowerCase() === paymentFilter;
 
-        const matchesHandlerFilter =
-          handlerFilter === "all" ||
-          task.handledBy === handlerFilter ||
-          (task.type === "Visa Application" && task.translationHandler === handlerFilter);
-
         const isAdminUser = auth.user.role === "admin";
         const shouldDisplayTaskForUser =
           !isAdminUser || task.role !== "admin";
 
         const isCompleted =
           ["Completed", "Approved", "Delivered"].includes(task.status);
+
+        // Updated filtering logic for translationHandler and handledBy
+        let matchesHandlerFilter = handlerFilter === "all";
+        
+        if (handlerFilter !== "all") {
+          const isTranslationHandler = task.translationHandler === handlerFilter;
+          const isMainHandler = task.handledBy === handlerFilter;
+
+          if (isTranslationHandler) {
+            // Rule 1: Don't show completed translations to translationHandler
+            if (task.translationStatus === "Completed") {
+              matchesHandlerFilter = false;
+            }
+            // New Rule: Don't show tasks with documentStatus "Not Yet" to translationHandler
+            else if (task.documentStatus === "Not Yet") {
+              matchesHandlerFilter = false;
+            }
+            // Show tasks where translation is still relevant (not completed and not "Not Yet")
+            else {
+              matchesHandlerFilter = true;
+            }
+          } else if (isMainHandler) {
+            // For handledBy, show regardless of translationStatus or documentStatus
+            matchesHandlerFilter = true;
+          } else {
+            matchesHandlerFilter = false;
+          }
+        }
 
         return (
           matchesPaymentFilter &&
@@ -736,3 +764,68 @@ export default function OngoingTasks() {
     </div>
   );
 }
+
+
+
+
+
+// _id
+// 67b6d2782f9f6e0a55fdac60
+// superAdminId
+// 679990e01a90a625442daa52
+// createdBy
+// 679991709ecb3d9b90a96eec
+// clientId
+// 67b6cc0d2f9f6e0a55fd9a75
+
+// steps
+// Array (3)
+// clientName
+// "EAS JAPAN"
+// type
+// "Visitor Visa"
+// country
+// "Malta"
+// documentStatus
+// "Fully Received"
+// documentsToTranslate
+// 11
+// translationStatus
+// "Completed"
+// visaStatus
+// "Processing"
+// handledBy
+// "Sampurna Dahal"
+// translationHandler
+// "Durga Poudel"
+// deadline
+// 2025-02-24T06:57:14.000+00:00
+
+// payment
+// Object
+// paymentStatus
+// "Due"
+// notes
+// ""
+
+// todos
+// Array (empty)
+
+// clientFiles
+// Array (empty)
+
+// familyMembers
+// Array (empty)
+// submissionDate
+// 2025-02-20T06:58:00.408+00:00
+// createdAt
+// 2025-02-20T06:58:00.613+00:00
+// updatedAt
+// 2025-02-21T02:27:55.915+00:00
+// __v
+// 0 
+
+
+// note: -- need to solve this problem later 
+// 1. if translationStatus = Completed then dont show those data to translationHandler and make sure show data handledBy (ex : in case durage poudel is translationHandler and Sampurna Dahal is handledBy so if translationstatus is completed then dont show those data duraga poudel but show sampura dahal) 
+// 2. if documentStatus  === 'Few Received ' then show translationHandler otherwise dont show those data to translationHandler (in case durga poudel is translatinohander so show those data to duraga poudel if not then dont show  )
