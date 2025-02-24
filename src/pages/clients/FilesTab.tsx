@@ -1,15 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Modal, Upload, message } from 'antd';
-import { Upload as LucideUpload, Eye, FileText, Trash2 } from 'lucide-react'; // Lucide icon
+import { Upload as LucideUpload, Eye, FileText, Trash2 } from 'lucide-react';
 import { useAccountTaskGlobally } from '../../context/AccountTaskContext';
 
-const FilesTab = ({ getAllModelData }) => {
+// Define types for clarity
+interface Task {
+  _id: string;
+  clientId: { _id: string; name: string };
+  clientName?: string;
+  clientFiles: string[];
+}
+
+interface ClientTasks {
+  applications: Task[];
+  appointment: Task[];
+  documentTranslation: Task[];
+  epassport: Task[];
+  graphicDesigns: Task[];
+  japanVisit: Task[];
+  otherServices: Task[];
+}
+
+interface FilesTabProps {
+  getAllModelData: () => void;
+}
+
+const keyMap: Record<string, keyof ClientTasks> = {
+  application: 'applications',
+  appointment: 'appointment',
+  documentTranslation: 'documentTranslation',
+  epassports: 'epassport',
+  graphicDesigns: 'graphicDesigns',
+  japanVisit: 'japanVisit',
+  otherServices: 'otherServices',
+};
+
+const FilesTab: React.FC<FilesTabProps> = ({ getAllModelData }) => {
   const { accountTaskData, selectedClientId } = useAccountTaskGlobally();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [fileList, setFileList] = useState([]);
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
-  const [selectedModelName, setSelectedModelName] = useState('');
-  const [clientTasks, setClientTasks] = useState({
+  const [modalState, setModalState] = useState({
+    uploadVisible: false,
+    previewVisible: false,
+    filesVisible: false,
+    deleteConfirmVisible: false, // New state for delete confirmation
+    selectedTaskId: null as string | null,
+    selectedModelName: '',
+    fileList: [] as any[],
+    previewFiles: [] as string[],
+    fileToDelete: null as string | null, // Track file to delete
+  });
+
+  const [clientTasks, setClientTasks] = useState<ClientTasks>({
     applications: [],
     appointment: [],
     documentTranslation: [],
@@ -18,342 +58,332 @@ const FilesTab = ({ getAllModelData }) => {
     japanVisit: [],
     otherServices: [],
   });
-  const [previewModalVisible, setPreviewModalVisible] = useState(false);
-  const [previewFiles, setPreviewFiles] = useState([]);
-  const [fileModalVisible, setFileModalVisible] = useState(false); // To manage file modal visibility
 
-  // Fetch tasks based on clientId
+  // Fetch and filter tasks based on selectedClientId
   useEffect(() => {
-    if (accountTaskData && selectedClientId) {
-      const updatedClientTasks = {
-        applications: [],
-        appointment: [],
-        documentTranslation: [],
-        epassport: [],
-        graphicDesigns: [],
-        japanVisit: [],
-        otherServices: [],
-      };
+    if (!accountTaskData || !selectedClientId) return;
 
-      Object.keys(accountTaskData).forEach((key) => {
-        const modelData = accountTaskData[key];
-        if (Array.isArray(modelData)) {
-          modelData.forEach((item) => {
-            if (item?.clientId?._id === selectedClientId) {
-              if (key === "application") updatedClientTasks.applications.push(item);
-              if (key === "appointment") updatedClientTasks.appointment.push(item);
-              if (key === "documentTranslation") updatedClientTasks.documentTranslation.push(item);
-              if (key === "epassports") updatedClientTasks.epassport.push(item);
-              if (key === "graphicDesigns") updatedClientTasks.graphicDesigns.push(item);
-              if (key === "japanVisit") updatedClientTasks.japanVisit.push(item);
-              if (key === "otherServices") updatedClientTasks.otherServices.push(item);
-            }
-          });
-        }
-      });
+    const updatedTasks: ClientTasks = {
+      applications: [],
+      appointment: [],
+      documentTranslation: [],
+      epassport: [],
+      graphicDesigns: [],
+      japanVisit: [],
+      otherServices: [],
+    };
 
-      setClientTasks(updatedClientTasks);
-    }
+    Object.entries(accountTaskData).forEach(([key, modelData]) => {
+      const mappedKey = keyMap[key];
+      if (mappedKey && Array.isArray(modelData)) {
+        modelData.forEach((item: Task) => {
+          if (item?.clientId?._id === selectedClientId) {
+            updatedTasks[mappedKey].push(item);
+          }
+        });
+      }
+    });
+
+    setClientTasks(updatedTasks);
   }, [selectedClientId, accountTaskData]);
 
-  const renderTaskSection = (title, tasks, modelName) => {
-    return (
-      tasks.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">{title}</h3>
-          {tasks.map((task) => (
-            <div
-              key={task._id}
-              className="bg-gray-50 p-3 rounded-lg border border-gray-400 transition-shadow duration-300"
-
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-medium">{task.clientId.name || task.clientName}</p>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button
-                    icon={<LucideUpload className="h-6 w-6 text-black" />} // Increased size and black color
-                    onClick={() => handleModalOpen(task._id, modelName)}
-                    size="small"
-                    type="link"
-                    className="text-blue-500"
-                  />
-                  {/* Eye Button for file preview */}
-                  <Button
-                    icon={<Eye className="h-6 w-6 text-black" />} // Increased size and black color
-                    onClick={() => handlePreviewOpen(task)}
-                    size="small"
-                    type="link"
-                    className="text-green-500"
-                  />
-
-                  {/* File Button to open the new modal */}
-                  <Button
-                    icon={<FileText className="h-6 w-6 text-black" />}
-                    onClick={() =>
-                      handleFileModalOpen(task.clientFiles, modelName)
-                    }
-                    size="small"
-                    type="link"
-                    className="text-orange-500"
-                  />
-
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )
-    );
+  // Handle modal visibility and state updates
+  const updateModalState = (updates: Partial<typeof modalState>) => {
+    setModalState((prev) => ({ ...prev, ...updates }));
   };
 
-  // Open Modal for file upload
-  const handleModalOpen = (taskId, modelName) => {
-    setSelectedTaskId(taskId);
-    setSelectedModelName(modelName);
-    setIsModalVisible(true);
+  // Open upload modal
+  const handleModalOpen = (taskId: string, modelName: string) => {
+    updateModalState({ uploadVisible: true, selectedTaskId: taskId, selectedModelName: modelName });
   };
 
-  // Close Modal
-  const handleModalClose = () => {
-    setIsModalVisible(false);
-    setFileList([]);
+  // Open preview modal
+  const handlePreviewOpen = (task: Task) => {
+    if (task.clientFiles?.length) {
+      updateModalState({ previewVisible: true, previewFiles: task.clientFiles });
+    } else {
+      message.warning('No files available for preview.');
+    }
   };
 
-  // Handle file selection
-  // Handle file selection
-  const handleFileChange = ({ fileList }) => {
-    setFileList(fileList);
+  // Open files modal
+  const handleFilesOpen = (files: string[], modelName: string) => {
+    updateModalState({ filesVisible: true, previewFiles: files, selectedModelName: modelName });
   };
 
   // Handle file upload
   const handleUpload = async () => {
-    if (fileList.length === 0) {
-      message.error('Please select files before uploading.');
+    if (!modalState.fileList.length) {
+      message.error('Please select files to upload.');
       return;
     }
 
     const formData = new FormData();
-    fileList.forEach((file) => {
-      formData.append('clientFiles', file.originFileObj);
-    });
-
+    modalState.fileList.forEach((file) => formData.append('clientFiles', file.originFileObj));
     const loadingMessage = message.loading('Uploading files...', 0);
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/fileUpload/${selectedClientId}/${selectedModelName}`,
-        {
-          method: 'POST',
-          body: formData,
-        }
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/fileUpload/${selectedClientId}/${modalState.selectedModelName}`,
+        { method: 'POST', body: formData }
       );
       const data = await response.json();
 
       if (data.success) {
         message.success('Files uploaded successfully!');
+        getAllModelData();
+
+        const newFileUrls = data.clientFiles || data.updatedTask?.clientFiles || [];
+        if (newFileUrls.length) {
+          setClientTasks((prevTasks) => {
+            const updatedTasks = { ...prevTasks };
+            const taskSection = keyMap[modalState.selectedModelName.toLowerCase()] || modalState.selectedModelName.toLowerCase();
+            const sectionTasks = updatedTasks[taskSection as keyof ClientTasks];
+            if (sectionTasks) {
+              const taskIndex = sectionTasks.findIndex((task) => task._id === modalState.selectedTaskId);
+              if (taskIndex !== -1) {
+                sectionTasks[taskIndex] = {
+                  ...sectionTasks[taskIndex],
+                  clientFiles: newFileUrls,
+                };
+              }
+            }
+            return updatedTasks;
+          });
+
+          if (modalState.previewVisible || modalState.filesVisible) {
+            updateModalState({ previewFiles: newFileUrls });
+          }
+        }
       } else {
-        message.error(data.message || 'Failed to upload files.');
+        throw new Error(data.message || 'Upload failed');
       }
     } catch (error) {
-      message.error('An error occurred while uploading files.');
+      console.error('Upload error:', error);
+      message.error('Failed to upload files.');
     } finally {
       loadingMessage();
-    }
-
-    setFileList([]);
-    setIsModalVisible(false);
-  };
-
-  const handlePreviewOpen = (task) => {
-    if (task?.clientFiles?.length > 0) {
-      console.log('Previewing files:', task.clientFiles); // Debugging log
-      setPreviewFiles(task.clientFiles);
-      setPreviewModalVisible(true);
-    } else {
-      message.warning('No files available for preview.');
-      console.log('No files found for task:', task); // Debugging log
+      updateModalState({ uploadVisible: false, fileList: [] });
     }
   };
 
-  const handlePreviewClose = () => {
-    setPreviewModalVisible(false);
-    setPreviewFiles([]);
+  // Show delete confirmation modal
+  const showDeleteConfirmation = (fileUrl: string) => {
+    updateModalState({ deleteConfirmVisible: true, fileToDelete: fileUrl });
   };
 
-  // Open the new modal showing all client files
-  const handleFileModalOpen = (files, modelName) => {
-    setPreviewFiles(files);
-    setSelectedModelName(modelName); // Update model name here
-    setFileModalVisible(true);
-  };
+  // Handle file deletion after confirmation
+  const handleDeleteFile = async () => {
+    if (!modalState.fileToDelete) return;
 
-  // Close the file modal
-  const handleFileModalClose = () => {
-    setFileModalVisible(false);
-    setPreviewFiles([]);
-  };
+    const fileUrl = modalState.fileToDelete;
+    const loadingMessage = message.loading('Deleting file...', 0);
 
-  const handleDeleteFile = async (fileUrl) => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/deleteFile`,
         {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             clientId: selectedClientId,
-            modelName: selectedModelName,
+            modelName: modalState.selectedModelName,
             fileUrl,
           }),
         }
       );
-
       const data = await response.json();
+
       if (data.success) {
+        message.success('File deleted successfully!');
         getAllModelData();
-        message.success("File deleted successfully!");
-        setPreviewFiles(previewFiles.filter((file) => file !== fileUrl));
+        updateModalState({
+          previewFiles: modalState.previewFiles.filter((file) => file !== fileUrl),
+          deleteConfirmVisible: false,
+          fileToDelete: null,
+        });
       } else {
-        message.error(data.message || "Failed to delete file.");
+        throw new Error(data.message || 'Deletion failed');
       }
     } catch (error) {
-      message.error("An error occurred while deleting the file.");
+      console.error('Delete error:', error);
+      message.error('Failed to delete file.');
+    } finally {
+      loadingMessage();
     }
   };
 
-  // JSX for the Preview Modal
+  // Render a single task
+  const renderTask = (task: Task, modelName: string) => (
+    <div
+      key={task._id}
+      className="bg-gray-50 p-3 rounded-lg border border-gray-400 hover:shadow-md transition-shadow"
+    >
+      <div className="flex justify-between items-center">
+        <p className="font-medium">{task.clientId.name || task.clientName}</p>
+        <div className="flex space-x-2">
+          <Button
+            icon={<LucideUpload className="h-5 w-5" />}
+            onClick={() => handleModalOpen(task._id, modelName)}
+            size="small"
+            type="link"
+            className="text-blue-500"
+          />
+          <Button
+            icon={<Eye className="h-5 w-5" />}
+            onClick={() => handlePreviewOpen(task)}
+            size="small"
+            type="link"
+            className="text-green-500"
+          />
+          <Button
+            icon={<FileText className="h-5 w-5" />}
+            onClick={() => handleFilesOpen(task.clientFiles, modelName)}
+            size="small"
+            type="link"
+            className="text-orange-500"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render task section with memoization
+  const taskSections = useMemo(() => {
+    const sections = [
+      { title: 'Visa Applications', tasks: clientTasks.applications, modelName: 'applicationModel' },
+      { title: 'Document Translations', tasks: clientTasks.documentTranslation, modelName: 'documentTranslationModel' },
+      { title: 'Design Services', tasks: clientTasks.graphicDesigns, modelName: 'GraphicDesignModel' },
+      { title: 'Japan Visit Applications', tasks: clientTasks.japanVisit, modelName: 'japanVisitApplicationModel' },
+      { title: 'E-passport Applications', tasks: clientTasks.epassport, modelName: 'ePassportModel' },
+      { title: 'Other Services', tasks: clientTasks.otherServices, modelName: 'OtherServiceModel' },
+    ];
+
+    return sections.map(({ title, tasks, modelName }) =>
+      tasks.length > 0 ? (
+        <div key={title} className="space-y-4">
+          <h3 className="text-xl font-semibold">{title}</h3>
+          {tasks.map((task) => renderTask(task, modelName))}
+        </div>
+      ) : null
+    );
+  }, [clientTasks]);
+
+  // Check if there are no tasks at all
+  const hasTasks = Object.values(clientTasks).some((tasks) => tasks.length > 0);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Upload Modal */}
       <Modal
         title="Upload Files"
-        visible={isModalVisible}
-        onCancel={handleModalClose}
+        open={modalState.uploadVisible}
+        onCancel={() => updateModalState({ uploadVisible: false, fileList: [] })}
         footer={[
-          <Button key="back" onClick={handleModalClose}>Cancel</Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleUpload}
-            disabled={fileList.length === 0}
-          >
+          <Button key="cancel" onClick={() => updateModalState({ uploadVisible: false, fileList: [] })}>
+            Cancel
+          </Button>,
+          <Button key="upload" type="primary" onClick={handleUpload} disabled={!modalState.fileList.length}>
             Upload
           </Button>,
         ]}
       >
         <Upload
           multiple
-          fileList={fileList}
-          onChange={handleFileChange}
-          beforeUpload={() => false} // Prevent auto upload
+          fileList={modalState.fileList}
+          onChange={({ fileList }) => updateModalState({ fileList })}
+          beforeUpload={() => false}
         >
           <Button icon={<LucideUpload className="h-5 w-5" />}>Select Files</Button>
         </Upload>
-
-        {fileList.length > 0 && (
-          <div className="mt-4">
-            <h4 className="font-semibold">Selected Files:</h4>
-            {fileList.map((file) => (
-              <div key={file.uid} className="flex justify-between items-center">
-                <a
-                  href="#"
-                  onClick={() => handlePreview(file.url)}
-                  className="text-blue-500 text-sm"
-                >
-                  {file.name}
-                </a>
-                <Button
-                  type="link"
-                  onClick={() => handleFileChange({ fileList: [] })} // Update with new file
-                  className="text-red-500"
-                >
-                  Change
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
       </Modal>
 
-      {/* Modal for Viewing Client Files */}
+      {/* Preview Modal */}
       <Modal
-        title="Client Files"
-        open={fileModalVisible}
-        onCancel={handleFileModalClose}
+        title="Preview Files"
+        open={modalState.previewVisible}
+        onCancel={() => updateModalState({ previewVisible: false, previewFiles: [] })}
         footer={null}
-        width="80%"
+        width="60%"
       >
         <div className="space-y-4">
-          {previewFiles.map((fileUrl, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center p-2 border-b"
-            >
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500"
-              >
-                {fileUrl.split("/").pop()}
-              </a>
-              <Button
-                icon={<Trash2 className="h-5 w-5 text-red-500" />}
-                onClick={() => handleDeleteFile(fileUrl)}
-                type="link"
-              />
+          {modalState.previewFiles.map((fileUrl, index) => (
+            <div key={index}>
+              {fileUrl.match(/\.(jpeg|jpg|gif|png)$/) ? (
+                <img src={fileUrl} alt={`Preview ${index}`} className="w-full h-auto border rounded" />
+              ) : fileUrl.endsWith('.pdf') ? (
+                <iframe
+                  src={`https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
+                  className="w-full h-96 border rounded"
+                  title={`PDF Preview ${index}`}
+                />
+              ) : (
+                <p className="text-gray-500">File format not supported for preview</p>
+              )}
             </div>
           ))}
         </div>
       </Modal>
 
-      {/* Preview Files Modal */}
+      {/* Files Modal */}
       <Modal
-        title="Preview Files"
-        open={previewModalVisible}
-        onCancel={handlePreviewClose}
+        title="Client Files"
+        open={modalState.filesVisible}
+        onCancel={() => updateModalState({ filesVisible: false, previewFiles: [] })}
         footer={null}
-        width="60%"
+        width="50%" // Decreased from 80% to 50%
       >
-        <div className="p-4 bg-gray-50 space-y-4">
-          {previewFiles.map((fileUrl, index) => {
-            const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png)$/);
-            const isPDF = fileUrl.endsWith('.pdf');
-            return (
-              <div key={index}>
-                {isImage ? (
-                  <img
-                    src={fileUrl}
-                    alt={`Preview ${index + 1}`}
-                    className="w-full h-auto border"
-                  />
-                ) : isPDF ? (
-                  <iframe
-                    src={`https://docs.google.com/gview?url=${fileUrl}&embedded=true`}
-                    className="w-full h-96 border"
-                    title={`Preview ${index + 1}`}
-                  />
-                ) : (
-                  <p>File format not supported for preview</p>
-                )}
+        {modalState.previewFiles.length ? (
+          <div className="space-y-4">
+            {modalState.previewFiles.map((fileUrl, index) => (
+              <div key={index} className="flex justify-between items-center p-2 border-b">
+                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+                  {fileUrl.split('/').pop()}
+                </a>
+                <Button
+                  icon={<Trash2 className="h-5 w-5 text-red-500" />}
+                  onClick={() => showDeleteConfirmation(fileUrl)}
+                  type="link"
+                />
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-4">No files found</p>
+        )}
       </Modal>
 
-      {/* Task Sections */}
-      {renderTaskSection("Visa Applications", clientTasks.applications, "applicationModel")}
-      {renderTaskSection("Document Translations", clientTasks.documentTranslation, "documentTranslationModel")}
-      {renderTaskSection("Design Services", clientTasks.graphicDesigns, "GraphicDesignModel")}
-      {renderTaskSection("Japan Visit Applications", clientTasks.japanVisit, "japanVisitApplicationModel")}
-      {renderTaskSection("E-passport Applications", clientTasks.epassport, "ePassportModel")}
-      {renderTaskSection("Other Services", clientTasks.otherServices, "OtherServiceModel")}
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title="Confirm Deletion"
+        open={modalState.deleteConfirmVisible}
+        onCancel={() => updateModalState({ deleteConfirmVisible: false, fileToDelete: null })}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => updateModalState({ deleteConfirmVisible: false, fileToDelete: null })}
+          >
+            Cancel
+          </Button>,
+          <Button key="delete" type="primary" danger onClick={handleDeleteFile}>
+            Delete
+          </Button>,
+        ]}
+      >
+        <p>Are you sure you want to delete this file?</p>
+        {modalState.fileToDelete && (
+          <p className="text-gray-600">{modalState.fileToDelete.split('/').pop()}</p>
+        )}
+      </Modal>
+
+      {/* Task Sections or No Data Message */}
+      {hasTasks ? (
+        taskSections
+      ) : (
+        <div className="text-center py-8 text-gray-500">No documents found</div>
+      )}
     </div>
   );
 };
 
 export default FilesTab;
-
