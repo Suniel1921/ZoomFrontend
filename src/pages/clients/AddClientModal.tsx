@@ -1,12 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Upload, Plus } from "lucide-react";
+import { X, Upload, Plus, Eye, EyeOff, Key } from "lucide-react";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { useStore } from "../../store";
 import { fetchJapaneseAddress } from "../../services/addressService";
-import { generateStrongPassword } from "../../utils/passwordGenerator";
 import { countries } from "../../utils/countries";
 import { createClientSchema } from "../../utils/clientValidation";
 import type { ClientCategory } from "../../types";
@@ -21,7 +20,6 @@ const categories: ClientCategory[] = [
   "Epassport Applicant",
   "Japan Visa",
   "General Consultation",
-  // "Graphic Desing",
 ];
 
 const optionalCategories: ClientCategory[] = [
@@ -29,7 +27,6 @@ const optionalCategories: ClientCategory[] = [
   "Epassport Applicant",
   "Japan Visa",
   "General Consultation",
-  // "Graphic Desing",
 ];
 
 interface AddClientModalProps {
@@ -43,13 +40,14 @@ export default function AddClientModal({
   onClose,
   getAllClients,
 }: AddClientModalProps) {
-  const { addClient } = useStore();
   const [isAddressLoading, setIsAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ClientCategory>();
+  const [showPassword, setShowPassword] = useState(false);
+  const [files, setFiles] = useState<FileList | null>(null);
 
   const {
     register,
@@ -61,7 +59,7 @@ export default function AddClientModal({
   } = useForm({
     resolver: zodResolver(createClientSchema(selectedCategory)),
     defaultValues: {
-      facebookUrl : "",
+      facebookUrl: "",
       status: "active",
       category: selectedCategory,
       address: {
@@ -109,19 +107,19 @@ export default function AddClientModal({
     }
   }, [postalCode, setValue, selectedCategory]);
 
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+    const fileList = event.target.files;
+    if (fileList && fileList[0]) {
+      const file = fileList[0];
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        setProfilePhotoPreview(base64String); // Set the preview
-        setValue("profilePhoto", base64String); // Set the value for the form
+        setProfilePhotoPreview(base64String);
+        setValue("profilePhoto", base64String);
       };
       reader.readAsDataURL(file);
+      setFiles(fileList);
     }
-    setFiles(event.target.files); // Set the file list
   };
 
   const handleModeOfContactChange = (mode: string) => {
@@ -138,29 +136,20 @@ export default function AddClientModal({
 
   const handleCategoryChange = (category: ClientCategory) => {
     setSelectedCategory(category);
-    // Reset form with new validation schema
     reset({
       ...watch(),
       category,
     });
   };
 
-  const [files, setFiles] = useState([]);
-
-  // const handleFileChange = (e: any) => {
-  //   setFiles(e.target.files);
-  // };
-
   const onSubmit = async (data: any) => {
-    // Handle the case where no profile photo is selected (optional)
     if (files) {
-      // Check if any file exceeds 2MB
       const isFileTooLarge = Array.from(files).some(
         (file: File) => file.size > 2 * 1024 * 1024
       );
       if (isFileTooLarge) {
         setError("Please upload a file smaller than 2MB.");
-        setProfilePhotoPreview(null); // Reset preview if file is too large
+        setProfilePhotoPreview(null);
         return;
       }
     }
@@ -169,7 +158,6 @@ export default function AddClientModal({
 
     try {
       const formData = new FormData();
-
       formData.append("name", data.name);
       formData.append("category", data.category);
       formData.append("status", data.status);
@@ -182,20 +170,16 @@ export default function AddClientModal({
       formData.append("city", data.address.city);
       formData.append("street", data.address.street);
       formData.append("building", data.address.building);
-      formData.append('facebookUrl', data.facebookUrl);
+      formData.append("facebookUrl", data.facebookUrl || ""); // Ensure it's always sent, even if empty
+      formData.append("modeOfContact", JSON.stringify(data.modeOfContact));
+      formData.append("timeline", JSON.stringify(data.address.timeline || []));
 
-    formData.append("modeOfContact", JSON.stringify(data.modeOfContact));
-    formData.append("timeline", JSON.stringify(data.address.timeline));
-  
-
-      // Add profile photo if selected
       if (files && files.length > 0) {
         for (let i = 0; i < files.length; i++) {
           formData.append("profilePhoto", files[i]);
         }
       }
 
-      // Send the form data to backend
       const response = await axios.post(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/createClient`,
         formData,
@@ -208,24 +192,20 @@ export default function AddClientModal({
         );
         getAllClients();
         reset();
-        setFiles([]); // Clear files
-        setProfilePhotoPreview(null); // Reset photo preview
-        onClose(); // Close modal or form
+        setFiles(null);
+        setProfilePhotoPreview(null);
+        onClose();
       } else {
-        // Display success or failure messages from backend
         toast.error(
           response.data.message || "Something went wrong. Please try again."
         );
       }
     } catch (error: any) {
       if (error.response) {
-        // Log error details to check if we are getting the response
-        console.log(error.response); // Check the error response
         toast.error(
           error?.response?.data?.message || "Error occurred, please try again."
         );
       } else {
-        // Handle network errors
         toast.error("Network error, please try again.");
       }
     } finally {
@@ -239,230 +219,239 @@ export default function AddClientModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-semibold">Add New Client</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
-        {/* Profile Photo Section - Centered at top */}
-        <div className="flex flex-col items-center gap-4 mb-10">
-          <div className="relative w-32 h-32">
-            {profilePhotoPreview ? (
-              <img
-                src={profilePhotoPreview}
-                alt="Profile preview"
-                className="w-full h-full rounded-full object-cover border-4 border-brand-yellow"
-              />
-            ) : (
-              <div className="w-full h-full rounded-full bg-gray-100 border-4 border-dashed border-gray-300 flex items-center justify-center">
-                <Upload className="h-8 w-8 text-gray-400" />
-              </div>
-            )}
-            <label className="absolute bottom-0 right-0 bg-brand-yellow rounded-full p-2 cursor-pointer hover:bg-yellow-500 transition-colors">
-              <Upload className="h-4 w-4 text-white" />
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </label>
-          </div>
-          {error && (
-            <p className="text-red-500 text-sm text-center">{error}</p>
-          )}
-          <p className="text-sm text-gray-500">Upload profile photo (Optional)</p>
+      <div className="bg-white rounded-lg p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-semibold">Add New Client</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* Two Column Layout for Form Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          {/* Each form group has consistent spacing */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Name</label>
-            <Input {...register("name")} className="w-full" />
-            {errors.name && (
-              <p className="text-sm text-red-600">{errors.name.message as string}</p>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+          <div className="flex flex-col items-center gap-4 mb-10">
+            <div className="relative w-32 h-32">
+              {profilePhotoPreview ? (
+                <img
+                  src={profilePhotoPreview}
+                  alt="Profile preview"
+                  className="w-full h-full rounded-full object-cover border-4 border-brand-yellow"
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-gray-100 border-4 border-dashed border-gray-300 flex items-center justify-center">
+                  <Upload className="h-8 w-8 text-gray-400" />
+                </div>
+              )}
+              <label className="absolute bottom-0 right-0 bg-brand-yellow rounded-full p-2 cursor-pointer hover:bg-yellow-500 transition-colors">
+                <Upload className="h-4 w-4 text-white" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </label>
+            </div>
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
             )}
+            <p className="text-sm text-gray-500">Upload profile photo (Optional)</p>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Category</label>
-            <select
-              {...register("category")}
-              onChange={(e) => handleCategoryChange(e.target.value as ClientCategory)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow h-10 px-3"
-            >
-              <option>Select Category</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <Input {...register("email")} type="email" className="w-full" />
-            {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message as string}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <Input {...register("password")} type="password" className="w-full" />
-            {errors.password && (
-              <p className="text-sm text-red-600">{errors.password.message as string}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <Input {...register("phone")} type="tel" className="w-full" />
-            {errors.phone && (
-              <p className="text-sm text-red-600">{errors.phone.message as string}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              {...register("status")}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow h-10 px-3"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Nationality</label>
-            <select
-              {...register("nationality")}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow h-10 px-3"
-            >
-              <option value="">Select nationality</option>
-              {countries.map((country) => (
-                <option key={country.code} value={country.name}>{country.name}</option>
-              ))}
-            </select>
-            {errors.nationality && (
-              <p className="text-sm text-red-600">{errors.nationality.message as string}</p>
-            )}
-          </div>
-
-           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">facebook Profile URL</label>
-            <Input {...register("facebookUrl")} className="w-full" />
-          </div>
-        </div>
-
-        {/* Address Section */}
-        <div className="border-t pt-8">
-          <h3 className="font-medium text-lg mb-6">Address {isOptionalCategory && <span className="text-gray-500">(Optional)</span>}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div className="md:col-span-2 space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Postal Code</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <Input {...register("name")} className="w-full" />
+              {errors.name && (
+                <p className="text-sm text-red-600">{errors.name.message as string}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Category</label>
+              <select
+                {...register("category")}
+                onChange={(e) => handleCategoryChange(e.target.value as ClientCategory)}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow h-10 px-3"
+              >
+                <option>Select Category</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <Input {...register("email")} type="email" className="w-full" />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message as string}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
               <div className="relative">
                 <Input
-                  {...register("address.postalCode")}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const formatted = value
-                      .replace(/\D/g, "")
-                      .replace(/^(\d{3})(\d{0,4})/, "$1-$2")
-                      .substring(0, 8);
-                    setValue("address.postalCode", formatted);
-                    if (value.replace(/\D/g, "").length === 7) {
-                      handlePostalCodeChange();
-                    }
-                  }}
-                  placeholder="123-4567"
+                  {...register("password")}
+                  type={showPassword ? "text" : "password"}
+                  className="w-full pr-20"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue("password", "zoom2025")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  title="Generate Password"
+                >
+                  <Key className="h-4 w-4" />
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-sm text-red-600">{errors.password.message as string}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Phone</label>
+              <Input {...register("phone")} type="tel" className="w-full" />
+              {errors.phone && (
+                <p className="text-sm text-red-600">{errors.phone.message as string}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select
+                {...register("status")}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow h-10 px-3"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Nationality</label>
+              <select
+                {...register("nationality")}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow h-10 px-3"
+              >
+                <option value="">Select nationality</option>
+                {countries.map((country) => (
+                  <option key={country.code} value={country.name}>{country.name}</option>
+                ))}
+              </select>
+              {errors.nationality && (
+                <p className="text-sm text-red-600">{errors.nationality.message as string}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Facebook Profile URL <span className="text-gray-500">(Optional)</span>
+              </label>
+              <Input {...register("facebookUrl")} className="w-full" />
+              {errors.facebookUrl && (
+                <p className="text-sm text-red-600">{errors.facebookUrl.message as string}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t pt-8">
+            <h3 className="font-medium text-lg mb-6">Address {isOptionalCategory && <span className="text-gray-500">(Optional)</span>}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="md:col-span-2 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Postal Code</label>
+                <div className="relative">
+                  <Input
+                    {...register("address.postalCode")}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const formatted = value
+                        .replace(/\D/g, "")
+                        .replace(/^(\d{3})(\d{0,4})/, "$1-$2")
+                        .substring(0, 8);
+                      setValue("address.postalCode", formatted);
+                      if (value.replace(/\D/g, "").length === 7) {
+                        handlePostalCodeChange();
+                      }
+                    }}
+                    placeholder="123-4567"
+                    className="w-full"
+                  />
+                  {isAddressLoading && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-yellow border-t-transparent"></div>
+                    </div>
+                  )}
+                </div>
+                {addressError && <p className="text-sm text-red-600">{addressError}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Prefecture</label>
+                <Input {...register("address.prefecture")} disabled={isAddressLoading} className="w-full" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">City</label>
+                <Input {...register("address.city")} disabled={isAddressLoading} className="w-full" />
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Street</label>
+                <Input {...register("address.street")} disabled={isAddressLoading} className="w-full" />
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Building & Apartment</label>
+                <Input
+                  {...register("address.building")}
+                  placeholder="Building name, Floor, Unit number"
                   className="w-full"
                 />
-                {isAddressLoading && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-yellow border-t-transparent"></div>
-                  </div>
-                )}
               </div>
-              {addressError && <p className="text-sm text-red-600">{addressError}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Prefecture</label>
-              <Input {...register("address.prefecture")} disabled={isAddressLoading} className="w-full" />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">City</label>
-              <Input {...register("address.city")} disabled={isAddressLoading} className="w-full" />
-            </div>
-
-            <div className="md:col-span-2 space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Street</label>
-              <Input {...register("address.street")} disabled={isAddressLoading} className="w-full" />
-            </div>
-
-            <div className="md:col-span-2 space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Building & Apartment</label>
-              <Input
-                {...register("address.building")}
-                placeholder="Building name, Floor, Unit number"
-                className="w-full"
-              />
             </div>
           </div>
-        </div>
 
-        {/* Contact Preferences */}
-        <div className="border-t pt-8">
-          <h3 className="font-medium text-lg mb-6">Contact Preferences</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {["Direct Call", "Viber", "WhatsApp", "Facebook Messenger"].map((mode) => (
-              <label key={mode} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedModes.includes(mode)}
-                  onChange={() => handleModeOfContactChange(mode)}
-                  className="w-4 h-4 rounded border-gray-300 text-brand-yellow focus:ring-brand-yellow"
-                />
-                <span className="text-sm text-gray-700">{mode}</span>
-              </label>
-            ))}
+          <div className="border-t pt-8">
+            <h3 className="font-medium text-lg mb-6">Contact Preferences</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {["Direct Call", "Viber", "WhatsApp", "Facebook Messenger"].map((mode) => (
+                <label key={mode} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedModes.includes(mode)}
+                    onChange={() => handleModeOfContactChange(mode)}
+                    className="w-4 h-4 rounded border-gray-300 text-brand-yellow focus:ring-brand-yellow"
+                  />
+                  <span className="text-sm text-gray-700">{mode}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Form Actions */}
-        <div className="flex justify-end gap-4 border-t pt-8">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">Add Client</Button>
-        </div>
-      </form>
+          <div className="flex justify-end gap-4 border-t pt-8">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit">Add Client</Button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
