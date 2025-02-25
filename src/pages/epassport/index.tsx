@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CreditCard, Plus, Search, Calculator, Upload, Eye, Download, Calendar } from "lucide-react";
+import { CreditCard, Plus, Search, Calculator, Upload, Eye, Download, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import AddEpassportModal from "./AddEpassportModal";
@@ -43,9 +43,11 @@ export default function EpassportPage() {
   const [applicationToDelete, setApplicationToDelete] = useState<EpassportApplication | null>(null);
   const [epassportApplications, setEpassportApplications] = useState<EpassportApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1); // New state for current page
+  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page (matching the reference)
   const [auth] = useAuthGlobally();
 
-  // Fetch ePassport applications, sorted by createdAt ascending (oldest first)
+  // Fetch ePassport applications, sorted by createdAt descending (newest first)
   const getAllEPassportApplication = async () => {
     setIsLoading(true);
     try {
@@ -54,7 +56,13 @@ export default function EpassportPage() {
       );
       if (response.data.success) {
         const applications = Array.isArray(response.data.data) ? response.data.data : [];
-        setEpassportApplications(applications);
+        // Sort applications by createdAt in descending order (newest first)
+        const sortedApplications = applications.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA; // Newest first
+        });
+        setEpassportApplications(sortedApplications);
       } else {
         console.error("API responded with success false:", response.data);
         setEpassportApplications([]);
@@ -82,6 +90,16 @@ export default function EpassportPage() {
     return matchesSearch && matchesType && matchesLocation;
   });
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredApplications.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
   const formatPhoneForViber = (phone: string | undefined | null): string => {
     if (!phone) return "";
     return phone.replace(/\D/g, "");
@@ -105,7 +123,7 @@ export default function EpassportPage() {
         toast.success("Application deleted successfully!");
         setIsDeleteModalOpen(false);
         setApplicationToDelete(null);
-        getAllEPassportApplication(); // Refresh list, oldest first
+        getAllEPassportApplication(); // Refresh list, newest first
       } else {
         toast.error("Failed to delete the application.");
       }
@@ -158,7 +176,7 @@ export default function EpassportPage() {
       );
       if (response.data.success) {
         toast.success("Date updated successfully!");
-        getAllEPassportApplication(); // Refresh data
+        getAllEPassportApplication(); // Refresh data, newest first
       } else {
         toast.error("Failed to update the date.");
       }
@@ -399,7 +417,56 @@ export default function EpassportPage() {
         {isLoading ? (
           <ClientTableSkeleton />
         ) : (
-          <DataTable columns={columns} data={filteredApplications} searchable={false} />
+          <>
+            <DataTable columns={columns} data={currentItems} searchable={false} />
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(indexOfLastItem, filteredApplications.length)}</span> of{" "}
+                    <span className="font-medium">{filteredApplications.length}</span> results
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

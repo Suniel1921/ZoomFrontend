@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Languages, Plus, Search, Calculator, Copy, Check } from 'lucide-react';
+import { Languages, Plus, Search, Calculator, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import AddTranslationModal from './AddTranslationModal';
@@ -27,9 +27,11 @@ export default function TranslationsPage() {
   const [translationToDelete, setTranslationToDelete] = useState<Translation | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [currentPage, setCurrentPage] = useState(1); // New state for current page
+  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page
   const [auth] = useAuthGlobally();
 
-  // Fetch translations from API, sorted by createdAt ascending (oldest first)
+  // Fetch translations from API, sorted by createdAt descending (newest first)
   const getAllTranslations = async () => {
     setIsLoading(true);
     try {
@@ -37,7 +39,13 @@ export default function TranslationsPage() {
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/getAllDocumentTranslation`
       );
       const data = Array.isArray(response.data.translations) ? response.data.translations : [];
-      setTranslations(data);
+      // Sort translations by createdAt in descending order (newest first)
+      const sortedTranslations = data.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // Newest first
+      });
+      setTranslations(sortedTranslations);
     } catch (error) {
       console.error('Error fetching document translations:', error);
       toast.error('Failed to fetch translations');
@@ -51,7 +59,7 @@ export default function TranslationsPage() {
     getAllTranslations();
   }, []);
 
-  // Filter translations based on search query and status
+  // Filter translations based on search query, status, and valid clientId
   const filteredTranslations = translations.filter((trans) => {
     const clientName = trans.clientId?.name?.toLowerCase() || '';
     const matchesSearch = clientName.includes(searchQuery.toLowerCase());
@@ -59,6 +67,16 @@ export default function TranslationsPage() {
     const hasClientId = trans.clientId !== null && trans.clientId !== undefined;
     return matchesSearch && matchesStatus && hasClientId;
   });
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredTranslations.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredTranslations.length / itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   const formatPhoneForViber = (phone: string | undefined | null): string => {
     if (!phone) return '';
@@ -282,7 +300,56 @@ export default function TranslationsPage() {
         {isLoading ? (
           <ClientTableSkeleton />
         ) : (
-          <DataTable columns={columns} data={filteredTranslations} searchable={false} />
+          <>
+            <DataTable columns={columns} data={currentItems} searchable={false} />
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(indexOfLastItem, filteredTranslations.length)}</span> of{" "}
+                    <span className="font-medium">{filteredTranslations.length}</span> results
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

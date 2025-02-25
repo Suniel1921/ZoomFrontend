@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Briefcase, Plus, Search, Calculator } from "lucide-react";
+import { Briefcase, Plus, Search, Calculator, ChevronLeft, ChevronRight } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import { useStore } from "../../store";
@@ -26,9 +26,11 @@ export default function OtherServicesPage() {
   const [serviceToDelete, setServiceToDelete] = useState<OtherService | null>(null);
   const [otherServices, setOtherServices] = useState<OtherService[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1); // New state for current page
+  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page
   const [auth] = useAuthGlobally();
 
-  // Fetch services, sorted by createdAt ascending (oldest first)
+  // Fetch services, sorted by createdAt descending (newest first)
   const fetchServices = async () => {
     setLoading(true);
     try {
@@ -36,7 +38,13 @@ export default function OtherServicesPage() {
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/otherServices/getAllOtherServices`
       );
       if (Array.isArray(response.data.data)) {
-        setOtherServices(response.data.data);
+        // Sort services by createdAt in descending order (newest first)
+        const sortedServices = response.data.data.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA; // Newest first
+        });
+        setOtherServices(sortedServices);
       } else {
         console.error("Unexpected data format:", response.data);
         setOtherServices([]);
@@ -54,7 +62,7 @@ export default function OtherServicesPage() {
     fetchServices();
   }, []);
 
-  // Filter services based on search query and type
+  // Filter services based on search query, type, and valid clientId
   const filteredServices = otherServices.filter((service) => {
     const matchesSearch =
       (service.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
@@ -67,6 +75,16 @@ export default function OtherServicesPage() {
     const hasClientId = service.clientId !== null && service.clientId !== undefined;
     return matchesSearch && matchesType && hasClientId;
   });
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredServices.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredServices.length / itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   // Handle initiating deletion
   const initiateDelete = (service: OtherService) => {
@@ -86,7 +104,7 @@ export default function OtherServicesPage() {
         toast.success("Service deleted successfully!");
         setIsDeleteModalOpen(false);
         setServiceToDelete(null);
-        fetchServices(); // Refresh list, oldest first
+        fetchServices(); // Refresh list, newest first
       } else {
         toast.error("Failed to delete the service.");
       }
@@ -278,11 +296,60 @@ export default function OtherServicesPage() {
         {loading ? (
           <ClientTableSkeleton />
         ) : (
-          <DataTable
-            columns={columns}
-            data={filteredServices}
-            searchable={false}
-          />
+          <>
+            <DataTable
+              columns={columns}
+              data={currentItems}
+              searchable={false}
+            />
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(indexOfLastItem, filteredServices.length)}</span> of{" "}
+                    <span className="font-medium">{filteredServices.length}</span> results
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

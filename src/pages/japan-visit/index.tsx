@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Plane, Plus, Search, Calculator } from "lucide-react";
+import { Plane, Plus, Search, Calculator, ChevronLeft, ChevronRight } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import { useStore } from "../../store";
@@ -26,10 +26,12 @@ export default function JapanVisitPage() {
   const [applicationToDelete, setApplicationToDelete] = useState<JapanVisitApplication | null>(null);
   const [applications, setApplications] = useState<JapanVisitApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [currentPage, setCurrentPage] = useState(1); // New state for current page
+  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page
   const clients = useStore((state) => state.clients);
   const [auth] = useAuthGlobally();
 
-  // Fetch Japan visit applications, sorted by createdAt ascending (oldest first)
+  // Fetch Japan visit applications, sorted by createdAt descending (newest first)
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
@@ -37,7 +39,14 @@ export default function JapanVisitPage() {
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/japanVisit/getAllJapanVisitApplication`
       );
       const applicationsData = response.data?.data;
-      setApplications(Array.isArray(applicationsData) ? applicationsData : []);
+      const sortedApplications = Array.isArray(applicationsData) 
+        ? applicationsData.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0).getTime();
+            const dateB = new Date(b.createdAt || 0).getTime();
+            return dateB - dateA; // Newest first
+          })
+        : [];
+      setApplications(sortedApplications);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to fetch applications');
@@ -69,7 +78,7 @@ export default function JapanVisitPage() {
         toast.success("Application deleted successfully!");
         setIsDeleteModalOpen(false);
         setApplicationToDelete(null);
-        fetchApplications(); // Refresh list, oldest first
+        fetchApplications(); // Refresh list, newest first
       } else {
         toast.error("Failed to delete application.");
       }
@@ -88,6 +97,7 @@ export default function JapanVisitPage() {
     return clients.find((c) => c.id === clientId);
   };
 
+  // Filter applications based on search query, package, and valid clientId
   const filteredApplications = Array.isArray(applications)
     ? applications.filter((app) => {
         const clientName = app.clientId?.name || "";
@@ -99,6 +109,16 @@ export default function JapanVisitPage() {
         return matchesSearch && matchesPackage && hasClientId;
       })
     : [];
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredApplications.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   const columns = [
     {
@@ -256,7 +276,56 @@ export default function JapanVisitPage() {
         {isLoading ? (
           <ClientTableSkeleton />
         ) : (
-          <DataTable columns={columns} data={filteredApplications} searchable={false} />
+          <>
+            <DataTable columns={columns} data={currentItems} searchable={false} />
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(indexOfLastItem, filteredApplications.length)}</span> of{" "}
+                    <span className="font-medium">{filteredApplications.length}</span> results
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -298,4 +367,3 @@ export default function JapanVisitPage() {
     </div>
   );
 }
-

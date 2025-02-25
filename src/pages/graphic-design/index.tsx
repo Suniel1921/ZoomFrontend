@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Palette, Plus, Search, Calculator } from "lucide-react";
+import { Palette, Plus, Search, Calculator, ChevronLeft, ChevronRight } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import DataTable from "../../components/DataTable";
@@ -32,9 +32,11 @@ export default function GraphicDesignPage() {
   const [selectedJob, setSelectedJob] = useState<GraphicDesignJob | null>(null);
   const [jobToDelete, setJobToDelete] = useState<GraphicDesignJob | null>(null);
   const [loading, setLoading] = useState(true); // Changed to true initially
+  const [currentPage, setCurrentPage] = useState(1); // New state for current page
+  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page
   const [auth] = useAuthGlobally();
 
-  // Fetch graphic design jobs from the API, sorted by createdAt ascending (oldest first)
+  // Fetch graphic design jobs from the API, sorted by createdAt descending (newest first)
   const fetchGraphicDesignJobs = async () => {
     setLoading(true);
     try {
@@ -42,7 +44,13 @@ export default function GraphicDesignPage() {
         `${API_URL}/api/v1/graphicDesign/getAllGraphicDesign`
       );
       const data = Array.isArray(response.data.designJobs) ? response.data.designJobs : [];
-      setGraphicDesignJobs(data);
+      // Sort jobs by createdAt in descending order (newest first)
+      const sortedJobs = data.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // Newest first
+      });
+      setGraphicDesignJobs(sortedJobs);
     } catch (error) {
       console.error("Error fetching graphic design jobs:", error);
       toast.error("Failed to fetch graphic design jobs");
@@ -56,7 +64,7 @@ export default function GraphicDesignPage() {
     fetchGraphicDesignJobs();
   }, []);
 
-  // Filter jobs based on search query
+  // Filter jobs based on search query and valid clientId
   const filteredJobs = graphicDesignJobs.filter((job) => {
     const hasClientId = job.clientId !== null && job.clientId !== undefined;
     return (
@@ -66,6 +74,16 @@ export default function GraphicDesignPage() {
       )
     );
   });
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredJobs.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   // Handle initiating deletion
   const initiateDelete = (job: GraphicDesignJob) => {
@@ -85,7 +103,7 @@ export default function GraphicDesignPage() {
         toast.success("Job deleted successfully!");
         setIsDeleteModalOpen(false);
         setJobToDelete(null);
-        fetchGraphicDesignJobs(); // Refresh list, oldest first
+        fetchGraphicDesignJobs(); // Refresh list, newest first
       } else {
         toast.error("Failed to delete the job.");
       }
@@ -213,7 +231,56 @@ export default function GraphicDesignPage() {
         {loading ? (
           <ClientTableSkeleton />
         ) : (
-          <DataTable columns={columns} data={filteredJobs} searchable={false} />
+          <>
+            <DataTable columns={columns} data={currentItems} searchable={false} />
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(indexOfLastItem, filteredJobs.length)}</span> of{" "}
+                    <span className="font-medium">{filteredJobs.length}</span> results
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

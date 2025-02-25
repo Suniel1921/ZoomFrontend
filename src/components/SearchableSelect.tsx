@@ -88,6 +88,31 @@ const NoResults: React.FC = () => (
   </div>
 );
 
+const Loading: React.FC = () => (
+  <div className="flex items-center justify-center px-3 py-2">
+    <svg
+      className="animate-spin h-5 w-5 text-[#FEDC00]"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  </div>
+);
+
 export default function SearchableSelect({
   options,
   value,
@@ -140,7 +165,6 @@ export default function SearchableSelect({
         setIsSearching(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -221,6 +245,10 @@ export default function SearchableSelect({
       return <NoResults />;
     }
 
+    if (isSearching) {
+      return <Loading />;
+    }
+
     if (filteredAndSortedOptions.length <= MAX_ITEMS_WITHOUT_VIRTUALIZATION) {
       return filteredAndSortedOptions.map((option, index) => (
         <OptionItem
@@ -261,6 +289,7 @@ export default function SearchableSelect({
     handleOptionSelect,
     value,
     highlightedIndex,
+    isSearching,
   ]);
 
   return (
@@ -281,32 +310,8 @@ export default function SearchableSelect({
           }}
           onFocus={() => setShowDropdown(true)}
           onKeyDown={handleKeyDown}
-          className={`pl-9 pr-10 ${error ? "border-destructive" : ""}`} // Added pr-10 for spinner space
+          className={`pl-9 ${error ? "border-destructive" : ""}`} // Removed pr-10 for spinner space
         />
-        {isSearching && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <svg
-              className="animate-spin h-5 w-5 text-[#FEDC00]"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          </div>
-        )}
       </div>
 
       {showDropdown && (
@@ -329,4 +334,3 @@ export default function SearchableSelect({
     </div>
   );
 }
-
