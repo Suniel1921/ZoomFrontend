@@ -243,7 +243,7 @@ export default function AddDesignJobModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Advance Paid</label>
+              <label className="block text-sm font-medium text-gray-700">Paid</label>
               <Input
                 type="number"
                 {...register('advancePaid', { valueAsNumber: true })}
