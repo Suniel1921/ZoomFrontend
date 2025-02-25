@@ -22,6 +22,8 @@ import {
   GripIcon,
   GitPullRequestIcon,
   Megaphone,
+  ChefHat,
+  BarChartBigIcon,
 } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 import NotesPanel from './notes/NotesPanel';
@@ -64,6 +66,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           { icon: Palette, label: 'Graphic Design', path: '/dashboard/graphic-design' },
           { icon: CreditCard, label: 'Accounts & Tasks', path: '/dashboard/accounts' },
           { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
+          { icon: BarChartBigIcon, label: 'Chat With Us', path: '/dashboard/chat-with-us' },
         ]),
   ];
 

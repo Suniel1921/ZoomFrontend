@@ -115,8 +115,6 @@ export default function DashboardHome() {
 
 
 
-
-    
   // Chart data definitions
   const clientChartData = [
     { name: 'Jan', value: activeClients.length },
@@ -145,11 +143,6 @@ export default function DashboardHome() {
     { name: 'In Progress', value: serviceRequested.filter(s => s.status === 'in-progress').length },
     { name: 'Completed', value: serviceRequested.filter(s => s.status === 'completed').length }
   ];
-
-
-
-
-    
 
 
   if (loading) {

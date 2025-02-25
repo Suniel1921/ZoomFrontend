@@ -26,6 +26,8 @@ import AccountsPage from './pages/accounts';
 import useOnlineOfflineStatus from './components/onlineOfflineStatus/useOnlineOfflineStatus';
 import Not_Found_Page from './pages/applications/components/Not_Found_Page';
 import CallLogs from './pages/callLogs/CallLogs';
+import ChatWindow from './pages/messages/components/ChatWindow';
+import ChatWithUs from './pages/chatwithus/ChatWithUs';
 
 
 const App = () => {
@@ -63,6 +65,7 @@ const App = () => {
                         <Route path="reports/*" element={<ReportsPage />} />
                         <Route path="appointment/*" element={<AppointmentPage />} />
                         <Route path="call-logs/*" element={<CallLogs />} />
+                        <Route path="chat-with-us/*" element={<ChatWithUs />} />
 
                     </Route>
                 </Route>

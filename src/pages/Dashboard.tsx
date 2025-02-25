@@ -14,6 +14,7 @@ import AccountsPage from './accounts';
 import Layout from '../components/Layout';
 import CallLogs from './callLogs/CallLogs';
 import Campaign from './campaign/Campaign';
+import ChatWithUs from './chatwithus/ChatWithUs';
 
 export default function Dashboard() {
   return (
@@ -33,6 +34,7 @@ export default function Dashboard() {
         <Route path="accounts/*" element={<AccountsPage />} />
         <Route path="call-logs/*" element={<CallLogs />} />
         <Route path="campaign/*" element={<Campaign />} />
+        <Route path="chat-with-us/*" element={<ChatWithUs />} />
       </Routes>
     </Layout>
   );
