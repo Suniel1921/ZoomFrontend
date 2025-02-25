@@ -7,7 +7,7 @@ import type { Option, SearchableSelectProps } from "./types";
 import { ErrorBoundary } from "react-error-boundary";
 
 // Constants
-const ITEM_HEIGHT = 50;
+const ITEM_HEIGHT = 50; // Adjust if needed for phone number
 const MAX_ITEMS_WITHOUT_VIRTUALIZATION = 50;
 const DROPDOWN_HEIGHT = 300;
 
@@ -68,9 +68,16 @@ const OptionItem: React.FC<OptionItemProps> = ({
           <User className="h-5 w-5 text-muted-foreground" />
         )}
       </div>
-      <span className="text-sm font-medium">
-        {highlightMatch(option.label, searchTerm)}
-      </span>
+      <div className="flex-1">
+        <span className="text-sm font-medium block">
+          {highlightMatch(option.label, searchTerm)}
+        </span>
+        {option.clientData?.phone && (
+          <span className="text-xs text-gray-500 block mt-0.5">
+            {option.clientData.phone}
+          </span>
+        )}
+      </div>
     </div>
   );
 };
@@ -92,6 +99,7 @@ export default function SearchableSelect({
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isSearching, setIsSearching] = useState(false); // New loading state
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<any>(null);
@@ -102,19 +110,34 @@ export default function SearchableSelect({
     [options, value]
   );
 
-  // Sync search term with selected value
+  // Sync search term with selected value and manage spinner
   useEffect(() => {
     if (!showDropdown && selectedOption) {
       setSearchTerm(selectedOption.label);
+      setIsSearching(false); // Reset spinner when dropdown closes
+    } else if (searchTerm.trim() && showDropdown) {
+      setIsSearching(true); // Show spinner while searching
     }
-  }, [selectedOption, showDropdown]);
+  }, [selectedOption, showDropdown, searchTerm]);
+
+  // Reset spinner when search results are ready
+  useEffect(() => {
+    if (debouncedSearchTerm.trim()) {
+      // Simulate search completion (you could add async logic here if fetching data)
+      setIsSearching(false);
+    }
+  }, [debouncedSearchTerm]);
 
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
         setHighlightedIndex(-1);
+        setIsSearching(false);
       }
     };
 
@@ -139,7 +162,7 @@ export default function SearchableSelect({
         return { ...option, score, nameMatch };
       })
       .filter((option) => option.nameMatch)
-      .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label)); // Secondary sort by label
+      .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
   }, [debouncedSearchTerm, options]);
 
   // Handlers
@@ -149,6 +172,7 @@ export default function SearchableSelect({
       setSearchTerm(option.label);
       setShowDropdown(false);
       setHighlightedIndex(-1);
+      setIsSearching(false);
     },
     [onChange]
   );
@@ -170,17 +194,20 @@ export default function SearchableSelect({
           break;
         case "Enter":
           e.preventDefault();
-          if (highlightedIndex >= 0 && filteredAndSortedOptions[highlightedIndex]) {
+          if (
+            highlightedIndex >= 0 &&
+            filteredAndSortedOptions[highlightedIndex]
+          ) {
             handleOptionSelect(filteredAndSortedOptions[highlightedIndex]);
           }
           break;
         case "Escape":
           setShowDropdown(false);
           setHighlightedIndex(-1);
+          setIsSearching(false);
           break;
       }
 
-      // Scroll highlighted item into view
       if (listRef.current && highlightedIndex >= 0) {
         listRef.current.scrollToItem(highlightedIndex, "smart");
       }
@@ -228,10 +255,19 @@ export default function SearchableSelect({
         )}
       </List>
     );
-  }, [filteredAndSortedOptions, debouncedSearchTerm, handleOptionSelect, value, highlightedIndex]);
+  }, [
+    filteredAndSortedOptions,
+    debouncedSearchTerm,
+    handleOptionSelect,
+    value,
+    highlightedIndex,
+  ]);
 
   return (
-    <div ref={wrapperRef} className={`relative w-full space-y-2 searchable-select ${className}`}>
+    <div
+      ref={wrapperRef}
+      className={`relative w-full space-y-2 searchable-select ${className}`}
+    >
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -241,19 +277,50 @@ export default function SearchableSelect({
           onChange={(e) => {
             setSearchTerm(e.target.value);
             setShowDropdown(true);
+            setIsSearching(true); // Show spinner on input change
           }}
           onFocus={() => setShowDropdown(true)}
           onKeyDown={handleKeyDown}
-          className={`pl-9 ${error ? "border-destructive" : ""}`}
+          className={`pl-9 pr-10 ${error ? "border-destructive" : ""}`} // Added pr-10 for spinner space
         />
+        {isSearching && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <svg
+              className="animate-spin h-5 w-5 text-[#FEDC00]"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+        )}
       </div>
 
       {showDropdown && (
         <div className="absolute w-full bg-background border rounded-lg shadow-sm z-10 overflow-hidden">
           <ErrorBoundary
-            fallback={<div className="px-3 py-2 text-sm text-red-500">An error occurred. Please try again.</div>}
+            fallback={
+              <div className="px-3 py-2 text-sm text-red-500">
+                An error occurred. Please try again.
+              </div>
+            }
           >
-            <div className="max-h-[300px] overflow-auto py-1">{renderOptionsList()}</div>
+            <div className="max-h-[300px] overflow-auto py-1">
+              {renderOptionsList()}
+            </div>
           </ErrorBoundary>
         </div>
       )}
@@ -262,3 +329,4 @@ export default function SearchableSelect({
     </div>
   );
 }
+

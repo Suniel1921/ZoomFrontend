@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
-import { useAdminStore } from "../../store/adminStore";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { PREFECTURES } from "../../constants/prefectures";
@@ -24,11 +23,8 @@ export default function EditEpassportModal({
   application,
   getAllEPassportApplication,
 }: EditEpassportModalProps) {
-  const { admins } = useAdminStore();
-  const [showPrefecture, setShowPrefecture] = useState(
-    application.ghumtiService
-  );
-  const [clients, setClients] = useState<any[]>([]);
+  const [showPrefecture, setShowPrefecture] = useState(application.ghumtiService);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: {
@@ -42,69 +38,33 @@ export default function EditEpassportModal({
   const amount = watch("amount") || 0;
   const paidAmount = watch("paidAmount") || 0;
   const discount = watch("discount") || 0;
-  // const dueAmount = (amount - discount) - paidAmount;
-  // Dynamically calculate the due amount
   const dueAmount = amount - discount - paidAmount;
 
-  // const handlers = admins.filter(admin => admin.role !== 'super_admin');
-  const clientId = watch("clientId");
-  const selectedClient = clients.find((c) => c._id === clientId);
-
-  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
-
-  // Fetch the handlers (admins) from the API
+  // Fetch handlers (admins) from the API
   useEffect(() => {
     const fetchHandlers = async () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
         );
-        setHandlers(response.data.admins);
+        setHandlers(response.data.admins || []);
       } catch (error: any) {
         console.error("Failed to fetch handlers:", error);
-        toast.error(error.response.data.message);
+        toast.error(error.response?.data?.message || "Failed to fetch handlers.");
       }
     };
 
     fetchHandlers();
   }, []);
 
-  //get all clients list in drop down
-  useEffect(() => {
-    if (isOpen) {
-      axios
-        .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
-        .then((response) => {
-          const clientsData = response?.data?.clients;
-          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]);
-        })
-        .catch((error) => {
-          console.error("Error fetching clients:", error);
-          setClients([]); // Set clients to an empty array in case of error
-        });
-    }
-  }, [isOpen]);
-
   const onSubmit = (data: any) => {
-    const dueAmount =
-      (data.amount || 0) - (data.discount || 0) - (data.paidAmount || 0);
-    let clientName = "";
+    const dueAmount = (data.amount || 0) - (data.discount || 0) - (data.paidAmount || 0);
 
-    // Check if the client is selected
-    const client = clients.find((c) => c._id === data.clientId);
-    if (client) {
-      clientName = client.name;
-    }
-
-    // Update the application, even without a selected client
     axios
       .put(
-        `${
-          import.meta.env.VITE_REACT_APP_URL
-        }/api/v1/ePassport/updateEpassport/${application._id}`,
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/updateEpassport/${application._id}`,
         {
           ...data,
-          clientName: clientName || "Default Client", // If no client selected, use a default value
           dueAmount,
           date: data.date.toISOString(),
           deadline: data.deadline.toISOString(),
@@ -112,8 +72,8 @@ export default function EditEpassportModal({
       )
       .then((response) => {
         console.log("ePassport updated successfully", response.data);
-        toast.success(response.data.message);
-        onClose(); // Close the modal after successful update
+        toast.success(response.data.message || "ePassport updated successfully!");
+        onClose();
         getAllEPassportApplication();
       })
       .catch((error: any) => {
@@ -145,6 +105,16 @@ export default function EditEpassportModal({
           <div className="space-y-4">
             <h3 className="font-medium border-b pb-2">Client Information</h3>
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone Number
+                </label>
+                <Input
+                  value={application.mobileNo || "N/A"} // Display mobileNo from application data
+                  className="mt-1 bg-gray-50"
+                  disabled // Make it non-editable
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Contact Channel
@@ -193,9 +163,7 @@ export default function EditEpassportModal({
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Processing">Processing</option>
-                  <option value="Waiting for Payment">
-                    Waiting for Payment
-                  </option>
+                  <option value="Waiting for Payment">Waiting for Payment</option>
                   <option value="Completed">Completed</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
@@ -214,15 +182,14 @@ export default function EditEpassportModal({
                 </select>
               </div>
 
-              {/* Handled By */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Handled By
                 </label>
                 <select
                   {...register("handledBy")}
-                  value={watch("handledBy") || application.handledBy} // Ensure the initial value is set
-                  onChange={(e) => setValue("handledBy", e.target.value)} // Sync changes with the form
+                  value={watch("handledBy") || application.handledBy}
+                  onChange={(e) => setValue("handledBy", e.target.value)}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="">Select handler</option>
@@ -257,19 +224,6 @@ export default function EditEpassportModal({
                   dateFormat="yyyy-MM-dd"
                 />
               </div>
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Payment Status
-                </label>
-                <select
-                  {...register("paymentStatus")}
-                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
-                >
-                  <option value="Due">Due</option>
-                  <option value="Paid">Paid</option>
-                </select>
-              </div> */}
 
               <div className="col-span-2">
                 <label className="flex items-center gap-2">
@@ -348,7 +302,6 @@ export default function EditEpassportModal({
                   Due Amount
                 </label>
                 <Input
-                  {...register("dueAmount")}
                   value={dueAmount}
                   className="mt-1 bg-gray-50"
                   disabled
