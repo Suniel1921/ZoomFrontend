@@ -85,7 +85,12 @@ export type ClientCategory =
   | 'Student Visa Applicant'
   | 'Epassport Applicant'
   | 'Japan Visa'
-  | 'General Consultation';
+  | 'Graphic Design & Printing'
+  | 'Web Design & Seo' 
+  | 'Birth Registration'
+  | 'Documentation Support'
+  | 'Other'
+
 
 export interface TimelineEvent {
   id: string;

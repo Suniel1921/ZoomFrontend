@@ -45,6 +45,7 @@ export default function AddEpassportModal({
 }: AddEpassportModalProps) {
   const [showPrefecture, setShowPrefecture] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   const {
     register,
@@ -73,15 +74,10 @@ export default function AddEpassportModal({
   const paidAmount = watch("paidAmount") || 0;
   const discount = watch("discount") || 0;
   const dueAmount = amount - (paidAmount + discount);
-  const [epassportApplications, setEpassportApplications] = useState<
-    EpassportApplication[]
-  >([]);
-  
   const clientId = watch("clientId");
   const selectedClient = clients.find((c) => c._id === clientId);
-  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
-  // Fetch the handlers (admins) from the API
+  // Fetch handlers (admins)
   useEffect(() => {
     const fetchHandlers = async () => {
       try {
@@ -94,11 +90,10 @@ export default function AddEpassportModal({
         toast.error(error.response?.data?.message || "Failed to fetch handlers.");
       }
     };
-
     fetchHandlers();
   }, []);
 
-  // Fetch all clients
+  // Fetch clients when modal opens
   useEffect(() => {
     if (isOpen) {
       axios
@@ -110,24 +105,23 @@ export default function AddEpassportModal({
         .catch((error) => {
           console.error("Error fetching clients:", error);
           setClients([]);
+          toast.error("Failed to fetch clients.");
         });
     }
   }, [isOpen]);
 
   const onSubmit = async (data: EpassportFormData) => {
     try {
-      console.log("Form Data Submitted:", data);
-
       const client = clients.find((c) => c._id === data.clientId);
       if (!client) {
-        toast.error("Please Select Client Name");
+        toast.error("Please select a client.");
         return;
       }
 
       const formData = {
         ...data,
         clientName: client.name,
-        mobileNo: client.phone, // Include mobileNo in the payload
+        mobileNo: client.phone,
         date: data.date.toISOString(),
         deadline: data.deadline.toISOString(),
         dueAmount: amount - (paidAmount + discount),
@@ -137,22 +131,16 @@ export default function AddEpassportModal({
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/createEpassport`,
         formData
       );
+
       if (response.data.success) {
-        setEpassportApplications((prevApplications) => [
-          ...prevApplications,
-          response.data.data,
-        ]);
         toast.success(response.data.message || "ePassport application created successfully!");
         reset();
         onClose();
         getAllEPassportApplication();
       }
     } catch (error: any) {
-      console.error(
-        "Error creating ePassport application:",
-        error.response || error
-      );
-      toast.error(error.response?.data?.message || "Error creating application");
+      console.error("Error creating ePassport application:", error.response || error);
+      toast.error(error.response?.data?.message || "Error creating application.");
     }
   };
 
@@ -163,10 +151,7 @@ export default function AddEpassportModal({
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">New ePassport Application</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -177,22 +162,18 @@ export default function AddEpassportModal({
             <h3 className="font-medium border-b pb-2">Client Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700]">
-                  Client
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Client</label>
                 <SearchableSelect
                   options={clients.map((client) => ({
                     value: client._id,
                     label: client.name,
                     clientData: { ...client, profilePhoto: client.profilePhoto },
                   }))}
-                  value={watch("clientId")}
+                  value={clientId}
                   onChange={(value) => {
                     setValue("clientId", value);
                     const client = clients.find((c) => c._id === value);
-                    if (client) {
-                      setValue("mobileNo", client.phone);
-                    }
+                    if (client) setValue("mobileNo", client.phone);
                   }}
                   placeholder="Select client"
                   className="mt-1"
@@ -201,22 +182,18 @@ export default function AddEpassportModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Phone Number
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
                 <Input
-                  value={selectedClient?.mobileNo || selectedClient?.phone || ""}
+                  value={selectedClient?.phone || ""}
                   className="mt-1 bg-gray-50"
                   disabled
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Contact Channel
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Contact Channel</label>
                 <select
-                  {...register("contactChannel")}
+                  {...register("contactChannel", { required: "Contact channel is required" })}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Viber">Viber</option>
@@ -225,6 +202,9 @@ export default function AddEpassportModal({
                   <option value="Friend">Friend</option>
                   <option value="Office Visit">Office Visit</option>
                 </select>
+                {errors.contactChannel && (
+                  <p className="mt-1 text-sm text-red-600">{errors.contactChannel.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -234,11 +214,9 @@ export default function AddEpassportModal({
             <h3 className="font-medium border-b pb-2">Application Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Application Type
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Application Type</label>
                 <select
-                  {...register("applicationType")}
+                  {...register("applicationType", { required: "Application type is required" })}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Newborn Child">Newborn Child</option>
@@ -248,15 +226,15 @@ export default function AddEpassportModal({
                   <option value="Travel Document">Travel Document</option>
                   <option value="Birth Registration">Birth Registration</option>
                 </select>
+                {errors.applicationType && (
+                  <p className="mt-1 text-sm text-red-600">{errors.applicationType.message}</p>
+                )}
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Handled By
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Handled By</label>
                 <select
-                  {...register("handledBy", {
-                    required: "This field is required",
-                  })}
+                  {...register("handledBy", { required: "Handler is required" })}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="">Select handler</option>
@@ -267,16 +245,12 @@ export default function AddEpassportModal({
                   ))}
                 </select>
                 {errors.handledBy && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.handledBy.message}
-                  </p>
+                  <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Job Status
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Job Status</label>
                 <select
                   {...register("applicationStatus")}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
@@ -289,9 +263,7 @@ export default function AddEpassportModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Data Sent Status
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Data Sent Status</label>
                 <select
                   {...register("dataSentStatus")}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
@@ -302,9 +274,7 @@ export default function AddEpassportModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Date
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Date</label>
                 <DatePicker
                   selected={watch("date")}
                   onChange={(date) => setValue("date", date as Date)}
@@ -314,9 +284,7 @@ export default function AddEpassportModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Deadline
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Deadline</label>
                 <DatePicker
                   selected={watch("deadline")}
                   onChange={(date) => setValue("deadline", date as Date)}
@@ -333,9 +301,7 @@ export default function AddEpassportModal({
                     onChange={(e) => {
                       setValue("ghumtiService", e.target.checked);
                       setShowPrefecture(e.target.checked);
-                      if (!e.target.checked) {
-                        setValue("prefecture", undefined);
-                      }
+                      if (!e.target.checked) setValue("prefecture", undefined);
                     }}
                     className="rounded border-gray-300 text-brand-yellow focus:ring-brand-yellow"
                   />
@@ -345,9 +311,7 @@ export default function AddEpassportModal({
 
               {ghumtiService && (
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Prefecture
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Prefecture</label>
                   <select
                     {...register("prefecture")}
                     className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
@@ -369,59 +333,39 @@ export default function AddEpassportModal({
             <h3 className="font-medium border-b pb-2">Payment Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Amount (¥)
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Amount (¥)</label>
                 <Input
                   type="number"
                   min="0"
-                  {...register("amount", {
-                    valueAsNumber: true,
-                  })}
+                  {...register("amount", { valueAsNumber: true })}
                   className="mt-1"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Paid Amount (¥)
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Paid Amount (¥)</label>
                 <Input
                   type="number"
                   min="0"
-                  {...register("paidAmount", {
-                    valueAsNumber: true,
-                  })}
+                  {...register("paidAmount", { valueAsNumber: true })}
                   className="mt-1"
-                  onChange={(e) => {
-                    const paid = parseFloat(e.target.value) || 0;
-                    setValue("paidAmount", paid);
-                  }}
+                  onChange={(e) => setValue("paidAmount", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Discount (¥)
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Discount (¥)</label>
                 <Input
                   type="number"
                   min="0"
-                  {...register("discount", {
-                    valueAsNumber: true,
-                  })}
+                  {...register("discount", { valueAsNumber: true })}
                   className="mt-1"
-                  onChange={(e) => {
-                    const disc = parseFloat(e.target.value) || 0;
-                    setValue("discount", disc);
-                  }}
+                  onChange={(e) => setValue("discount", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Due Amount (¥)
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Due Amount (¥)</label>
                 <Input
                   type="number"
                   value={dueAmount.toString()}
@@ -431,31 +375,28 @@ export default function AddEpassportModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Payment Status
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Payment Status</label>
                 <select
                   {...register("paymentStatus")}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Due">Due</option>
-                  <option value="Partial">Partial</option>
                   <option value="Paid">Paid</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Payment Method
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Payment Method</label>
                 <select
                   {...register("paymentMethod")}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="">Select payment method</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Online Payment">Online Payment</option>
+                  <option value="Counter Cash">Cash</option>
+                  <option value="Bank Furicomy">Bank Transfer</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Paypay">Paypay</option>
+                  <option value="Line Pay">Line Pay</option>
                 </select>
               </div>
             </div>
@@ -465,9 +406,7 @@ export default function AddEpassportModal({
           <div className="space-y-4">
             <h3 className="font-medium border-b pb-2">Remarks</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Remarks
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Remarks</label>
               <textarea
                 {...register("remarks")}
                 className="flex h-20 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
@@ -475,7 +414,7 @@ export default function AddEpassportModal({
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-4">
             <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>

@@ -461,7 +461,11 @@ export default function ClientsPage() {
     "Student Visa Applicant",
     "Epassport Applicant",
     "Japan Visa",
-    "General Consultation",
+    'Graphic Design & Printing',
+    'Web Design & Seo',
+    'Birth Registration',
+    'Documentation Support',
+    'Other'
   ];
 
   const getAllClients = useCallback(async (forceRefresh = false) => {

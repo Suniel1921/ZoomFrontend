@@ -110,7 +110,11 @@ const optionalCategories: ClientCategory[] = [
   'Document Translation',
   'Epassport Applicant',
   'Japan Visa',
-  'General Consultation',
+  'Graphic Design & Printing',
+  'Web Design & Seo',
+  'Birth Registration',
+  'Documentation Support',
+  'Other',
 ];
 
 export const createClientSchema = (category: ClientCategory, isEditing = false) => {
@@ -127,7 +131,11 @@ export const createClientSchema = (category: ClientCategory, isEditing = false) 
     'Student Visa Applicant',
     'Epassport Applicant',
     'Japan Visa',
-    'General Consultation',
+    'Graphic Design & Printing',
+    'Web Design & Seo' ,
+    'Birth Registration',
+    'Documentation Support',
+    'Other',
   ] as const);
 
   // Optional fields (always optional regardless of category or editing state)
