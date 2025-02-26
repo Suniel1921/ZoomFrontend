@@ -124,6 +124,7 @@ export default function AddEpassportModal({
         return;
       }
 
+      // Clean up paymentMethod: omit if empty string
       const formData = {
         ...data,
         clientName: client.name,
@@ -131,6 +132,7 @@ export default function AddEpassportModal({
         date: data.date.toISOString(),
         deadline: data.deadline.toISOString(),
         dueAmount: amount - (paidAmount + discount),
+        paymentMethod: data.paymentMethod === "" ? undefined : data.paymentMethod,
       };
 
       const response = await axios.post(
@@ -443,7 +445,7 @@ export default function AddEpassportModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Payment Method
+                  Payment Method <span className="text-gray-500 text-xs">(Optional)</span>
                 </label>
                 <select
                   {...register("paymentMethod")}
@@ -484,5 +486,3 @@ export default function AddEpassportModal({
     </div>
   );
 }
-
-
