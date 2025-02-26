@@ -14,7 +14,7 @@ import ServiceRequestsList from "./components/ServiceRequestsList";
 import { useAuthGlobally } from "../../context/AuthContext";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { SkeletonSection, SkeletonStatsCard, SkeletonWelcome } from "../../components/skeletonEffect/DashboardHomeSkeleton";
+import  { SkeletonSection, SkeletonStatsCard, SkeletonWelcome } from "../../components/skeletonEffect/DashboardHomeSkeleton";
 
 
 export default function DashboardHome() {

@@ -127,7 +127,7 @@ export default function AddEpassportModal({
       const formData = {
         ...data,
         clientName: client.name,
-        mobileNo: client.phone, // Include mobileNo in the payload
+        mobileNo: client.phone,
         date: data.date.toISOString(),
         deadline: data.deadline.toISOString(),
         dueAmount: amount - (paidAmount + discount),
@@ -148,10 +148,7 @@ export default function AddEpassportModal({
         getAllEPassportApplication();
       }
     } catch (error: any) {
-      console.error(
-        "Error creating ePassport application:",
-        error.response || error
-      );
+      console.error("Error creating ePassport application:", error.response?.data || error);
       toast.error(error.response?.data?.message || "Error creating application");
     }
   };
@@ -177,7 +174,7 @@ export default function AddEpassportModal({
             <h3 className="font-medium border-b pb-2">Client Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700]">
+                <label className="block text-sm font-medium text-gray-700">
                   Client
                 </label>
                 <SearchableSelect
@@ -453,9 +450,10 @@ export default function AddEpassportModal({
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="">Select payment method</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Online Payment">Online Payment</option>
+                  <option value="Bank Furicomy">Bank Furikomi</option>
+                  <option value="Counter Cash">Counter Cash</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Paypay">PayPay</option>
                 </select>
               </div>
             </div>
@@ -475,7 +473,7 @@ export default function AddEpassportModal({
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-6">
             <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
@@ -486,3 +484,5 @@ export default function AddEpassportModal({
     </div>
   );
 }
+
+

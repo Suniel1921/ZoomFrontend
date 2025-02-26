@@ -84,6 +84,27 @@ export default function AddAppointmentModal({
   const isRecurring = watch("isRecurring");
   const recurringFrequency = watch("recurringFrequency");
   const recurringEndDate = watch("recurringEndDate");
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
+
+
+  
+  // Fetch the handlers (admins) from the API
+  useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
+        );
+        setHandlers(response.data.admins || []);
+      } catch (error: any) {
+        console.error("Failed to fetch handlers:", error);
+        toast.error(error.response?.data?.message || "Failed to fetch handlers.");
+      }
+    };
+
+    fetchHandlers();
+  }, []);
+
 
   //get all client
   useEffect(() => {
@@ -290,6 +311,30 @@ export default function AddAppointmentModal({
                 />
               </div>
             )}
+
+<div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Handled By
+                </label>
+                <select
+                  {...register("handledBy", {
+                    required: "This field is required",
+                  })}
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
+                >
+                  <option value="">Select handler</option>
+                  {handlers.map((handler) => (
+                    <option key={handler.id} value={handler.name}>
+                      {handler.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.handledBy && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.handledBy.message}
+                  </p>
+                )}
+              </div>
 
             {meetingType === "online" && (
               <div className="col-span-2">
