@@ -82,9 +82,6 @@
 
 
 
-
-
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -146,7 +143,7 @@ const FileUpload = ({ onFileChange, file, isUploading }) => {
     <div className="mb-8 w-full max-w-xl mx-auto animate-fade-up">
       <p className="text-sm text-[#232323]/70 mb-2 font-medium">Upload Banner</p>
       <div
-        className={`border-2 border-dashed p-4 rounded-lg text-center transition-colors duration-200 ${
+        className={`relative border-2 border-dashed p-4 rounded-lg text-center transition-colors duration-200 ${
           file ? 'border-[#fcda00]' : 'border-[#232323]/30 hover:border-[#232323]/50'
         }`}
       >
@@ -154,7 +151,7 @@ const FileUpload = ({ onFileChange, file, isUploading }) => {
           type="file"
           accept="image/*"
           onChange={(e) => onFileChange(e.target.files?.[0] || null)}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           disabled={isUploading}
         />
         {previewUrl ? (
@@ -169,7 +166,7 @@ const FileUpload = ({ onFileChange, file, isUploading }) => {
                 e.stopPropagation();
                 onFileChange(null);
               }}
-              className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full transform translate-x-1/2 -translate-y-1/2 hover:bg-red-600 transition-colors"
+              className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full transform translate-x-1/2 -translate-y-1/2 hover:bg-red-600 transition-colors z-20"
             >
               <X size={14} />
             </button>
@@ -285,7 +282,8 @@ const ManageApp = () => {
   };
 
   // Handle upload
-  const handleUpload = async () => {
+  const handleUpload = async (e) => {
+    e.preventDefault(); // Prevent any default behavior
     if (!file) return;
 
     setIsUploading(true);
