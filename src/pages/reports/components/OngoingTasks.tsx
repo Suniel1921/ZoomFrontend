@@ -416,18 +416,19 @@
 
 
 
+
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { safeParse } from "../../../utils/dateUtils";
 import Button from "../../../components/Button";
 import axios from "axios";
 import { useAuthGlobally } from "../../../context/AuthContext";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
 // Types
 interface Task {
   clientName?: string;
-  clientId?: { _id: string; name: string }; // Updated to include _id
+  clientId?: { _id: string; name: string };
   type: string;
   status: string;
   handledBy?: string;
@@ -442,6 +443,7 @@ interface Task {
   applicationStatus?: string;
   jobStatus?: string;
   documentStatus?: string;
+  createdAt?: string | Date; // Added for sorting by creation date
 }
 
 interface TasksProps {
@@ -464,28 +466,23 @@ const spinnerStyles = `
     align-items: center;
     gap: 6px;
   }
-
   .dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     animation: bounce 1.2s infinite ease-in-out;
   }
-
   .dot:nth-child(1),
   .dot:nth-child(3) {
     background-color: #000;
   }
-
   .dot:nth-child(2) {
     background-color: #fedc00;
     animation-delay: 0.2s;
   }
-
   .dot:nth-child(3) {
     animation-delay: 0.4s;
   }
-
   @keyframes bounce {
     0%, 80%, 100% {
       transform: translateY(0);
@@ -499,12 +496,12 @@ const spinnerStyles = `
 export default function OngoingTasks() {
   const [paymentFilter, setPaymentFilter] = useState<"all" | "paid" | "due">("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [tasks, setTasks] = useState<TasksProps["tasks"] | null>(null);
+  const [tasks, setTasks] = useState<TasksProps | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [handlerFilter, setHandlerFilter] = useState<string>("all");
   const [auth] = useAuthGlobally();
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
   // Fetch tasks from API
   useEffect(() => {
@@ -552,15 +549,7 @@ export default function OngoingTasks() {
       ...otherServices.map((task) => task.handledBy),
     ].filter(Boolean);
     return [...new Set(handlers)];
-  }, [
-    application,
-    appointment,
-    documentTranslation,
-    epassports,
-    graphicDesigns,
-    japanVisit,
-    otherServices,
-  ]);
+  }, [application, appointment, documentTranslation, epassports, graphicDesigns, japanVisit, otherServices]);
 
   // Map raw tasks to a standardized format
   const mapTasks = (tasks: any[], type: string, statusField: string): Task[] =>
@@ -595,22 +584,17 @@ export default function OngoingTasks() {
           paymentFilter === "all" || task.paymentStatus.toLowerCase() === paymentFilter;
 
         const isAdminUser = auth.user.role === "admin";
-        const shouldDisplayTaskForUser =
-          !isAdminUser || task.role !== "admin";
+        const shouldDisplayTaskForUser = !isAdminUser || task.role !== "admin";
 
-        const isCompleted =
-          ["Completed", "Approved", "Delivered"].includes(task.status);
+        const isCompleted = ["Completed", "Approved", "Delivered"].includes(task.status);
 
         let matchesHandlerFilter = handlerFilter === "all";
-        
         if (handlerFilter !== "all") {
           const isTranslationHandler = task.translationHandler === handlerFilter;
           const isMainHandler = task.handledBy === handlerFilter;
 
           if (isTranslationHandler) {
-            if (task.translationStatus === "Completed") {
-              matchesHandlerFilter = false;
-            } else if (task.documentStatus === "Not Yet") {
+            if (task.translationStatus === "Completed" || task.documentStatus === "Not Yet") {
               matchesHandlerFilter = false;
             } else {
               matchesHandlerFilter = true;
@@ -630,9 +614,10 @@ export default function OngoingTasks() {
         );
       })
       .sort((a, b) => {
-        const dateA = safeParse(a.deadline)?.getTime() || 0;
-        const dateB = safeParse(b.deadline)?.getTime() || 0;
-        return dateA - dateB;
+        // Sort by createdAt (latest first), fallback to deadline if createdAt is unavailable
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : safeParse(a.deadline)?.getTime() || 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : safeParse(b.deadline)?.getTime() || 0;
+        return dateB - dateA; // Descending order (latest first)
       });
   }, [
     application,
@@ -661,7 +646,7 @@ export default function OngoingTasks() {
 
   // Redirect handler
   const handleClientClick = (task: Task) => {
-    const clientId = task.clientId?._id || ""; // Assuming clientId has _id
+    const clientId = task.clientId?._id || "";
     let redirectPath = "";
 
     switch (task.type) {
@@ -684,13 +669,12 @@ export default function OngoingTasks() {
         redirectPath = "/dashboard/graphic-design";
         break;
       case "Appointment":
-        redirectPath = "/dashboard/appointments"; // Assuming there's an appointment route
+        redirectPath = "/dashboard/appointments";
         break;
       default:
-        return; // No redirect for unknown types
+        return;
     }
 
-    // Navigate with clientId as a query parameter
     navigate(`${redirectPath}?clientId=${clientId}`);
   };
 
@@ -711,7 +695,6 @@ export default function OngoingTasks() {
     <div>
       <style>{spinnerStyles}</style>
       <div className="flex justify-end items-center gap-4 mb-4">
-        {/* Handler Filter Dropdown */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Filter By Admin</span>
           <select
@@ -727,15 +710,11 @@ export default function OngoingTasks() {
             ))}
           </select>
         </div>
-
-        {/* Payment Filter */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Payment Status:</span>
           <select
             value={paymentFilter}
-            onChange={(e) =>
-              setPaymentFilter(e.target.value as "all" | "paid" | "due")
-            }
+            onChange={(e) => setPaymentFilter(e.target.value as "all" | "paid" | "due")}
             className="h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-yellow focus:ring-2 focus:ring-brand-yellow/20 w-40"
           >
             <option value="all">All Payments</option>
@@ -745,7 +724,6 @@ export default function OngoingTasks() {
         </div>
       </div>
 
-      {/* Tasks Table */}
       {paginatedTasks.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           No tasks found matching the selected filters
@@ -755,27 +733,13 @@ export default function OngoingTasks() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Client
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Task Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Handler
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Due Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Handler</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -796,21 +760,15 @@ export default function OngoingTasks() {
                         {task.type}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {task.handledBy}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{task.handledBy}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {dueDate ? format(dueDate, "MMM d, yyyy") : "No date"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ¥{task.amount.toLocaleString()}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">¥{task.amount.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          task.paymentStatus === "Paid"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
+                          task.paymentStatus === "Paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         {task.paymentStatus}
@@ -837,7 +795,6 @@ export default function OngoingTasks() {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-4 flex justify-center gap-2">
           <Button
@@ -862,5 +819,3 @@ export default function OngoingTasks() {
     </div>
   );
 }
-
-

@@ -33,7 +33,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [fetchedAppointments, setFetchedAppointments] = useState<Appointment[]>([]);
-  const [fetchedApplications, setFetchedApplications] = useState<any[]>([]); // Replace `any` with proper type.
+  const [fetchedApplications, setFetchedApplications] = useState<any[]>([]); 
 
   const today = startOfDay(new Date());
 
