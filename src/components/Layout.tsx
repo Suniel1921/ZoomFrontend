@@ -56,6 +56,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: ReceiptPoundSterlingIcon, label: 'Reports', path: '/dashboard/reports' },
         { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
         { icon: Megaphone , label: 'Campaign', path: '/dashboard/campaign' },
+        { icon: AppWindow, label: 'Manage App', path: '/dashboard/manage-app' },
       ]
       : [
         { icon: Users, label: 'Clients', path: '/dashboard/clients' },

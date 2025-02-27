@@ -82,6 +82,9 @@
 
 
 
+
+
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -408,7 +411,7 @@ const ManageApp = () => {
                 key={banner._id}
                 banner={banner}
                 onDelete={handleDelete}
-                isDeleting={deletingId === banner._id}
+                isDeleting={deletingId === banner._id}   
               />
             ))}
           </div>
