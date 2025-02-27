@@ -503,6 +503,8 @@ export default function OngoingTasks() {
   const [auth] = useAuthGlobally();
   const navigate = useNavigate();
 
+  console.log('task is ', tasks)
+
   // Fetch tasks from API
   useEffect(() => {
     const fetchTasks = async () => {
@@ -512,6 +514,7 @@ export default function OngoingTasks() {
         );
         if (response.data.success && response.data.allData) {
           setTasks(response.data.allData);
+      
         } else {
           setError("No task data available.");
         }

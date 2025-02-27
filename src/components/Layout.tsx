@@ -24,6 +24,7 @@ import {
   Megaphone,
   ChefHat,
   BarChartBigIcon,
+  AppWindow,
 } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 import NotesPanel from './notes/NotesPanel';
@@ -67,6 +68,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: CreditCard, label: 'Accounts & Tasks', path: '/dashboard/accounts' },
         { icon: Calendar, label: 'Appointments', path: '/dashboard/appointment' },
         { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
+        { icon: AppWindow, label: 'Manage App', path: '/dashboard/manage-app' },
           // { icon: BarChartBigIcon, label: 'Chat With Us', path: '/dashboard/chat-with-us' },
         ]),
   ];

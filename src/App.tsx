@@ -28,6 +28,7 @@ import Not_Found_Page from './pages/applications/components/Not_Found_Page';
 import CallLogs from './pages/callLogs/CallLogs';
 import ChatWindow from './pages/messages/components/ChatWindow';
 import ChatWithUs from './pages/chatwithus/ChatWithUs';
+import ManageApp from './components/appManagement/ManageApp';
 
 
 const App = () => {
@@ -65,6 +66,7 @@ const App = () => {
                         <Route path="reports/*" element={<ReportsPage />} />
                         <Route path="appointment/*" element={<AppointmentPage />} />
                         <Route path="call-logs/*" element={<CallLogs />} />
+                        <Route path="manage-app/*" element={<ManageApp />} />
                         {/* <Route path="chat-with-us/*" element={<ChatWithUs />} /> */}
 
                     </Route>
