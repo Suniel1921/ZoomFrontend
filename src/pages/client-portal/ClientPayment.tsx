@@ -63,12 +63,32 @@ const ClientPayment = () => {
               >
                 {task.paymentStatus}
               </span>
-
-              <p className="text-sm text-gray-500 mb-4">Amount: {task.amount || task?.payment?.visaApplicationFee}</p>
-              <p className="text-sm text-gray-500 mb-4">Translation Fee: {task?.payment?.translationFee || 0}</p>
-              <p className="text-sm text-gray-500 mb-4">Due Amount: {task.dueAmount || task?.payment?.total}</p>
-              <p className="text-sm text-gray-500 mb-4">Discount Amount: {task.discount || task?.payment?.discount}</p>
-              <p className="text-sm text-gray-500 mb-4">Paid Amount: {task.paidAmount || task?.payment?.paidAmount}</p>
+   {/* Payment details */}
+   <div className="space-y-2 text-sm text-gray-600">
+                <p>
+                  <span className="font-medium text-gray-800">Amount:</span>{" "}
+                  {task.amount || task?.payment?.visaApplicationFee || "N/A"}
+                </p>
+                <p>
+                  <span className="font-medium text-gray-800">Translation Fee:</span>{" "}
+                  {task?.payment?.translationFee || 0}
+                </p>
+                <p>
+                  <span className="font-medium text-gray-800">Due Amount:</span>{" "}
+                  {task.dueAmount || task?.payment?.total || "0"}
+                </p>
+                {/* Conditionally render Discount Amount */}
+                {(task.discount || task?.payment?.discount) > 0 && (
+                  <p>
+                    <span className="font-medium text-gray-800">Discount Amount:</span>{" "}
+                    {task.discount || task?.payment?.discount}
+                  </p>
+                )}
+                <p>
+                  <span className="font-medium text-gray-800">Paid Amount:</span>{" "}
+                  {task.paidAmount || task?.payment?.paidAmount || "N/A"}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -81,4 +101,6 @@ const ClientPayment = () => {
 
 export default ClientPayment;
 
+
+// if discount amount is 0 then dont show the discount amount 
 
