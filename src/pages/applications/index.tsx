@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { FileText, Plus, Search, Calculator, ChevronLeft, ChevronRight } from 'lucide-react';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-import AddApplicationModal from './AddApplicationModal';
-import EditApplicationModal from './EditApplicationModal';
-import HisabKitabModal from '../../components/HisabKitabModal';
-import DataTable from '../../components/DataTable';
-import DeleteConfirmationModal from '../../components/deleteConfirmationModal/DeleteConfirmationModal';
-import { countries } from '../../utils/countries';
-import { Application } from '../../types';
-import axios from 'axios';
-import toast from 'react-hot-toast';
-import { useAuthGlobally } from '../../context/AuthContext';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
+import { useState, useEffect } from "react";
+import { FileText, Plus, Search, Calculator, ChevronLeft, ChevronRight } from "lucide-react";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import AddApplicationModal from "./AddApplicationModal";
+import EditApplicationModal from "./EditApplicationModal";
+import HisabKitabModal from "../../components/HisabKitabModal";
+import DataTable from "../../components/DataTable";
+import DeleteConfirmationModal from "../../components/deleteConfirmationModal/DeleteConfirmationModal";
+import { countries } from "../../utils/countries";
+import { Application } from "../../types";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useAuthGlobally } from "../../context/AuthContext";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 // Skeleton Loading Component
 const ClientTableSkeleton = () => {
@@ -32,8 +32,8 @@ const ClientTableSkeleton = () => {
 };
 
 export default function VisaApplicantsPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
@@ -42,8 +42,8 @@ export default function VisaApplicantsPage() {
   const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1); // New state for current page
-  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [auth] = useAuthGlobally();
 
   // Fetch all visa applications, sorted by createdAt descending (newest first)
@@ -62,8 +62,8 @@ export default function VisaApplicantsPage() {
       });
       setApplications(sortedApplications);
     } catch (error) {
-      console.error('Error fetching applications:', error);
-      toast.error('Failed to fetch applications');
+      console.error("Error fetching applications:", error);
+      toast.error("Failed to fetch applications");
       setApplications([]);
     } finally {
       setIsLoading(false);
@@ -77,8 +77,8 @@ export default function VisaApplicantsPage() {
   // Filter applications based on search query, country, and valid clientId
   const filteredApplications = (applications || []).filter((app) => {
     const matchesSearch =
-      (app.clientName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (app.type?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      (app.clientName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (app.type?.toLowerCase() || "").includes(searchQuery.toLowerCase());
     const matchesCountry = !selectedCountry || app.country === selectedCountry;
     const hasClientId = app.clientId !== null && app.clientId !== undefined;
     return matchesSearch && matchesCountry && hasClientId;
@@ -115,19 +115,19 @@ export default function VisaApplicantsPage() {
         getAllApplication();
       }
     } catch (error: any) {
-      console.error('Error deleting application:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete application');
+      console.error("Error deleting application:", error);
+      toast.error(error.response?.data?.message || "Failed to delete application");
     }
   };
 
   // Table columns configuration
   const columns = [
     {
-      key: 'clientName',
-      label: 'Client',
+      key: "clientName",
+      label: "Client",
       render: (value: string, item: Application) => (
         <div>
-          <p className="font-medium">{item.clientId?.name || 'N/A'}</p>
+          <p className="font-medium">{item.clientId?.name || "N/A"}</p>
           <p className="text-sm text-gray-500">
             {item.type} - {item.country}
           </p>
@@ -135,16 +135,16 @@ export default function VisaApplicantsPage() {
       ),
     },
     {
-      key: 'visaStatus',
-      label: 'Status',
+      key: "visaStatus",
+      label: "Status",
       render: (value: string) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            value === 'Completed'
-              ? 'bg-green-100 text-green-700'
-              : value === 'Cancelled'
-              ? 'bg-red-100 text-red-700'
-              : 'bg-blue-100 text-blue-700'
+            value === "Completed"
+              ? "bg-green-100 text-green-700"
+              : value === "Cancelled"
+              ? "bg-red-100 text-red-700"
+              : "bg-blue-100 text-blue-700"
           }`}
         >
           {value}
@@ -152,27 +152,31 @@ export default function VisaApplicantsPage() {
       ),
     },
     {
-      key: 'deadline',
-      label: 'Deadline',
+      key: "deadline",
+      label: "Deadline",
       render: (value: string) => (
         <span className="text-sm">{new Date(value).toLocaleDateString()}</span>
       ),
     },
     {
-      key: 'payment',
-      label: 'Payment',
-      render: (value: any) => (
-        <div>
-          <p className="text-sm">Total: ¥{(value?.total || 0).toLocaleString()}</p>
-          <p className="text-sm text-gray-500">
-            Paid: ¥{(value?.paidAmount || 0).toLocaleString()}
-          </p>
-        </div>
-      ),
+      key: "payment",
+      label: "Payment",
+      render: (value: any) => {
+        // Calculate total as visaApplicationFee + translationFee
+        const calculatedTotal = (value?.visaApplicationFee || 0) + (value?.translationFee || 0);
+        return (
+          <div>
+            <p className="text-sm">Total: ¥{calculatedTotal.toLocaleString()}</p>
+            <p className="text-sm text-gray-500">
+              Paid: ¥{(value?.paidAmount || 0).toLocaleString()}
+            </p>
+          </div>
+        );
+      },
     },
     {
-      key: 'id',
-      label: 'Actions',
+      key: "id",
+      label: "Actions",
       render: (_: string, item: Application) => (
         <div className="flex justify-end gap-2">
           <Button
@@ -196,7 +200,7 @@ export default function VisaApplicantsPage() {
           >
             Edit
           </Button>
-          {auth.user.role === 'superadmin' && (
+          {auth.user.role === "superadmin" && (
             <Button
               variant="outline"
               size="sm"
@@ -343,7 +347,7 @@ export default function VisaApplicantsPage() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
-        applicationName={applicationToDelete?.clientId?.name || 'Unknown'}
+        applicationName={applicationToDelete?.clientId?.name || "Unknown"}
       />
     </div>
   );
