@@ -50,13 +50,13 @@ const spinnerStyles = `
 
 export default function ReportsPage() {
   const navigate = useNavigate();
-  const [totalSalesAmount, setTotalSalesAmount] = useState(0);
+  const [totalSalesAmount, setTotalSalesAmount] = useState(0); // Initialize as 0, updated by SalesReport
   const [clients, setClients] = useState([]);
   const [totalTask, setTotalTask] = useState<any>({}); // Adjust type if you have a specific interface
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all data and calculate lifetime earnings
+  // Fetch all data (no local total calculation)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -80,45 +80,6 @@ export default function ReportsPage() {
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`
         );
         setAppointments(appointmentsResponse.data.appointments || []);
-
-        // Calculate lifetime total earnings from all models
-        const calculateLifetimeEarnings = () => {
-          let total = 0;
-
-          const applications = allData.application || [];
-          applications.forEach((app) => {
-            total += app.payment?.total || 0; // Use total field
-          });
-
-          const translations = allData.documentTranslation || [];
-          translations.forEach((trans) => {
-            total += trans.amount || 0;
-          });
-
-          const epassports = allData.epassports || [];
-          epassports.forEach((ep) => {
-            total += ep.amount || 0;
-          });
-
-          const designs = allData.graphicDesigns || [];
-          designs.forEach((design) => {
-            total += design.amount || 0;
-          });
-
-          const japanVisits = allData.japanVisit || [];
-          japanVisits.forEach((jv) => {
-            total += jv.amount || 0;
-          });
-
-          const otherServices = allData.otherServices || [];
-          otherServices.forEach((service) => {
-            total += service.amount || 0;
-          });
-
-          return total;
-        };
-
-        setTotalSalesAmount(calculateLifetimeEarnings());
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setClients([]);
@@ -191,7 +152,7 @@ export default function ReportsPage() {
           icon={FileText}
         />
         <StatsCard
-          label="Lifetime Total Earnings"
+          label="Total Earnings" // Changed label to reflect filter dependency
           value={loading ? <ThreeDotSpinner /> : `¥${totalSalesAmount.toLocaleString()}`}
           icon={DollarSign}
           className="text-green-600"
@@ -212,7 +173,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Sales Report */}
-      <SalesReport onTotalSalesUpdate={() => {}} />
+      <SalesReport onTotalSalesUpdate={(newTotal) => setTotalSalesAmount(newTotal)} />
     </div>
   );
 }
