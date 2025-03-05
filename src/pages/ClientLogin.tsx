@@ -24,41 +24,54 @@ export default function ClientLogin() {
 
   // Check authentication and handle redirects
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const tokenData = localStorage.getItem("token");
-      if (tokenData) {
-        try {
-          const { user, token } = JSON.parse(tokenData);
-          if (user && user.role && token) {
-            // Valid token exists, redirect based on role
-            const redirectPath =
-              user.role === "user" ? "/client-portal" : "/dashboard";
-            navigate(redirectPath, { replace: true }); // Replace to avoid stacking history
-            return; // Exit early to prevent rendering login page
-          } else {
-            // Invalid token structure, clear it
-            localStorage.removeItem("token");
-            setAuthGlobally({ user: null, role: null, token: null });
-          }
-        } catch (err) {
-          console.error("Error parsing token:", err);
-          localStorage.removeItem("token"); // Clear invalid token
-          setAuthGlobally({ user: null, role: null, token: null });
-        }
+      if (!tokenData) {
+        // No token exists, show login page
+        setIsCheckingAuth(false);
+        return;
       }
-      // No valid token or token cleared, proceed to show login page
-      setIsCheckingAuth(false);
+
+      try {
+        const { user, token } = JSON.parse(tokenData);
+        if (!user || !user.role || !token) {
+          throw new Error("Invalid token structure");
+        }
+
+        // Verify token validity with the server
+        const response = await axios.get(`${API_URL}/api/v1/auth/verify-token`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data.success) {
+          // Token is valid, redirect based on role
+          const redirectPath =
+            user.role === "user" ? "/client-portal" : "/dashboard";
+          navigate(redirectPath, { replace: true });
+        } else {
+          throw new Error("Token verification failed");
+        }
+      } catch (err) {
+        console.error("Auth check error:", err);
+        // Clear invalid/expired token and reset auth state
+        localStorage.removeItem("token");
+        setAuthGlobally({ user: null, role: null, token: null });
+        delete axios.defaults.headers.common["Authorization"];
+        setIsCheckingAuth(false); // Show login page
+      }
     };
 
     checkAuth();
 
-    // Fallback timeout to ensure page renders if something goes wrong
+    // Fallback timeout
     const timeout = setTimeout(() => {
       if (isCheckingAuth) {
         console.warn("Auth check timed out, showing login page");
+        localStorage.removeItem("token");
+        setAuthGlobally({ user: null, role: null, token: null });
         setIsCheckingAuth(false);
       }
-    }, 3000);
+    }, 5000); // Increased to 5s to allow server check
 
     return () => clearTimeout(timeout);
   }, [navigate, setAuthGlobally]);
@@ -82,7 +95,7 @@ export default function ClientLogin() {
         };
         setAuthGlobally(authData);
         localStorage.setItem("token", JSON.stringify(authData));
-        axios.defaults.headers.common["Authorization"] = authData.token;
+        axios.defaults.headers.common["Authorization"] = `Bearer ${authData.token}`;
 
         const redirectPath =
           authData.role === "admin" || authData.role === "superadmin"
@@ -97,7 +110,6 @@ export default function ClientLogin() {
     }
   };
 
-  // Loading state during auth check
   if (isCheckingAuth) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
@@ -123,7 +135,7 @@ export default function ClientLogin() {
     );
   }
 
-  // Render login UI
+  // Rest of your component (login UI) remains the same
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Branding Section */}
@@ -276,7 +288,7 @@ export default function ClientLogin() {
 
 
 
-
+// there is a  problem in my code the problem is let assume ram is my client and ram login as a client credentials and they login successfully, but the problem is when i delete the ram from my database and again came on the crm and they dont show the login page its showing  the spinner only show make sure if user role is user then show the client-portal and if role is admin or superadmin then redirect on /dashbaord page and if they dont have token then redirect on client-login page 
 
 
 
