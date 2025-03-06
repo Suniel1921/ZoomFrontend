@@ -461,11 +461,11 @@ export default function ClientsPage() {
     "Student Visa Applicant",
     "Epassport Applicant",
     "Japan Visa",
-    'Graphic Design & Printing',
-    'Web Design & Seo',
-    'Birth Registration',
-    'Documentation Support',
-    'Other'
+    "Graphic Design & Printing",
+    "Web Design & Seo",
+    "Birth Registration",
+    "Documentation Support",
+    "Other",
   ];
 
   const getAllClients = useCallback(async (forceRefresh = false) => {
@@ -530,20 +530,13 @@ export default function ClientsPage() {
       })
       .sort((a, b) => {
         if (searchQuery) {
-          // If there's a search query, prioritize relevance
           return calculateRelevanceScore(b, searchQuery) - calculateRelevanceScore(a, searchQuery);
         }
-
-        // Get timestamps or fallback dates for comparison
         const dateA = a.createdAt || a.dateJoined || new Date(0);
         const dateB = b.createdAt || b.dateJoined || new Date(0);
-
-        // Convert to timestamps for comparison
         const timeA = new Date(dateA).getTime();
         const timeB = new Date(dateB).getTime();
-
-        // Sort newest first
-        return timeB - timeA;
+        return timeB - timeA; // Newest first
       });
   }, [allClients, selectedCategory, selectedStatus, searchQuery, calculateRelevanceScore]);
 
@@ -600,20 +593,22 @@ export default function ClientsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Users className="h-6 w-6 text-gray-400" />
-            <h1 className="text-xl font-semibold text-gray-900">Clients ({filteredAndSortedClients.length} total)</h1>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Clients ({filteredAndSortedClients.length} total)
+            </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as ClientCategory | "all")}
-              className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
+              className="flex h-10 w-full sm:w-40 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
             >
               <option value="all">All Categories</option>
               {categories.map((category) => (
@@ -626,32 +621,39 @@ export default function ClientsPage() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as "all" | "active" | "inactive")}
-              className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
+              className="flex h-10 w-full sm:w-32 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
 
-            <div className="relative">
+            <div className="relative w-full sm:w-64">
               <Input
                 type="search"
                 placeholder="Search clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64"
+                className="w-full pl-10"
               />
             </div>
 
-            <div className="flex gap-2">
-              <Button onClick={() => setIsAddModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Client
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="w-full sm:w-auto flex items-center justify-center text-sm px-3 py-2 sm:px-4 sm:py-3"
+              >
+                <Plus className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">New Client</span>
               </Button>
 
-              <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" />
-                Import
+              <Button
+                variant="outline"
+                onClick={() => setIsImportModalOpen(true)}
+                className="w-full sm:w-auto flex items-center justify-center text-sm px-3 py-2 sm:px-4 sm:py-2"
+              >
+                <Upload className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Import</span>
               </Button>
             </div>
           </div>
@@ -670,27 +672,27 @@ export default function ClientsPage() {
               {allClients.length === 0
                 ? "No clients found."
                 : searchQuery
-                  ? "No clients found matching your search."
-                  : "No clients found matching the selected filters."}
+                ? "No clients found matching your search."
+                : "No clients found matching the selected filters."}
             </div>
           ) : (
             <>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
                       Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="hidden lg:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
                       Category
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
                       Actions
                     </th>
                   </tr>
@@ -698,7 +700,7 @@ export default function ClientsPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedClients.map((client) => (
                     <tr key={client._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 sm:px-6 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           {client.profilePhoto ? (
                             <img
@@ -720,10 +722,26 @@ export default function ClientsPage() {
                           <div>
                             <p className="font-medium text-brand-black">{client.name}</p>
                             <p className="text-sm text-gray-500">{client.nationality}</p>
+                            {/* Show contact on mobile */}
+                            <div className="md:hidden mt-1 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Mail className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">{client.email}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-gray-400" />
+                                <a
+                                  href={`viber://chat?number=${formatPhoneForViber(client.phone)}`}
+                                  className="text-brand-black hover:text-brand-yellow text-sm"
+                                >
+                                  {client.phone.length > 10 ? `${client.phone.slice(0, 11)}...` : client.phone}
+                                </a>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden md:table-cell px-4 py-4 sm:px-6 whitespace-nowrap">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Mail className="h-4 w-4 text-gray-400" />
@@ -742,10 +760,10 @@ export default function ClientsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden lg:table-cell px-4 py-4 sm:px-6 whitespace-nowrap">
                         <CategoryBadge category={client.category || "import from CSV file"} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden md:table-cell px-4 py-4 sm:px-6 whitespace-nowrap">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-medium ${
                             client.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
@@ -754,8 +772,8 @@ export default function ClientsPage() {
                           {client.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-4 py-4 sm:px-6 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2 flex-wrap">
                           <PrintAddressButton client={client} />
                           <Button
                             size="sm"
@@ -793,12 +811,13 @@ export default function ClientsPage() {
               </table>
 
               {/* Pagination */}
-              <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="px-4 py-4 sm:px-6 flex items-center justify-between border-t border-gray-200 flex-col sm:flex-row gap-4">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <Button
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                     variant="outline"
+                    className="w-full sm:w-auto"
                   >
                     Previous
                   </Button>
@@ -806,11 +825,12 @@ export default function ClientsPage() {
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                     variant="outline"
+                    className="w-full sm:w-auto"
                   >
                     Next
                   </Button>
                 </div>
-                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
                       Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{" "}
