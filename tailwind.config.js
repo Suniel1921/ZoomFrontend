@@ -67,9 +67,6 @@
 
 
 
-
-
-
 /** @type {import('tailwindcss').Config} */
 import tailwindcssAnimate from "tailwindcss-animate";
 
@@ -128,6 +125,18 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)'
+      },
+      keyframes: {
+        wave: {
+          "0%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-10deg)" },
+          "50%": { transform: "rotate(10deg)" },
+          "75%": { transform: "rotate(-10deg)" },
+          "100%": { transform: "rotate(0deg)" },
+        }
+      },
+      animation: {
+        wave: 'wave 1.5s infinite',
       }
     }
   },

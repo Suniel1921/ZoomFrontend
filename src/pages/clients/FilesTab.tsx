@@ -113,6 +113,10 @@ const FilesTab: React.FC<FilesTabProps> = ({ getAllModelData }) => {
 
   // Handle file upload
   const handleUpload = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found. Please log in.");
+    }
     if (!modalState.fileList.length) {
       message.error('Please select files to upload.');
       return;
@@ -125,7 +129,13 @@ const FilesTab: React.FC<FilesTabProps> = ({ getAllModelData }) => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/fileUpload/${selectedClientId}/${modalState.selectedModelName}`,
-        { method: 'POST', body: formData }
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
       );
       const data = await response.json();
 
