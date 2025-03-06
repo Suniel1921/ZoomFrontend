@@ -26,11 +26,22 @@ export default function EditEpassportModal({
   const [showPrefecture, setShowPrefecture] = useState(application.ghumtiService);
   const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
-  const { register, handleSubmit, setValue, watch } = useForm({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       ...application,
       date: new Date(application.date),
       deadline: new Date(application.deadline),
+      amount: application.amount || 0,
+      paidAmount: application.paidAmount || 0,
+      discount: application.discount || 0,
+      dueAmount: application.dueAmount || 0,
+      paymentStatus: application.paymentStatus || "Due", // Load from DB
     },
   });
 
@@ -57,32 +68,46 @@ export default function EditEpassportModal({
     fetchHandlers();
   }, []);
 
-  const onSubmit = (data: any) => {
-    const dueAmount = (data.amount || 0) - (data.discount || 0) - (data.paidAmount || 0);
+  // Sync dueAmount and paymentStatus when amount, paidAmount, or discount changes
+  useEffect(() => {
+    const calculatedDueAmount = amount - paidAmount - discount;
+    setValue("dueAmount", calculatedDueAmount);
 
-    axios
-      .put(
+    // Automatically update paymentStatus based on dueAmount
+    if (calculatedDueAmount <= 0) {
+      setValue("paymentStatus", "Paid");
+    } else if (paidAmount > 0) {
+      setValue("paymentStatus", "Partial");
+    } else {
+      setValue("paymentStatus", "Due");
+    }
+  }, [amount, paidAmount, discount, setValue]);
+
+  const onSubmit = async (data: any) => {
+    const updatedData = {
+      ...data,
+      dueAmount: dueAmount, // Use calculated dueAmount
+      date: data.date.toISOString(),
+      deadline: data.deadline.toISOString(),
+      paymentStatus: data.paymentStatus, // Explicitly include paymentStatus
+    };
+
+    try {
+      const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/updateEpassport/${application._id}`,
-        {
-          ...data,
-          dueAmount,
-          date: data.date.toISOString(),
-          deadline: data.deadline.toISOString(),
-        }
-      )
-      .then((response) => {
-        console.log("ePassport updated successfully", response.data);
-        toast.success(response.data.message || "ePassport updated successfully!");
-        onClose();
-        getAllEPassportApplication();
-      })
-      .catch((error: any) => {
-        console.error("Error updating ePassport:", error);
-        const errorMessage =
-          error.response?.data?.message ||
-          "An unexpected error occurred. Please try again later.";
-        toast.error(errorMessage);
-      });
+        updatedData
+      );
+      console.log("ePassport updated successfully", response.data);
+      toast.success(response.data.message || "ePassport updated successfully!");
+      onClose();
+      getAllEPassportApplication();
+    } catch (error: any) {
+      console.error("Error updating ePassport:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "An unexpected error occurred. Please try again later.";
+      toast.error(errorMessage);
+    }
   };
 
   if (!isOpen) return null;
@@ -110,9 +135,9 @@ export default function EditEpassportModal({
                   Phone Number
                 </label>
                 <Input
-                  value={application.mobileNo || "N/A"} // Display mobileNo from application data
+                  value={application.mobileNo || "N/A"}
                   className="mt-1 bg-gray-50"
-                  disabled // Make it non-editable
+                  disabled
                 />
               </div>
               <div>
@@ -194,7 +219,7 @@ export default function EditEpassportModal({
                 >
                   <option value="">Select handler</option>
                   {handlers.map((handler) => (
-                    <option key={handler.id} value={handler.id}>
+                    <option key={handler.id} value={handler.name}>
                       {handler.name}
                     </option>
                   ))}
@@ -270,42 +295,80 @@ export default function EditEpassportModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Amount
-                </label>
-                <Input type="number" {...register("amount")} className="mt-1" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Paid Amount
+                  Amount (¥)
                 </label>
                 <Input
                   type="number"
-                  {...register("paidAmount")}
+                  min="0"
+                  {...register("amount", { valueAsNumber: true })}
                   className="mt-1"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Discount
+                  Paid Amount (¥)
                 </label>
                 <Input
                   type="number"
-                  {...register("discount")}
+                  min="0"
+                  {...register("paidAmount", { valueAsNumber: true })}
                   className="mt-1"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Due Amount
+                  Discount (¥)
                 </label>
                 <Input
+                  type="number"
+                  min="0"
+                  {...register("discount", { valueAsNumber: true })}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Due Amount (¥)
+                </label>
+                <Input
+                  type="number"
                   value={dueAmount}
                   className="mt-1 bg-gray-50"
                   disabled
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Payment Status
+                </label>
+                <select
+                  {...register("paymentStatus")}
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
+                >
+                  <option value="Due">Due</option>
+                  <option value="Partial">Partial</option>
+                  <option value="Paid">Paid</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Payment Method <span className="text-gray-500 text-xs">(Optional)</span>
+                </label>
+                <select
+                  {...register("paymentMethod")}
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
+                >
+                  <option value="">Select payment method</option>
+                  <option value="Bank Furicomy">Bank Furikomi</option>
+                  <option value="Counter Cash">Counter Cash</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Paypay">PayPay</option>
+                </select>
               </div>
             </div>
           </div>
