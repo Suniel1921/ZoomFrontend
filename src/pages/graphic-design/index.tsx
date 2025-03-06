@@ -19,7 +19,13 @@ const API_URL = import.meta.env.VITE_REACT_APP_URL;
 const STATUS_CLASSES = {
   Completed: "bg-green-100 text-green-700",
   Cancelled: "bg-red-100 text-red-700",
-  Pending: "bg-blue-100 text-blue-700",
+  Processing: "bg-blue-100 text-blue-700", // Updated to match job status options
+  "Waiting for Payment": "bg-yellow-100 text-yellow-700",
+};
+
+const PAYMENT_STATUS_CLASSES = {
+  Paid: "bg-green-100 text-green-700",
+  Due: "bg-red-100 text-red-700",
 };
 
 export default function GraphicDesignPage() {
@@ -31,12 +37,11 @@ export default function GraphicDesignPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<GraphicDesignJob | null>(null);
   const [jobToDelete, setJobToDelete] = useState<GraphicDesignJob | null>(null);
-  const [loading, setLoading] = useState(true); // Changed to true initially
-  const [currentPage, setCurrentPage] = useState(1); // New state for current page
-  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [auth] = useAuthGlobally();
 
-  // Fetch graphic design jobs from the API, sorted by createdAt descending (newest first)
   const fetchGraphicDesignJobs = async () => {
     setLoading(true);
     try {
@@ -44,7 +49,6 @@ export default function GraphicDesignPage() {
         `${API_URL}/api/v1/graphicDesign/getAllGraphicDesign`
       );
       const data = Array.isArray(response.data.designJobs) ? response.data.designJobs : [];
-      // Sort jobs by createdAt in descending order (newest first)
       const sortedJobs = data.sort((a, b) => {
         const dateA = new Date(a.createdAt || 0).getTime();
         const dateB = new Date(b.createdAt || 0).getTime();
@@ -64,7 +68,6 @@ export default function GraphicDesignPage() {
     fetchGraphicDesignJobs();
   }, []);
 
-  // Filter jobs based on search query and valid clientId
   const filteredJobs = graphicDesignJobs.filter((job) => {
     const hasClientId = job.clientId !== null && job.clientId !== undefined;
     return (
@@ -75,7 +78,6 @@ export default function GraphicDesignPage() {
     );
   });
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredJobs.slice(indexOfFirstItem, indexOfLastItem);
@@ -85,13 +87,11 @@ export default function GraphicDesignPage() {
     setCurrentPage(newPage);
   };
 
-  // Handle initiating deletion
   const initiateDelete = (job: GraphicDesignJob) => {
     setJobToDelete(job);
     setIsDeleteModalOpen(true);
   };
 
-  // Handle confirmed deletion
   const handleDelete = async () => {
     if (!jobToDelete) return;
 
@@ -103,7 +103,7 @@ export default function GraphicDesignPage() {
         toast.success("Job deleted successfully!");
         setIsDeleteModalOpen(false);
         setJobToDelete(null);
-        fetchGraphicDesignJobs(); // Refresh list, newest first
+        fetchGraphicDesignJobs();
       } else {
         toast.error("Failed to delete the job.");
       }
@@ -128,16 +128,32 @@ export default function GraphicDesignPage() {
     },
     {
       key: "status",
-      label: "Status",
+      label: "Job Status",
       render: (value: string) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            STATUS_CLASSES[value as keyof typeof STATUS_CLASSES] || STATUS_CLASSES.Pending
+            STATUS_CLASSES[value as keyof typeof STATUS_CLASSES] || STATUS_CLASSES.Processing
           }`}
         >
           {value}
         </span>
       ),
+    },
+    {
+      key: "paymentStatus",
+      label: "Payment Status",
+      render: (_: unknown, item: GraphicDesignJob) => {
+        const paymentStatus = item.dueAmount === 0 ? "Paid" : "Due";
+        return (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${
+              PAYMENT_STATUS_CLASSES[paymentStatus as keyof typeof PAYMENT_STATUS_CLASSES]
+            }`}
+          >
+            {paymentStatus}
+          </span>
+        );
+      },
     },
     {
       key: "deadline",

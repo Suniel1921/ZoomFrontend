@@ -36,23 +36,24 @@ export default function EditDesignJobModal({
 }: EditDesignJobModalProps) {
   const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
-  const { register, handleSubmit, watch, setValue } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: {
       ...job,
       amount: job.amount || 0,
       advancePaid: job.advancePaid || 0,
+      status: job.status || "Processing", // Ensure initial status from job
     },
   });
 
   const amount = watch("amount", 0);
   const advancePaid = watch("advancePaid", 0);
   const dueAmount = amount - advancePaid;
-
-  // Automatically update status based on due amount
-  useEffect(() => {
-    const newStatus = dueAmount === 0 ? "Paid" : "Due";
-    setValue("status", newStatus);
-  }, [amount, advancePaid, setValue]);
 
   // Fetch handlers (admins) from the API
   useEffect(() => {
@@ -79,13 +80,16 @@ export default function EditDesignJobModal({
       if (isNaN(date.getTime())) throw new Error("Invalid date");
       if (isNaN(deadline.getTime())) throw new Error("Invalid deadline");
 
+      const updatedData = {
+        ...data,
+        date: date.toISOString(),
+        deadline: deadline.toISOString(),
+        dueAmount, // Include dueAmount in the update
+      };
+
       const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/graphicDesign/updateGraphicDesign/${job._id}`,
-        {
-          ...data,
-          date: date.toISOString(),
-          deadline: deadline.toISOString(),
-        }
+        updatedData
       );
 
       toast.success(response.data.message || "Design job updated successfully");
@@ -146,24 +150,23 @@ export default function EditDesignJobModal({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Handled By
-                </label>
-                <select
-                  {...register("handledBy")}
-                  value={watch("handledBy") || application.handledBy}
-                  onChange={(e) => setValue("handledBy", e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
-                >
-                  <option value="">Select handler</option>
-                  {handlers.map((handler) => (
-                    <option key={handler.id} value={handler.id}>
-                      {handler.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+              <label className="block text-sm font-medium text-gray-700">
+                Handled By
+              </label>
+              <select
+                {...register("handledBy")}
+                value={watch("handledBy") || job.handledBy} // Use job.handledBy as fallback
+                onChange={(e) => setValue("handledBy", e.target.value)}
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
+              >
+                <option value="">Select handler</option>
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.name}>
+                    {handler.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -219,6 +222,21 @@ export default function EditDesignJobModal({
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Job Status
+              </label>
+              <select
+                {...register("status")}
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
+              >
+                <option value="Processing">Processing</option>
+                <option value="Waiting for Payment">Waiting for Payment</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700">
                 Remarks
@@ -243,3 +261,6 @@ export default function EditDesignJobModal({
     </div>
   );
 }
+
+
+// add a amount heading and in PAYMENT heading show the payment status paid or due and in status heading show the job status processing completed waiting for payment cancelled 
