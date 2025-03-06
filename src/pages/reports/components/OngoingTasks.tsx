@@ -416,7 +416,6 @@
 
 
 
-
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { safeParse } from "../../../utils/dateUtils";
@@ -443,7 +442,7 @@ interface Task {
   applicationStatus?: string;
   jobStatus?: string;
   documentStatus?: string;
-  createdAt?: string | Date; // Added for sorting by creation date
+  createdAt?: string | Date;
 }
 
 interface TasksProps {
@@ -503,8 +502,6 @@ export default function OngoingTasks() {
   const [auth] = useAuthGlobally();
   const navigate = useNavigate();
 
-  console.log('task is ', tasks)
-
   // Fetch tasks from API
   useEffect(() => {
     const fetchTasks = async () => {
@@ -514,7 +511,6 @@ export default function OngoingTasks() {
         );
         if (response.data.success && response.data.allData) {
           setTasks(response.data.allData);
-      
         } else {
           setError("No task data available.");
         }
@@ -590,6 +586,7 @@ export default function OngoingTasks() {
         const shouldDisplayTaskForUser = !isAdminUser || task.role !== "admin";
 
         const isCompleted = ["Completed", "Approved", "Delivered"].includes(task.status);
+        const isCancelled = task.status === "Cancelled";
 
         let matchesHandlerFilter = handlerFilter === "all";
         if (handlerFilter !== "all") {
@@ -609,18 +606,27 @@ export default function OngoingTasks() {
           }
         }
 
+        // Show all tasks when "all" is selected, hide "Cancelled" when a specific admin is selected
         return (
           matchesPaymentFilter &&
           matchesHandlerFilter &&
           shouldDisplayTaskForUser &&
-          !(task.paymentStatus === "Paid" && isCompleted && isAdminUser)
+          !(task.paymentStatus === "Paid" && isCompleted && isAdminUser) &&
+          (handlerFilter === "all" || !isCancelled) // Hide "Cancelled" only when admin is selected
         );
       })
       .sort((a, b) => {
-        // Sort by createdAt (latest first), fallback to deadline if createdAt is unavailable
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : safeParse(a.deadline)?.getTime() || 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : safeParse(b.deadline)?.getTime() || 0;
-        return dateB - dateA; // Descending order (latest first)
+        if (handlerFilter !== "all") {
+          // Sort by deadline (earliest first) when an admin is selected
+          const deadlineA = safeParse(a.deadline)?.getTime() || Number.MAX_SAFE_INTEGER;
+          const deadlineB = safeParse(b.deadline)?.getTime() || Number.MAX_SAFE_INTEGER;
+          return deadlineA - deadlineB; // Ascending order
+        } else {
+          // Sort by createdAt (latest first) when "all" is selected
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : safeParse(a.deadline)?.getTime() || 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : safeParse(b.deadline)?.getTime() || 0;
+          return dateB - dateA; // Descending order
+        }
       });
   }, [
     application,
