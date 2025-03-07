@@ -107,7 +107,7 @@ export default function AddEpassportModal({
         date: data.date.toISOString(),
         deadline: data.deadline.toISOString(),
         dueAmount,
-        paymentMethod: data.paymentMethod === "" ? undefined : data.paymentMethod,
+        paymentMethod: data.paymentMethod === "" ? undefined : data.paymentMethod,        
         additionalClients: data.additionalClients,
       };
 
