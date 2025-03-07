@@ -210,10 +210,15 @@ export default function EpassportPage() {
         <div className="flex items-center gap-2">
           <p className="font-medium">{item.clientId?.name || "Unknown Name"}</p>
           {item.additionalClients && item.additionalClients.length > 0 && (
-            <Users 
-              className="h-4 w-4 text-red-500 hover:animate-pulse" 
-              title={`Additional Clients: ${item.additionalClients.length}`} 
-            />
+            <div className="relative group">
+              <Users 
+                className="h-4 w-4 text-red-500 hover:animate-pulse" 
+                title={`Additional Clients: ${item.additionalClients.length}`} 
+              />
+              <span className="absolute ml-20 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                This client has {item.additionalClients.length} additional client(s) linked
+              </span>
+            </div>
           )}
         </div>
       ),
