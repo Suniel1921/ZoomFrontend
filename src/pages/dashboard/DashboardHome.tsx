@@ -393,9 +393,6 @@
 
 
 
-
-
-// DashboardHome.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -405,6 +402,9 @@ import {
   Clock,
   Bell,
   Languages,
+  Sun,
+  Sunset,
+  Moon,
 } from "lucide-react";
 import StatsCard from "../reports/components/StatsCard";
 import OngoingTasks from "../reports/components/OngoingTasks";
@@ -423,6 +423,36 @@ export default function DashboardHome() {
   const [appointments, setAppointments] = useState([]);
   const [serviceRequested, setServiceRequested] = useState([]);
   const [superAdminName, setSuperAdminName] = useState({});
+
+  // Array of motivational quotes
+  const motivationalQuotes = [
+    "Success is the sum of small efforts, repeated day in and day out.",
+    "The only way to do great work is to love what you do.",
+    "Every day is a new opportunity to change the world.",
+    "Hard work beats talent when talent doesn’t work hard.",
+    "Believe you can and you're halfway there.",
+    "Your limitation—it’s only your imagination.",
+    "The future depends on what you do today.",
+    "Dream big and dare to fail.",
+    "Opportunities don’t happen. You create them.",
+    "Don’t stop when you’re tired. Stop when you’re done.",
+    "Doubt kills more dreams than failure ever will.",
+    "Small steps in the right direction can turn into the biggest journey of your life.",
+    "Do what you can, with what you have, where you are.",
+    "Stay hungry, stay foolish.",
+    "Success doesn’t come from what you do occasionally, but from what you do consistently.",
+    "The secret to getting ahead is getting started.",
+    "Act as if what you do makes a difference. It does.",
+];
+
+
+  // Select a random quote daily based on the day of the year
+  const getDailyMotivation = () => {
+    const today = new Date();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+    const quoteIndex = dayOfYear % motivationalQuotes.length;
+    return motivationalQuotes[quoteIndex];
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -649,11 +679,37 @@ export default function DashboardHome() {
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Welcome back, {superAdminName.name}! <span className="inline-block animate-wave">👋</span>
-            </h1>
+            {(() => {
+              const currentHour = new Date().getHours();
+              let greeting = "";
+              let IconComponent = null;
+
+              if (currentHour < 12) {
+                greeting = "Good Morning";
+                IconComponent = Sun;
+              } else if (currentHour < 17) {
+                greeting = "Good Afternoon";
+                IconComponent = Sunset;
+              } else {
+                greeting = "Good Evening";
+                IconComponent = Moon;
+              }
+
+              return (
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  {greeting},  <span className="inline-block">
+                    <IconComponent className="w-6 h-6 inline-block" />
+                  </span> {superAdminName.name}!{" "}
+                  <span className="inline-block animate-wave">👋</span>{" "}
+                 
+                </h1>
+              );
+            })()}
             <p className="mt-1 text-sm sm:text-base text-gray-500">
               Here's what's happening today
+            </p>
+            <p className="mt-1 text-sm sm:text-base text-gray-600 italic">
+              "{getDailyMotivation()}"
             </p>
           </div>
           <div className="text-left sm:text-right">
