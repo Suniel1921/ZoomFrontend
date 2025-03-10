@@ -26,6 +26,7 @@ export default function AddDesignJobModal({
   const { clients, addGraphicDesignJob, addAppointment } = useStore();
   const { admins } = useAdminStore();
   const [clientsList, setClientsList] = useState<any[]>([]);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   const {
     register,
@@ -49,20 +50,22 @@ export default function AddDesignJobModal({
 
   const clientId = watch('clientId');
   const selectedClient = clientsList.find(c => c._id === clientId);
-  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     const fetchHandlers = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`);
-        setHandlers(response.data.admins); 
+        setHandlers(response.data.admins.map((admin: any) => ({
+          id: admin._id,
+          name: admin.name,
+        })));
       } catch (error: any) {
         console.error('Failed to fetch handlers:', error);
-        toast.error(error.response.data.message);
+        toast.error(error.response?.data?.message || 'Error fetching handlers');
       }
     };
-    fetchHandlers();
-  }, []);
+    if (isOpen) fetchHandlers();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -70,68 +73,81 @@ export default function AddDesignJobModal({
         .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
           const clientsData = response?.data?.clients;
-          setClientsList(Array.isArray(clientsData) ? clientsData : [clientsData]); // Always treat as array, even if single client
+          setClientsList(Array.isArray(clientsData) ? clientsData : [clientsData]);
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);
-          setClientsList([]); // Set clients to an empty array in case of error
+          setClientsList([]);
         });
     }
   }, [isOpen]);
 
-  const subAdmins = admins.filter(admin => admin.role !== 'super_admin');
-
   const onSubmit = async (data: any) => {
     const client = clientsList.find(c => c._id === data.clientId);
-  
-    if (client) {
-      const designJob = {
-        ...data,
-        clientName: client.name,
-        dueAmount: dueAmount,
-        paymentStatus: dueAmount > 0 ? 'Due' : 'Paid',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-  
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/graphicDesign/createGraphicDesign`, designJob, {
+    const handler = handlers.find(h => h.id === data.handledBy);
+
+    if (!client) {
+      toast.error('Please select a client.');
+      return;
+    }
+    if (!handler) {
+      toast.error('Please select a handler.');
+      return;
+    }
+
+    const designJob = {
+      ...data,
+      clientName: client.name,
+      dueAmount: dueAmount,
+      paymentStatus: dueAmount > 0 ? 'Due' : 'Paid',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      handledBy: handler.name, // Store handler name in DB
+      handlerId: handler.id,  // Use ObjectId for notification
+    };
+
+    console.log('Sending POST request:', designJob);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/graphicDesign/createGraphicDesign`,
+        designJob,
+        {
           headers: {
             'Content-Type': 'application/json',
           },
-        });
-  
-        if (response.data.success) {
-          toast.success(response.data.message);
-          fetchGraphicDesignJobs();
-        } else {
-          toast.error('Failed to create design job. Please try again.');
         }
-  
-        const appointment = {
-          clientId: client._id,
-          clientName: client.name,
-          type: `Design Deadline: ${data.designType}`,
-          date: data.deadline.toISOString(),
-          time: '23:59',
-          duration: 0,
-          status: 'Scheduled',
-          meetingType: 'physical',
-          location: 'Office',
-          notes: `Design deadline for ${data.designType} - ${data.businessName}`,
-          isRecurring: false,
-          handledBy: data.handledBy,
-        };
-  
-        await addAppointment(appointment);
-  
-        reset();
-        onClose();
-  
-      } catch (error) {
-        console.error('Error creating graphic design job or appointment:', error);
-        toast.error('An error occurred while creating the design job or appointment. Please try again.');
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+        fetchGraphicDesignJobs();
+      } else {
+        toast.error('Failed to create design job. Please try again.');
       }
+
+      const appointment = {
+        clientId: client._id,
+        clientName: client.name,
+        type: `Design Deadline: ${data.designType}`,
+        date: data.deadline.toISOString(),
+        time: '23:59',
+        duration: 0,
+        status: 'Scheduled',
+        meetingType: 'physical',
+        location: 'Office',
+        notes: `Design deadline for ${data.designType} - ${data.businessName}`,
+        isRecurring: false,
+        handledBy: handler.name, // Use handler name here too
+      };
+
+      await addAppointment(appointment);
+
+      reset();
+      onClose();
+    } catch (error) {
+      console.error('Error creating graphic design job or appointment:', error);
+      toast.error('An error occurred while creating the design job or appointment. Please try again.');
     }
   };
 
@@ -155,7 +171,7 @@ export default function AddDesignJobModal({
                 options={clientsList.map(client => ({
                   value: client._id,
                   label: client.name,
-                  clientData: { ...client, profilePhoto: client.profilePhoto }, 
+                  clientData: { ...client, profilePhoto: client.profilePhoto },
                 }))}
                 value={watch('clientId')}
                 onChange={(value) => {
@@ -171,7 +187,6 @@ export default function AddDesignJobModal({
               {errors.clientId && <p className="mt-1 text-sm text-red-600">Client is required</p>}
             </div>
 
-            {/* Handled By */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Handled By</label>
               <select
@@ -180,7 +195,7 @@ export default function AddDesignJobModal({
               >
                 <option value="">Select handler</option>
                 {handlers.map((handler) => (
-                  <option key={handler.id} value={handler.name}>
+                  <option key={handler.id} value={handler.id}>
                     {handler.name}
                   </option>
                 ))}
@@ -214,23 +229,22 @@ export default function AddDesignJobModal({
             </div>
 
             <div>
-  <label className="block text-sm font-medium text-gray-700">Design Type</label>
-  <select
-    {...register('designType', { required: 'Design type is required' })}
-    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
-  >
-    <option value="">Select Design Type</option>
-    {DESIGN_TYPES.map((designType) => (
-      <option key={designType} value={designType}>
-        {designType}
-      </option>
-    ))}
-  </select>
-  {errors.designType && (
-    <p className="mt-1 text-sm text-red-600">{errors.designType.message}</p>
-  )}
-</div>
-
+              <label className="block text-sm font-medium text-gray-700">Design Type</label>
+              <select
+                {...register('designType', { required: 'Design type is required' })}
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
+              >
+                <option value="">Select Design Type</option>
+                {DESIGN_TYPES.map((designType) => (
+                  <option key={designType} value={designType}>
+                    {designType}
+                  </option>
+                ))}
+              </select>
+              {errors.designType && (
+                <p className="mt-1 text-sm text-red-600">{errors.designType.message}</p>
+              )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Amount</label>
@@ -272,10 +286,10 @@ export default function AddDesignJobModal({
                 {...register('status')}
                 className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
-                  <option value="Processing">Processing</option>
-                  <option value="Waiting for Payment">Waiting for Payment</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
+                <option value="Processing">Processing</option>
+                <option value="Waiting for Payment">Waiting for Payment</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
             </div>
 
@@ -301,5 +315,3 @@ export default function AddDesignJobModal({
     </div>
   );
 }
-
-

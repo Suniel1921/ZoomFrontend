@@ -29,10 +29,10 @@ const translationSchema = z.object({
 });
 
 export default function AddTranslationModal({ isOpen, onClose, getAllTranslations }) {
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [handlers, setHandlers] = useState([]);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
     resolver: zodResolver(translationSchema),
@@ -69,7 +69,10 @@ export default function AddTranslationModal({ isOpen, onClose, getAllTranslation
 
       axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`)
         .then((response) => {
-          setHandlers(response.data.admins);
+          setHandlers(response.data.admins.map((admin: any) => ({
+            id: admin._id,
+            name: admin.name,
+          })));
         })
         .catch((error) => {
           console.error('Failed to fetch handlers:', error);
@@ -92,28 +95,40 @@ export default function AddTranslationModal({ isOpen, onClose, getAllTranslation
 
   const onSubmit = async (data) => {
     const client = clients.find((c) => c._id === data.clientId);
-    if (client) {
-      const translationData = {
-        ...data,
-        clientName: client.name,
-        nameInTargetScript: data.nameInTargetScript || "",
-      };
+    const handler = handlers.find((h) => h.id === data.handledBy);
+    if (!client) {
+      toast.error("Please select a client");
+      return;
+    }
+    if (!handler) {
+      toast.error("Please select a valid handler");
+      return;
+    }
 
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/createDocumentTranslation`,
-          translationData
-        );
-        if (response.data.success) {
-          toast.success(response.data.message);
-          reset();
-          onClose();
-          getAllTranslations();
-        }
-      } catch (error) {
-        console.error('Error creating translation:', error);
-        toast.error('Error creating translation');
+    const translationData = {
+      ...data,
+      clientName: client.name,
+      nameInTargetScript: data.nameInTargetScript || "",
+      handledBy: handler.name, // Store handler name in DB
+      handlerId: handler.id,  // Use ObjectId for notification
+    };
+
+    console.log("Sending translation payload:", translationData);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/documentTranslation/createDocumentTranslation`,
+        translationData
+      );
+      if (response.data.success) {
+        toast.success(response.data.message);
+        reset();
+        onClose();
+        getAllTranslations();
       }
+    } catch (error: any) {
+      console.error('Error creating translation:', error);
+      toast.error(error.response?.data?.message || 'Error creating translation');
     }
   };
 
@@ -281,7 +296,7 @@ export default function AddTranslationModal({ isOpen, onClose, getAllTranslation
               >
                 <option value="">Select handler</option>
                 {handlers.map((handler) => (
-                  <option key={handler.id} value={handler.name}>{handler.name}</option>
+                  <option key={handler.id} value={handler.id}>{handler.name}</option>
                 ))}
               </select>
               {errors.handledBy && (

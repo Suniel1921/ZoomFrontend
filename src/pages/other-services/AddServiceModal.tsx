@@ -44,45 +44,48 @@ export default function AddServiceModal({
   const amount = watch('amount') || 0;
   const paidAmount = watch('paidAmount') || 0;
   const discount = watch('discount') || 0;
-  const dueAmount = parseFloat(amount) - (parseFloat(paidAmount) + parseFloat(discount)); // Ensuring numeric calculation
+  const dueAmount = parseFloat(amount) - (parseFloat(paidAmount) + parseFloat(discount));
   const selectedTypes = watch('serviceTypes') || [];
 
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   const clientId = watch('clientId');
   const selectedClient = clients.find((c) => c._id === clientId);
-  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
-  // Fetch the handlers (admins) from the API
+  // Fetch handlers (admins) from the API
   useEffect(() => {
     const fetchHandlers = async () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
         );
-        setHandlers(response.data.admins);
+        setHandlers(response.data.admins.map((admin: any) => ({
+          id: admin._id,
+          name: admin.name,
+        })));
       } catch (error: any) {
         console.error('Failed to fetch handlers:', error);
-        toast.error(error.response.data.message);
+        toast.error(error.response?.data?.message || 'Error fetching handlers');
       }
     };
 
-    fetchHandlers();
-  }, []);
+    if (isOpen) fetchHandlers();
+  }, [isOpen]);
 
-   //get all clients list in drop down 
-   useEffect(() => {
+  // Fetch clients list for dropdown
+  useEffect(() => {
     if (isOpen) {
       axios
         .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
           const clientsData = response?.data?.clients;
-          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]); 
+          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]);
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);
-          setClients([]); // Set clients to an empty array in case of error
+          setClients([]);
         });
     }
   }, [isOpen]);
@@ -90,12 +93,18 @@ export default function AddServiceModal({
   if (!isOpen) return null;
 
   const onSubmit = async (data: any) => {
-    setLoading(true); // Disable button when submitting
+    setLoading(true);
     const client = clients.find((c) => c._id === data.clientId);
+    const handler = handlers.find((h) => h.id === data.handledBy);
 
     if (!client) {
-      console.error('Client not found.');
-      setLoading(false); // Re-enable button if client not found
+      toast.error('Please select a client.');
+      setLoading(false);
+      return;
+    }
+    if (!handler) {
+      toast.error('Please select a handler.');
+      setLoading(false);
       return;
     }
 
@@ -106,10 +115,13 @@ export default function AddServiceModal({
       dueAmount,
       paymentStatus: dueAmount > 0 ? 'Due' : 'Paid',
       deadline: data.deadline?.toISOString(),
+      handledBy: handler.name, // Store handler name in DB
+      handlerId: handler.id,  // Use ObjectId for notification
     };
 
+    console.log('Sending POST request:', addOtherService);
+
     try {
-      console.log('Sending POST request:', addOtherService);
       const response = await axios.post(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/otherServices/createOtherServices`,
         addOtherService
@@ -126,7 +138,7 @@ export default function AddServiceModal({
         toast.error(error.response.data.message);
       }
     } finally {
-      setLoading(false); // Re-enable button after request is finished
+      setLoading(false);
     }
   };
 
@@ -148,7 +160,7 @@ export default function AddServiceModal({
                 options={clients.map((client) => ({
                   value: client._id,
                   label: client.name,
-                  clientData: { ...client, profilePhoto: client.profilePhoto }, 
+                  clientData: { ...client, profilePhoto: client.profilePhoto },
                 }))}
                 value={watch('clientId')}
                 onChange={(value) => {
@@ -224,7 +236,6 @@ export default function AddServiceModal({
               />
             </div>
 
-            {/* Handled By */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Handled By</label>
               <select
@@ -233,7 +244,7 @@ export default function AddServiceModal({
               >
                 <option value="">Select handler</option>
                 {handlers.map((handler) => (
-                  <option key={handler.id} value={handler.name}>
+                  <option key={handler.id} value={handler.id}>
                     {handler.name}
                   </option>
                 ))}
@@ -281,9 +292,9 @@ export default function AddServiceModal({
                 className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
                 <option value="Processing">Processing</option>
-                  <option value="Waiting for Payment">Waiting for Payment</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
+                <option value="Waiting for Payment">Waiting for Payment</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
             </div>
 
@@ -302,7 +313,9 @@ export default function AddServiceModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Create Service</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Service'}
+            </Button>
           </div>
         </form>
       </div>

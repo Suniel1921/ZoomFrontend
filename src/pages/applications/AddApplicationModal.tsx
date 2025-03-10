@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,12 +24,7 @@ const applicationSchema = z.object({
   documentStatus: z.enum(["Not Yet", "Few Received", "Fully Received"]),
   documentsToTranslate: z.number().min(0),
   translationStatus: z.enum(["Under Process", "Completed"]),
-  visaStatus: z.enum([
-    "Processing",
-    "Waiting for Payment",
-    "Completed",
-    "Cancelled",
-  ]),
+  visaStatus: z.enum(["Processing", "Waiting for Payment", "Completed", "Cancelled"]),
   deadline: z.date(),
   payment: z.object({
     visaApplicationFee: z.number().min(0),
@@ -52,9 +46,7 @@ const applicationSchema = z.object({
     )
     .default([]),
   handledBy: z.string().min(1, "Visa Application Handler is required"),
-  translationHandler: z
-    .string()
-    .min(1, "Document Translation Handler is required"),
+  translationHandler: z.string().min(1, "Document Translation Handler is required"),
 });
 
 type ApplicationFormData = z.infer<typeof applicationSchema>;
@@ -65,6 +57,11 @@ interface AddApplicationModalProps {
   onClose: () => void;
 }
 
+interface Handler {
+  id: string;
+  name: string;
+}
+
 export default function AddApplicationModal({
   isOpen,
   onClose,
@@ -72,8 +69,7 @@ export default function AddApplicationModal({
 }: AddApplicationModalProps) {
   const [clients, setClients] = useState<any[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
-  const [applicationStep, setApplicationStep] = useState<any[]>([]);
+  const [handlers, setHandlers] = useState<Handler[]>([]);
 
   const {
     register,
@@ -100,11 +96,11 @@ export default function AddApplicationModal({
     },
   });
 
-  const handleFamilyMembersChange = (updatedMembers) => {
+  const handleFamilyMembersChange = (updatedMembers: FamilyMember[]) => {
     setFamilyMembers(updatedMembers);
   };
 
-  //get all clients list in drop down
+  // Fetch clients
   useEffect(() => {
     if (isOpen) {
       axios
@@ -115,24 +111,30 @@ export default function AddApplicationModal({
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);
-          setClients([]); // Set clients to an empty array in case of error
+          setClients([]);
         });
     }
   }, [isOpen]);
 
-  // Fetch the handlers (admins) from the API
+  // Fetch handlers
   useEffect(() => {
     const fetchHandlers = async () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
         );
-        setHandlers(response.data.admins);
+        // Map admins to { id: ObjectId, name: string }
+        setHandlers(
+          response.data.admins.map((admin: any) => ({
+            id: admin._id,
+            name: admin.name,
+          }))
+        );
       } catch (error) {
         console.error("Failed to fetch handlers:", error);
+        toast.error("Failed to fetch handlers.");
       }
     };
-
     fetchHandlers();
   }, []);
 
@@ -144,6 +146,16 @@ export default function AddApplicationModal({
         return;
       }
 
+      const visaHandler = handlers.find((h) => h.id === data.handledBy);
+      const translationHandler = handlers.find(
+        (h) => h.id === data.translationHandler
+      );
+
+      if (!visaHandler || !translationHandler) {
+        toast.error("Invalid handler selected");
+        return;
+      }
+
       const total =
         data.payment.visaApplicationFee +
         data.payment.translationFee -
@@ -152,27 +164,26 @@ export default function AddApplicationModal({
       const payload = {
         ...data,
         clientName: client.name,
-        handledBy: client.handledBy || data.handledBy, // Use client.handledBy if available
-        translationHandler:
-          client.translationHandler || data.translationHandler, // Use client.translationHandler if available
-
-        familyMembers, // Ensure family members are sent as part of the payload
+        handledBy: visaHandler.name, // Store name in DB
+        translationHandler: translationHandler.name, // Store name in DB
+        handlerId: data.handledBy, // Use ObjectId for notification
+        familyMembers,
         submissionDate: new Date().toISOString(),
         payment: { ...data.payment, total },
         paymentStatus: total <= 0 ? "Paid" : "Due",
       };
 
+      console.log("Sending application payload:", payload);
+
       const response = await axios.post(
-        `${
-          import.meta.env.VITE_REACT_APP_URL
-        }/api/v1/visaApplication/createVisaApplication`,
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/createVisaApplication`,
         payload
       );
 
       if (response.data.success) {
         toast.success(response.data.message);
         reset();
-        setFamilyMembers([]); // Reset family members after submission
+        setFamilyMembers([]);
         onClose();
         getAllApplication();
       }
@@ -212,8 +223,6 @@ export default function AddApplicationModal({
               Client Information
             </h3>
             <div className="space-y-4">
-              
-
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Client
@@ -222,8 +231,8 @@ export default function AddApplicationModal({
                   options={clients.map((client) => ({
                     value: client._id,
                     label: client.name,
-                    clientData: { ...client, profilePhoto: client.profilePhoto }, 
-                  }))}                  
+                    clientData: { ...client, profilePhoto: client.profilePhoto },
+                  }))}
                   value={watch("clientId")}
                   onChange={(value) => setValue("clientId", value)}
                   placeholder="Select client"
@@ -367,10 +376,8 @@ export default function AddApplicationModal({
           </div>
 
           {/* Family Members Section */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium border-b pb-2">
-              Family Members
-            </h3>
+           <div className="space-y-6">
+            <h3 className="text-lg font-medium border-b pb-2">Family Members</h3>
             <FamilyMembersList
               familyMembers={familyMembers}
               onFamilyMembersChange={handleFamilyMembersChange}
@@ -417,6 +424,3 @@ export default function AddApplicationModal({
     </div>
   );
 }
-
-
-

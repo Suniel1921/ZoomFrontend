@@ -28,6 +28,7 @@ export default function NotificationBell() {
   const maxRetries = useRef(5);
   const retryCount = useRef(0);
   const [auth] = useAuthGlobally();
+  const [isAudioPrimed, setIsAudioPrimed] = useState(false); // Track AudioContext priming
 
   const fetchNotifications = useCallback(async () => {
     if (!auth?.token) {
@@ -50,9 +51,8 @@ export default function NotificationBell() {
   }, [auth?.token]);
 
   useEffect(() => {
-    // Initialize Howler sound
     soundRef.current = new Howl({
-      src: ['/notification1.wav'], // Ensure this file is in /public
+      src: ['/notification.mp3'], // Ensure this file is in /public
       preload: true,
       volume: 0.5,
       onload: () => console.log('Notification sound loaded'),
@@ -66,15 +66,27 @@ export default function NotificationBell() {
     };
   }, []);
 
-  const playNotificationSound = () => {
-    if (soundRef.current) {
+  const playNotificationSound = useCallback(() => {
+    if (soundRef.current && isAudioPrimed) {
       if (!soundRef.current.playing()) {
         soundRef.current.play();
+        console.log('Playing notification sound');
       } else {
         console.log('Sound already playing, skipping');
       }
+    } else if (!isAudioPrimed) {
+      console.log('Audio not primed yet, waiting for user interaction');
     }
-  };
+  }, [isAudioPrimed]);
+
+  const primeAudio = useCallback(() => {
+    if (soundRef.current && !isAudioPrimed) {
+      soundRef.current.play(); // Play briefly to prime AudioContext
+      soundRef.current.stop(); // Stop immediately to avoid audible sound
+      setIsAudioPrimed(true);
+      console.log('AudioContext primed');
+    }
+  }, [isAudioPrimed]);
 
   const connectWebSocket = useCallback(() => {
     if (!auth?.token) {
@@ -99,12 +111,21 @@ export default function NotificationBell() {
         console.log('WebSocket message:', data);
         if (data.type === 'NEW_NOTIFICATION') {
           const newNotification = data.data || {};
-          setNotifications((prev) => {
-            if (!newNotification._id || prev.some((n) => n._id === newNotification._id)) return prev;
-            return [newNotification, ...prev];
-          });
-          setUnreadCount((prev) => prev + 1);
-          playNotificationSound();
+          if (newNotification.type === 'TASK_ASSIGNED') { // Only play for TASK_ASSIGNED
+            setNotifications((prev) => {
+              if (!newNotification._id || prev.some((n) => n._id === newNotification._id)) return prev;
+              return [newNotification, ...prev];
+            });
+            setUnreadCount((prev) => prev + 1);
+            playNotificationSound();
+          } else {
+            // Add notification without sound for other types
+            setNotifications((prev) => {
+              if (!newNotification._id || prev.some((n) => n._id === newNotification._id)) return prev;
+              return [newNotification, ...prev];
+            });
+            setUnreadCount((prev) => prev + (newNotification.read ? 0 : 1));
+          }
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
@@ -135,7 +156,7 @@ export default function NotificationBell() {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [auth?.token]);
+  }, [auth?.token, playNotificationSound]);
 
   useEffect(() => {
     if (auth?.token) {
@@ -205,13 +226,15 @@ export default function NotificationBell() {
       <button
         onClick={() => {
           setShowDropdown(!showDropdown);
-          if (unreadCount > 0) markAsRead();
-          playNotificationSound(); // Prime sound on user interaction
+          if (unreadCount > 0) {
+            markAsRead();
+            primeAudio(); // Prime audio only when marking unread as read
+          }
         }}
         className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
         aria-label="Notifications"
       >
-        <Bell className="h-6 w-6 text-gray-600" />
+        <Bell className="h-6 w-6 text-white" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse-custom">
             {unreadCount}
@@ -271,5 +294,3 @@ export default function NotificationBell() {
     </div>
   );
 }
-
-
