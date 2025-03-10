@@ -41,6 +41,7 @@ export default function AddEpassportModal({
       date: new Date(),
       deadline: new Date(),
       additionalClients: [],
+      handlerId: "",
     },
   });
 
@@ -56,6 +57,7 @@ export default function AddEpassportModal({
   const dueAmount = amount - (paidAmount + discount);
   const clientId = watch("clientId");
   const selectedClient = clients.find((c) => c._id === clientId);
+  const selectedHandlerId = watch("handlerId");
 
   useEffect(() => {
     const fetchHandlers = async () => {
@@ -63,7 +65,11 @@ export default function AddEpassportModal({
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
         );
-        setHandlers(response.data.admins || []);
+        const adminsData = response.data.admins || [];
+        setHandlers(adminsData.map(admin => ({
+          id: admin._id,
+          name: admin.name
+        })));
       } catch (error) {
         toast.error("Failed to fetch handlers.");
       }
@@ -100,6 +106,12 @@ export default function AddEpassportModal({
         return;
       }
 
+      const selectedHandler = handlers.find(h => h.id === data.handlerId);
+      if (!selectedHandler) {
+        toast.error("Please select a handler");
+        return;
+      }
+
       const formData = {
         ...data,
         clientName: client.name,
@@ -107,8 +119,10 @@ export default function AddEpassportModal({
         date: data.date.toISOString(),
         deadline: data.deadline.toISOString(),
         dueAmount,
-        paymentMethod: data.paymentMethod === "" ? undefined : data.paymentMethod,        
+        paymentMethod: data.paymentMethod === "" ? undefined : data.paymentMethod,
         additionalClients: data.additionalClients,
+        handledBy: selectedHandler.name,
+        handlerId: selectedHandler.id
       };
 
       const response = await axios.post(
@@ -202,18 +216,18 @@ export default function AddEpassportModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700">Handled By</label>
                 <select
-                  {...register("handledBy", { required: "This field is required" })}
+                  {...register("handlerId", { required: "This field is required" })}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="">Select handler</option>
                   {handlers.map((handler) => (
-                    <option key={handler.id} value={handler.name}>
+                    <option key={handler.id} value={handler.id}>
                       {handler.name}
                     </option>
                   ))}
                 </select>
-                {errors.handledBy && (
-                  <p className="mt-1 text-sm text-red-600">{errors.handledBy.message}</p>
+                {errors.handlerId && (
+                  <p className="mt-1 text-sm text-red-600">{errors.handlerId.message}</p>
                 )}
               </div>
               <div>

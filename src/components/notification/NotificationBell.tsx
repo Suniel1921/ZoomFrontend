@@ -1,171 +1,275 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import { Howl } from 'howler';
 import { useAuthGlobally } from '../../context/AuthContext';
 
 interface Notification {
-  id: string;
+  _id: string;
   message: string;
-  isRead: boolean;
   createdAt: string;
+  read: boolean;
+  sender: {
+    _id: string;
+    name: string;
+  };
+  type: string;
+  taskId: string;
+  taskModel: string;
 }
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const soundRef = useRef<Howl | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const maxRetries = useRef(5);
+  const retryCount = useRef(0);
   const [auth] = useAuthGlobally();
 
-  const checkDeadlines = async () => {
-    try {
-      // Get current user's name from auth context
-      const currentUserName = auth?.user?.fullName;
-      
-      if (!currentUserName) {
-        console.log('No user name found');
-        return;
-      }
-
-      const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/getAllVisaApplication`
-      );
-      
-      const applications = response.data?.applications || [];
-      
-      if (!Array.isArray(applications) || applications.length === 0) {
-        return;
-      }
-
-      const twoDaysFromNow = new Date();
-      twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
-
-      console.log('Two days from now:', twoDaysFromNow); // Debugging
-      
-      const deadlineNotifications = applications
-        .filter(app => {
-          if (!app?.deadline || !app?.handledBy || !app?.translationHandler) {
-            return false;
-          }
-          
-          const deadline = new Date(app.deadline);
-          console.log('Deadline for app:', deadline); // Debugging
-
-          // Compare with handler names instead of IDs
-          const isHandlerMatch = app.handledBy === currentUserName || app.translationHandler === currentUserName;
-          const isDeadlineApproaching = deadline <= twoDaysFromNow && deadline >= new Date();
-          
-          return isHandlerMatch && isDeadlineApproaching;
-        })
-        .map(app => ({
-          id: app._id,
-          message: `Deadline approaching for ${app.clientName || 'Unknown Client'}'s ${app.type || 'Visa'} application (${new Date(app.deadline).toLocaleDateString()})`,
-          isRead: false,
-          createdAt: new Date().toISOString()
-        }));
-
-      if (deadlineNotifications.length > 0) {
-        setNotifications(prev => {
-          const newNotifications = [...deadlineNotifications, ...prev];
-          const uniqueNotifications = Array.from(
-            new Map(newNotifications.map(item => [item.id, item])).values()
-          );
-          return uniqueNotifications;
-        });
-        
-        setUnreadCount(prev => prev + deadlineNotifications.length);
-        
-        // Show toast for new notifications
-        deadlineNotifications.forEach(notification => {
-          toast.custom((t) => (
-            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white shadow-lg rounded-lg p-4 max-w-md`}>
-              <div className="flex items-center">
-                <Bell className="h-5 w-5 text-yellow-500 mr-2" />
-                <p className="text-sm text-gray-800">{notification.message}</p>
-              </div>
-            </div>
-          ));
-        });
-      }
-    } catch (error) {
-      console.error('Error checking deadlines:', error);
-      toast.error('Failed to check for notifications');
+  const fetchNotifications = useCallback(async () => {
+    if (!auth?.token) {
+      console.log('No token available, skipping fetchNotifications');
+      return;
     }
-  };
+
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/notify/getNotifications`, {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+
+      const fetchedNotifications = response.data?.notifications || [];
+      setNotifications(fetchedNotifications);
+      setUnreadCount(fetchedNotifications.filter((n: Notification) => !n.read).length);
+    } catch (error) {
+      console.error('Error fetching notifications:', error.response?.data || error.message);
+      setNotifications([]);
+    }
+  }, [auth?.token]);
 
   useEffect(() => {
-    if (auth?.user?.fullName) {
-      checkDeadlines();
-      const interval = setInterval(checkDeadlines, 60 * 1000); // Poll every 60 seconds
-      return () => clearInterval(interval);
-    }
-  }, [auth?.user?.fullName]);
+    // Initialize Howler sound
+    soundRef.current = new Howl({
+      src: ['/notification1.wav'], // Ensure this file is in /public
+      preload: true,
+      volume: 0.5,
+      onload: () => console.log('Notification sound loaded'),
+      onloaderror: (id, error) => console.error('Error loading sound:', error),
+    });
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unload();
+      }
+    };
+  }, []);
+
+  const playNotificationSound = () => {
+    if (soundRef.current) {
+      if (!soundRef.current.playing()) {
+        soundRef.current.play();
+      } else {
+        console.log('Sound already playing, skipping');
+      }
+    }
   };
 
-  const clearAll = () => {
-    setNotifications([]);
-    setUnreadCount(0);
+  const connectWebSocket = useCallback(() => {
+    if (!auth?.token) {
+      console.log('No token available, skipping WebSocket connection');
+      return;
+    }
+
+    const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:3000'}?token=${auth.token}`;
+    const websocket = new WebSocket(wsUrl);
+
+    websocket.onopen = () => {
+      console.log('WebSocket connected');
+      retryCount.current = 0;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+
+    websocket.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket message:', data);
+        if (data.type === 'NEW_NOTIFICATION') {
+          const newNotification = data.data || {};
+          setNotifications((prev) => {
+            if (!newNotification._id || prev.some((n) => n._id === newNotification._id)) return prev;
+            return [newNotification, ...prev];
+          });
+          setUnreadCount((prev) => prev + 1);
+          playNotificationSound();
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    };
+
+    websocket.onclose = (event) => {
+      console.log('WebSocket disconnected:', event.code, event.reason);
+      if (retryCount.current < maxRetries.current && event.code !== 1000) {
+        const timeout = Math.min(1000 * Math.pow(2, retryCount.current), 30000);
+        retryCount.current++;
+        console.log(`Attempting reconnection in ${timeout}ms (Retry ${retryCount.current}/${maxRetries.current})...`);
+        reconnectTimeoutRef.current = setTimeout(connectWebSocket, timeout);
+      }
+    };
+
+    websocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    setWs(websocket);
+
+    return () => {
+      if (websocket.readyState === WebSocket.OPEN) {
+        websocket.close(1000, 'Component unmounted');
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [auth?.token]);
+
+  useEffect(() => {
+    if (auth?.token) {
+      fetchNotifications();
+      const cleanup = connectWebSocket();
+      return () => cleanup?.();
+    } else {
+      console.log('No auth token, skipping initialization');
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [fetchNotifications, connectWebSocket, auth?.token]);
+
+  const markAsRead = async () => {
+    if (!auth?.token) return;
+
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/notify/markAsRead`,
+        {},
+        { headers: { Authorization: `Bearer ${auth.token}` } }
+      );
+      setUnreadCount(0);
+      setNotifications(notifications.map((n) => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Error marking notifications as read:', error.response?.data || error.message);
+    }
+  };
+
+  const removeNotification = async (notificationId: string) => {
+    if (!auth?.token) return;
+
+    try {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/notify/${notificationId}`, {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+      setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error removing notification:', error.response?.data || error.message);
+    }
+  };
+
+  const formatTimeAgo = (date: string) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diff = now.getTime() - past.getTime();
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'just now';
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (notification.type === 'TASK_ASSIGNED' && notification.taskModel === 'ePassportModel') {
+      window.location.href = `/dashboard/epassport`;
+    }
   };
 
   return (
     <div className="relative">
       <button
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 text-gray-400 hover:text-white focus:outline-none"
+        onClick={() => {
+          setShowDropdown(!showDropdown);
+          if (unreadCount > 0) markAsRead();
+          playNotificationSound(); // Prime sound on user interaction
+        }}
+        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+        aria-label="Notifications"
       >
-        <Bell className="h-6 w-6" />
+        <Bell className="h-6 w-6 text-gray-600" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse-custom">
             {unreadCount}
           </span>
         )}
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
-          <div className="p-4 border-b">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Notifications **</h3>
-              {notifications.length > 0 && (
-                <button
-                  onClick={clearAll}
-                  className="text-sm text-gray-500 hover:text-gray-700"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                No notifications
-              </div>
-            ) : (
-              notifications.map(notification => (
-                <div
-                  key={notification.id}
-                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''}`}
-                  onClick={() => markAsRead(notification.id)}
-                >
-                  <p className="text-sm text-gray-800">{notification.message}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(notification.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              ))
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl z-50 max-h-[80vh] overflow-y-auto border border-gray-200 animate-slide-in">
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
+            {notifications.length > 0 && (
+              <button
+                onClick={() => setNotifications([])}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Clear all
+              </button>
             )}
           </div>
+
+          {notifications.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">No notifications</div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {notifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  className={`p-4 hover:bg-gray-50 transition-colors animate-fade-in cursor-pointer ${
+                    notification.read ? 'bg-white' : 'bg-blue-50'
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-800">{notification.message || 'No message'}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatTimeAgo(notification.createdAt || new Date().toISOString())}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeNotification(notification._id);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+
