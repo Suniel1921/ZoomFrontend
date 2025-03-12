@@ -11,7 +11,7 @@ interface EditDesignJobModalProps {
   isOpen: boolean;
   onClose: () => void;
   fetchGraphicDesignJobs: () => void;
-  job: any; // Replace 'any' with a proper interface if possible
+  job: any;
 }
 
 interface FormData {
@@ -26,6 +26,7 @@ interface FormData {
   remarks: string;
   deadline?: string;
   date?: string;
+  paymentStatus?: string; // Add paymentStatus to FormData
 }
 
 export default function EditDesignJobModal({
@@ -47,7 +48,8 @@ export default function EditDesignJobModal({
       ...job,
       amount: job.amount || 0,
       advancePaid: job.advancePaid || 0,
-      status: job.status || "Processing", // Ensure initial status from job
+      status: job.status || "Processing",
+      paymentStatus: job.paymentStatus || "Due", // Set initial paymentStatus from job
     },
   });
 
@@ -55,7 +57,6 @@ export default function EditDesignJobModal({
   const advancePaid = watch("advancePaid", 0);
   const dueAmount = amount - advancePaid;
 
-  // Fetch handlers (admins) from the API
   useEffect(() => {
     const fetchHandlers = async () => {
       try {
@@ -80,11 +81,15 @@ export default function EditDesignJobModal({
       if (isNaN(date.getTime())) throw new Error("Invalid date");
       if (isNaN(deadline.getTime())) throw new Error("Invalid deadline");
 
+      // Calculate paymentStatus based on dueAmount
+      const paymentStatus = dueAmount === 0 ? "Paid" : "Due";
+
       const updatedData = {
         ...data,
         date: date.toISOString(),
         deadline: deadline.toISOString(),
-        dueAmount, // Include dueAmount in the update
+        dueAmount,
+        paymentStatus, // Include paymentStatus in the update
       };
 
       const response = await axios.put(
@@ -155,7 +160,7 @@ export default function EditDesignJobModal({
               </label>
               <select
                 {...register("handledBy")}
-                value={watch("handledBy") || job.handledBy} // Use job.handledBy as fallback
+                value={watch("handledBy") || job.handledBy}
                 onChange={(e) => setValue("handledBy", e.target.value)}
                 className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
               >
@@ -261,6 +266,3 @@ export default function EditDesignJobModal({
     </div>
   );
 }
-
-
-// add a amount heading and in PAYMENT heading show the payment status paid or due and in status heading show the job status processing completed waiting for payment cancelled 
