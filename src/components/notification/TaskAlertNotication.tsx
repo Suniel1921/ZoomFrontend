@@ -1,111 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, AlertTriangle, DollarSign } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
-import TaskAlerts from './TaskAlerts';
+import React, { useEffect } from "react";
+import { AlertTriangle, DollarSign, X } from "lucide-react";
 
-interface AlertBellProps {
-  deadlineAlerts: any[];
-  paymentFollowUps: any[];
+interface TaskAlert {
+  taskId: string;
+  taskModel: string;
+  message: string;
+  priority?: "high" | "urgent";
+  clientName?: string;
+  dueAmount?: number;
+  handledBy: string;
+  alertType: "deadline" | "payment";
 }
 
-export default function AlertBell({ deadlineAlerts, paymentFollowUps }: AlertBellProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(true);
-  const totalAlerts = deadlineAlerts.length + paymentFollowUps.length;
+interface NotificationProps {
+  alert: TaskAlert;
+  onDismiss: () => void;
+}
 
+export default function TaskAlertNotification({ alert, onDismiss }: NotificationProps) {
   useEffect(() => {
-    let currentIndex = 0;
-    const allAlerts = [...deadlineAlerts, ...paymentFollowUps];
+    const timer = setTimeout(() => {
+      onDismiss();
+    }, 10000); // Dismiss after 10 seconds
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
 
-    if (allAlerts.length === 0) return;
-
-    const interval = setInterval(() => {
-      if (currentIndex < allAlerts.length) {
-        const alert = allAlerts[currentIndex];
-        const isDeadline = deadlineAlerts.includes(alert);
-
-        toast.custom(
-          (t) => (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className={`${
-                t.visible ? 'animate-enter' : 'animate-leave'
-              } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
-            >
-              <div className="flex-1 w-0 p-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 pt-0.5">
-                    {isDeadline ? (
-                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                    ) : (
-                      <DollarSign className="h-5 w-5 text-orange-500" />
-                    )}
-                  </div>
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {isDeadline ? 'Deadline Alert' : 'Payment Follow-up'}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">{alert.message}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ),
-          { duration: 5000 }
-        );
-        currentIndex++;
-      }
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, [deadlineAlerts, paymentFollowUps]);
+  const isDeadlineAlert = alert.priority !== undefined;
+  const gradientColor = isDeadlineAlert
+    ? alert.priority === "urgent"
+      ? "from-[#4C1D95] to-[#7C3AED]" // Purple gradient for urgent (deadline passed)
+      : "from-[#1E3A8A] to-[#3B82F6]" // Blue gradient for high (deadline ≤ 2 days)
+    : "from-[#14532D] to-[#22C55E]"; // Green gradient for payment follow-up
+  const textColor = "text-white"; // White text for contrast
+  const iconColor = "text-white"; // White icons for contrast
 
   return (
-    <div className="relative">
+    <div
+      className={`w-80 p-4 rounded-xl shadow-lg flex items-start space-x-4 bg-gradient-to-r ${gradientColor} border border-gray-300/20 animate-slide-in`}
+    >
+      {isDeadlineAlert ? (
+        <AlertTriangle className={`w-6 h-6 flex-shrink-0 ${iconColor}`} />
+      ) : (
+        <DollarSign className={`w-6 h-6 flex-shrink-0 ${iconColor}`} />
+      )}
+      <div className="flex-1">
+        <p className={`text-base font-semibold ${textColor}`}>{alert.message}</p>
+        <p className={`text-sm ${textColor} opacity-80 mt-1`}>
+          {alert.clientName} | {alert.taskModel}
+        </p>
+      </div>
       <button
-        onClick={() => {
-          setIsOpen(!isOpen);
-          setHasUnread(false);
-        }}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+        onClick={onDismiss}
+        className={`p-1 rounded-full hover:bg-white/20 transition-colors ${textColor}`}
       >
-        <Bell className="h-6 w-6" />
-        {hasUnread && totalAlerts > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-            {totalAlerts}
-          </span>
-        )}
+        <X className="w-5 h-5" />
       </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-25 z-40"
-              onClick={() => setIsOpen(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg overflow-hidden z-50"
-            >
-              <div className="max-h-[80vh] overflow-y-auto">
-                <div className="p-4">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Notifications</h2>
-                  <TaskAlerts deadlineAlerts={deadlineAlerts} paymentFollowUps={paymentFollowUps} />
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

@@ -8,7 +8,7 @@ interface TaskAlert {
   priority?: "high" | "urgent";
   clientName?: string;
   dueAmount?: number;
-  handledBy: string; // Updated to match DB
+  handledBy: string;
 }
 
 interface TaskAlertsProps {
@@ -21,7 +21,7 @@ export default function TaskAlerts({ deadlineAlerts, paymentFollowUps }: TaskAle
   const [isPaymentOpen, setIsPaymentOpen] = useState(true);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-96 overflow-y-auto">
       {deadlineAlerts.length > 0 && (
         <div>
           <button
@@ -93,9 +93,3 @@ export default function TaskAlerts({ deadlineAlerts, paymentFollowUps }: TaskAle
     </div>
   );
 }
-
-
-
-
-
-
