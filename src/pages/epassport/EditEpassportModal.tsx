@@ -68,7 +68,7 @@ export default function EditEpassportModal({
   useEffect(() => {
     setValue("dueAmount", dueAmount);
     if (dueAmount <= 0) setValue("paymentStatus", "Paid");
-    else if (paidAmount > 0) setValue("paymentStatus", "Partial");
+    else if (paidAmount > 0) setValue("paymentStatus", "Due");
     else setValue("paymentStatus", "Due");
   }, [amount, paidAmount, discount, setValue]);
 
@@ -330,7 +330,6 @@ export default function EditEpassportModal({
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 mt-1"
                 >
                   <option value="Due">Due</option>
-                  <option value="Partial">Partial</option>
                   <option value="Paid">Paid</option>
                 </select>
               </div>
