@@ -745,7 +745,7 @@ import ServiceRequestsList from "./components/ServiceRequestsList";
 import { WelcomeSection } from "./WelcomeSection";
 import { StatsSection } from "./StatsSection";
 import { NotificationManager } from "../../components/notification/NotificationManage";
-import RecentActivity from "./RecentActivity"; // Import the new component
+import RecentActivity from "./RecentActivity"; // Import the updated RecentActivity
 import { History } from "lucide-react"; // Import the history icon
 
 interface TaskAlert {
@@ -1275,17 +1275,19 @@ const DashboardHome: React.FC = () => {
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen relative">
-      {/* Add the History Icon in the Header */}
+      {/* Header with Admin Activity button in the right corner for superadmin */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold"></h1>
-        <button
-          onClick={() => setShowRecentActivity(true)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
-          title="View Admin Activity"
-        >
-          <History className="h-6 w-6" />
-          <span className="text-sm font-medium">Admin Activity</span>
-        </button>
+        <div></div> {/* Placeholder for left side alignment */}
+        {auth.user.role === "superadmin" && (
+          <button
+            onClick={() => setShowRecentActivity(true)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+            title="View Admin Activity"
+          >
+            <History className="h-6 w-6" />
+            <span className="text-sm font-medium">Admin Activity</span>
+          </button>
+        )}
       </div>
 
       <WelcomeSection
@@ -1328,11 +1330,13 @@ const DashboardHome: React.FC = () => {
         onDismiss={handleNotificationDismiss}
       />
 
-      {/* Render the RecentActivity Modal */}
-      <RecentActivity
-        isOpen={showRecentActivity}
-        onClose={() => setShowRecentActivity(false)}
-      />
+      {/* Render the RecentActivity Modal only for superadmin */}
+      {auth.user.role === "superadmin" && (
+        <RecentActivity
+          isOpen={showRecentActivity}
+          onClose={() => setShowRecentActivity(false)}
+        />
+      )}
     </div>
   );
 };

@@ -43,7 +43,12 @@ const RecentActivity: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
       const response = await axios.get(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/logs/get-audit-log`,
         {
-          params: { page: pageNum, limit, userType: "admin", searchQuery: query },
+          params: {
+            page: pageNum,
+            limit,
+            userType: ["admin", "superadmin"], // Fetch both admin and superadmin logs
+            searchQuery: query,
+          },
         }
       );
       if (response.data.success) {
