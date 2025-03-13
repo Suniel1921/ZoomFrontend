@@ -41,7 +41,6 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
           <p className="mt-1 text-base text-gray-600 italic">{getDailyMotivation}</p>
         </div>
         <div className="text-left sm:text-right flex items-center gap-4">
-          <p className="text-sm text-gray-500">Today's Date</p>
           <p className="text-lg font-semibold">
             {new Date().toLocaleDateString("en-US", {
               weekday: "long",
