@@ -308,11 +308,11 @@
 //           setLoading(true);
 //           setError(null);
 //           const [clientsRes, tasksRes, appointmentsRes, servicesRes, adminRes] = await Promise.all([
-//             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`),
+  //             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`),
+  //             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/getAllRequestedService`),
+  //             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/superAdmin/getSuperAdmin/${auth.user.id}`),
+  //             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`),
 //             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`),
-//             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`),
-//             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/getAllRequestedService`),
-//             axios.get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/superAdmin/getSuperAdmin/${auth.user.id}`),
 //           ]);
 
 //           const clientsData = clientsRes.data.clients || [];
@@ -745,8 +745,8 @@ import ServiceRequestsList from "./components/ServiceRequestsList";
 import { WelcomeSection } from "./WelcomeSection";
 import { StatsSection } from "./StatsSection";
 import { NotificationManager } from "../../components/notification/NotificationManage";
-import RecentActivity from "./RecentActivity"; // Import the updated RecentActivity
-import { History } from "lucide-react"; // Import the history icon
+import RecentActivity from "./RecentActivity"; 
+import { History } from "lucide-react";
 
 interface TaskAlert {
   taskId: string;
@@ -819,7 +819,7 @@ const DashboardHome: React.FC = () => {
   const [showAlerts, setShowAlerts] = useState(false);
   const [notifications, setNotifications] = useState<TaskAlert[]>([]);
   const [notifiedKeys, setNotifiedKeys] = useState<Set<string>>(new Set());
-  const [showRecentActivity, setShowRecentActivity] = useState(false); // State for recent activity modal
+  const [showRecentActivity, setShowRecentActivity] = useState(false); 
 
   const motivationalQuotes = [
     "Success is the sum of small efforts, repeated day in and day out.",
