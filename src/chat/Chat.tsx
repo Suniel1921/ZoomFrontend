@@ -87,8 +87,8 @@ const Chat = () => {
     groups.find(g => g._id === selectedGroup) : null;
 
   // Debugging: Log auth.user.id and messages to check alignment logic
-  console.log('Auth User ID:', auth?.user?.id);
-  console.log('Current Messages:', currentMessages);
+  // console.log('Auth User ID:', auth?.user?.id);
+  // console.log('Current Messages:', currentMessages);
 
   // Ensure auth.user.id is available before rendering messages
   if (!auth?.user?.id) {
@@ -350,3 +350,4 @@ const Chat = () => {
 };
 
 export default Chat;
+
