@@ -37,7 +37,7 @@ export default function Dashboard() {
         <Route path="call-logs/*" element={<CallLogs />} />
         <Route path="campaign/*" element={<Campaign />} />
         <Route path="chat-with-us/*" element={<ChatWithUs />} />
-        <Route path="chat/*" element={<Chat />} />
+        {/* <Route path="chat/*" element={<Chat />} /> */}
         <Route path="manage-app/*" element={<ManageApp />} />
       </Routes>
     </Layout>
