@@ -181,7 +181,7 @@ const App = () => {
                         <Route path="call-logs/*" element={<CallLogs />} />
                         <Route path="manage-app/*" element={<ManageApp />} />
                         {/* <Route path="chat-with-us/*" element={<ChatWithUs />} /> --- for mobile app */}
-                        {/* <Route path="chat*" element={<Chat/>} /> ---- for web */}
+                        <Route path="chat*" element={<Chat/>} /> 
 
                     </Route>
                 </Route>

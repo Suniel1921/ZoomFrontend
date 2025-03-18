@@ -13,9 +13,9 @@ createRoot(document.getElementById("root")!).render(
     <AuthProvider>
       <AppointmentProvider>
         <AccountTaskProvider>
-          {/* <ChatProvider> */}
+          <ChatProvider>
             <App />
-          {/* </ChatProvider> */}
+          </ChatProvider>
         </AccountTaskProvider>
       </AppointmentProvider>
     </AuthProvider>
