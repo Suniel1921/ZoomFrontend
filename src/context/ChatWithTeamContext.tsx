@@ -13,6 +13,7 @@ export const ChatProvider = ({ children }) => {
     const [users, setUsers] = useState([]);
     const [groups, setGroups] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
+    const [typingUsers, setTypingUsers] = useState(new Map()); // Map to track typing users per chat
 
     const api = axios.create({
         baseURL: import.meta.env.VITE_REACT_APP_URL,
@@ -139,6 +140,24 @@ export const ChatProvider = ({ children }) => {
                         setOnlineUsers(new Set(data.users));
                         break;
                     }
+                    case 'TYPING': {
+                        const { chatId, userId, chatType } = data;
+                        setTypingUsers(prev => {
+                            const updated = new Map(prev);
+                            updated.set(`${chatType}-${chatId}`, userId);
+                            return updated;
+                        });
+                        setTimeout(() => {
+                            setTypingUsers(prev => {
+                                const updated = new Map(prev);
+                                updated.delete(`${chatType}-${chatId}`);
+                                return updated;
+                            });
+                        }, 1500); // Clear typing indicator after 1.5 seconds
+                        break;
+                    }
+                    default:
+                        console.warn('Unknown message type:', data.type);
                 }
             } catch (error) {
                 console.error('Error processing WebSocket message:', error);
@@ -149,10 +168,13 @@ export const ChatProvider = ({ children }) => {
         websocket.onclose = () => {
             console.log('WebSocket disconnected');
             setWs(null);
-            setTimeout(connectWebSocket, 1000);
+            setTimeout(connectWebSocket, 3000); // Retry connection after 3 seconds
         };
 
-        return () => websocket.close();
+        return () => {
+            websocket.close();
+            setTypingUsers(new Map()); // Clear typing state on disconnect
+        };
     }, [auth?.token, auth?.user?.id, updateUnreadCount]);
 
     useEffect(() => {
@@ -167,17 +189,16 @@ export const ChatProvider = ({ children }) => {
             return;
         }
 
-        // Optimistically update the UI
         const tempMessage = {
-            _id: `temp-${Date.now()}`, // Temporary ID
+            _id: `temp-${Date.now()}`,
             from: {
                 _id: auth.user.id,
-                name: auth.user.name,  // Assuming you have the user's name available
-                superAdminPhoto: auth.user.superAdminPhoto || null
+                name: auth.user.name,
+                superAdminPhoto: auth.user.superAdminPhoto || null,
             },
             content,
             timestamp: new Date().toISOString(),
-            read: true,  // Mark as read for the sender
+            read: true,
         };
 
         const chatKey = [auth.user.id, toId].sort().join('-');
@@ -188,7 +209,6 @@ export const ChatProvider = ({ children }) => {
             return updated;
         });
 
-        // Send the message to the server
         ws.send(JSON.stringify({ type: 'PRIVATE_MESSAGE', toUserId: toId, content }));
     };
 
@@ -198,13 +218,12 @@ export const ChatProvider = ({ children }) => {
             return;
         }
 
-        // Optimistically update the UI for group messages
         const tempMessage = {
             _id: `temp-${Date.now()}`,
             from: {
                 _id: auth.user.id,
                 name: auth.user.name,
-                superAdminPhoto: auth.user.superAdminPhoto || null
+                superAdminPhoto: auth.user.superAdminPhoto || null,
             },
             content,
             timestamp: new Date().toISOString(),
@@ -231,6 +250,14 @@ export const ChatProvider = ({ children }) => {
         }
     };
 
+    const sendTypingEvent = (chatId, chatType) => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            console.error('WebSocket not connected');
+            return;
+        }
+        ws.send(JSON.stringify({ type: 'TYPING', chatId, chatType, userId: auth.user.id }));
+    };
+
     const value = {
         privateChats,
         groupChats,
@@ -238,11 +265,13 @@ export const ChatProvider = ({ children }) => {
         groups,
         unreadCounts,
         onlineUsers,
+        typingUsers,
         sendPrivateMessage,
         sendGroupMessage,
         createGroup,
         fetchPrivateChatHistory,
         fetchGroupChatHistory,
+        sendTypingEvent,
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
