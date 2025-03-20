@@ -3,6 +3,7 @@ import { useAuthGlobally } from '../context/AuthContext';
 import { Send, UserPlus, X } from 'lucide-react';
 import { useChat } from '../context/ChatWithTeamContext';
 
+
 const Chat = () => {
   const {
     privateChats,
