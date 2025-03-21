@@ -1,31 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuthGlobally } from '../context/AuthContext';
 import { Send, UserPlus, X } from 'lucide-react';
 import { useChat } from '../context/ChatWithTeamContext';
-
-interface ChatSelection {
-    type: 'private' | 'group' | null;
-    id: string | null;
-}
-
-interface ChatUser {
-    _id: string;
-    name: string;
-    role: 'admin' | 'superadmin';
-    superAdminPhoto?: string;
-}
-
-interface Group {
-    _id: string;
-    name: string;
-    members: string[];
-}
 
 const Chat = () => {
     const {
         privateChats,
         groupChats,
-        users: chatUsers,
+        users,
         groups,
         unreadCounts,
         onlineUsers,
@@ -38,21 +20,34 @@ const Chat = () => {
         sendTypingEvent,
     } = useChat();
     const [auth] = useAuthGlobally();
-    if (!auth?.user?.id) return <div className="flex items-center justify-center h-screen text-gray-500">Loading...</div>;
-
-    const user = auth.user;
-
-    const [selectedChat, setSelectedChat] = useState<ChatSelection>({ type: null, id: null });
+    const [selectedChat, setSelectedChat] = useState({ type: null, id: null });
     const [message, setMessage] = useState('');
     const [showGroupCreator, setShowGroupCreator] = useState(false);
     const [groupName, setGroupName] = useState('');
-    const [groupMembers, setGroupMembers] = useState<string[]>([]);
-    const [error, setError] = useState<string | null>(null);
+    const [groupMembers, setGroupMembers] = useState([]);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const chatEndRef = useRef(null);
     const chatWindowRef = useRef(null);
-    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [users, setUsers] = useState<ChatUser[]>(chatUsers);
+    const typingTimeoutRef = useRef(null);
+
+    const handleScroll = useCallback(() => {
+        if (!chatWindowRef.current) return;
+        const currentScrollPos = chatWindowRef.current.scrollTop;
+        // Optional: Add logic to show/hide navbar if needed
+    }, []);
+
+    useEffect(() => {
+        const chatWindow = chatWindowRef.current;
+        if (chatWindow) {
+            chatWindow.addEventListener('scroll', handleScroll);
+        }
+        return () => {
+            if (chatWindow) {
+                chatWindow.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [handleScroll]);
 
     useEffect(() => {
         if (selectedChat.type === 'private' && selectedChat.id) {
@@ -62,12 +57,9 @@ const Chat = () => {
         }
     }, [selectedChat, fetchPrivateChatHistory, fetchGroupChatHistory]);
 
-    const clearTypingTimeout = () => {
-        if (typingTimeoutRef.current) {
-            clearTimeout(typingTimeoutRef.current);
-            typingTimeoutRef.current = null;
-        }
-    };
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [privateChats, groupChats, selectedChat]);
 
     const handleSend = () => {
         if (!message.trim() || !selectedChat.id) return;
@@ -77,7 +69,7 @@ const Chat = () => {
             sendGroupMessage(selectedChat.id, message);
         }
         setMessage('');
-        clearTypingTimeout();
+        clearTimeout(typingTimeoutRef.current);
     };
 
     const handleCreateGroup = async () => {
@@ -105,7 +97,7 @@ const Chat = () => {
     );
 
     const chatKey = selectedChat.type === 'private'
-        ? [user.id, selectedChat.id].sort().join('-')
+        ? [auth.user.id, selectedChat.id].sort().join('-')
         : selectedChat.id;
 
     const currentMessages = chatKey
@@ -116,25 +108,19 @@ const Chat = () => {
         ? users.find(u => u._id === selectedChat.id)
         : groups.find(g => g._id === selectedChat.id);
 
-    // Add type guard function
-    const isPrivateChat = (data: ChatUser | Group): data is ChatUser => {
-        return 'role' in data;
-    };
-
-    const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleTyping = (e) => {
         setMessage(e.target.value);
-        if (!e.target.value || !selectedChat.id || !selectedChat.type) {
-            clearTypingTimeout();
+
+        if (!e.target.value) {
+            clearTimeout(typingTimeoutRef.current);
             return;
         }
 
-        const chatKey = selectedChat.type === 'private'
-            ? [user.id, selectedChat.id].sort().join('-')
-            : selectedChat.id;
-
+        // Emit typing event to the server
         sendTypingEvent(chatKey, selectedChat.type);
 
-        clearTypingTimeout();
+        // Reset typing event after 1.5 seconds
+        clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
             // Optionally, you can emit a "STOP_TYPING" event if needed
         }, 1500);
@@ -142,8 +128,10 @@ const Chat = () => {
 
     // Check if someone is typing in the current chat (excluding the current user)
     const isTyping = selectedChat.id && typingUsers.has(`${selectedChat.type}-${chatKey}`)
-        ? typingUsers.get(`${selectedChat.type}-${chatKey}`) !== user.id
+        ? typingUsers.get(`${selectedChat.type}-${chatKey}`) !== auth.user.id
         : false;
+
+    if (!auth?.user?.id) return <div className="flex items-center justify-center h-screen text-gray-500">Loading...</div>;
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden mt-11">
@@ -168,39 +156,35 @@ const Chat = () => {
                             <UserPlus size={20} />
                         </button>
                     </div>
-                    {filteredUsers.map(chatUser => (
+                    {filteredUsers.map(user => (
                         <div
-                            key={chatUser._id}
-                            onClick={() => setSelectedChat({ type: 'private', id: chatUser._id })}
-                            className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer ${selectedChat.type === 'private' && selectedChat.id === chatUser._id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                            key={user._id}
+                            onClick={() => setSelectedChat({ type: 'private', id: user._id })}
+                            className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer ${selectedChat.type === 'private' && selectedChat.id === user._id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
                         >
-                            {chatUser.superAdminPhoto ? (
-                                <img src={chatUser.superAdminPhoto} alt={chatUser.name} className="w-10 h-10 rounded-full" />
+                            {user.superAdminPhoto ? (
+                                <img src={user.superAdminPhoto} alt={user.name} className="w-10 h-10 rounded-full" />
                             ) : (
                                 <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                    {chatUser.name.charAt(0)}
+                                    {user.name.charAt(0)}
                                 </div>
                             )}
                             <div className="ml-3 flex-1">
-                                <div className="font-medium">{chatUser.name}</div>
+                                <div className="font-medium">{user.name}</div>
                                 <div className="text-sm text-gray-500">
-                                    {chatUser.role === 'superadmin' ? 'Super Admin' : 'Admin'}
-                                    {onlineUsers.has(chatUser._id) ? (
+                                    {user.role === 'superadmin' ? 'Super Admin' : 'Admin'}
+                                    {onlineUsers.has(user._id) ? (
                                         <span className="ml-1 text-green-500">• Online</span>
                                     ) : (
                                         <span className="ml-1 text-gray-400">• Offline</span>
                                     )}
                                 </div>
                             </div>
-                            {(() => {
-                                const chatKey = [user.id, chatUser._id].sort().join('-');
-                                const unreadCount = unreadCounts.get(chatKey);
-                                return unreadCount && unreadCount > 0 ? (
-                                    <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
-                                        {unreadCount}
-                                    </span>
-                                ) : null;
-                            })()}
+                            {unreadCounts.get([auth.user.id, user._id].sort().join('-')) > 0 && (
+                                <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
+                                    {unreadCounts.get([auth.user.id, user._id].sort().join('-'))}
+                                </span>
+                            )}
                         </div>
                     ))}
                     <h3 className="text-lg font-semibold mt-6 mb-4">Groups</h3>
@@ -216,14 +200,11 @@ const Chat = () => {
                             <div className="ml-3 flex-1">
                                 <div className="font-medium">{group.name}</div>
                             </div>
-                            {(() => {
-                                const unreadCount = unreadCounts.get(group._id);
-                                return unreadCount && unreadCount > 0 ? (
-                                    <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
-                                        {unreadCount}
-                                    </span>
-                                ) : null;
-                            })()}
+                            {unreadCounts.get(group._id) > 0 && (
+                                <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
+                                    {unreadCounts.get(group._id)}
+                                </span>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -237,7 +218,7 @@ const Chat = () => {
                         <div className="fixed top-0 mt-14 left-[256px] right-0 p-4 border-b border-gray-200 flex items-center bg-white z-20">
                             {selectedData && (
                                 <>
-                                    {selectedChat.type === 'private' && isPrivateChat(selectedData) && selectedData.superAdminPhoto ? (
+                                    {selectedChat.type === 'private' && selectedData.superAdminPhoto ? (
                                         <img src={selectedData.superAdminPhoto} alt={selectedData.name} className="w-10 h-10 rounded-full" />
                                     ) : (
                                         <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -246,7 +227,7 @@ const Chat = () => {
                                     )}
                                     <div className="ml-3">
                                         <div className="font-medium">{selectedData.name}</div>
-                                        {selectedChat.type === 'private' && isPrivateChat(selectedData) && (
+                                        {selectedChat.type === 'private' && (
                                             <div className="text-sm text-gray-500">
                                                 {selectedData.role === 'superadmin' ? 'Super Admin' : 'Admin'}
                                                 {onlineUsers.has(selectedData._id) ? (
@@ -267,9 +248,9 @@ const Chat = () => {
                             {currentMessages.map((msg:any) => (
                                 <div
                                     key={msg._id}
-                                    className={`flex flex-col mb-2 ${msg.from._id === user.id ? 'items-end' : 'items-start'}`}
+                                    className={`flex flex-col mb-2 ${msg.from._id === auth.user.id ? 'items-end' : 'items-start'}`}
                                 >
-                                    {msg.from._id !== user.id && (
+                                    {msg.from._id !== auth.user.id && (
                                         <div className="flex items-center mb-1">
                                             {msg.from.superAdminPhoto ? (
                                                 <img
@@ -286,7 +267,7 @@ const Chat = () => {
                                         </div>
                                     )}
                                     <div
-                                        className={`rounded-xl p-2 break-words max-w-[70%] ${msg.from._id === user.id ? 'bg-green-100 text-gray-700' : 'bg-white border border-gray-200'}`}
+                                        className={`rounded-xl p-2 break-words max-w-[70%] ${msg.from._id === auth.user.id ? 'bg-green-100 text-gray-700' : 'bg-white border border-gray-200'}`}
                                     >
                                         {msg.content}
                                         <div className="text-xs text-gray-500 mt-1 text-right">
