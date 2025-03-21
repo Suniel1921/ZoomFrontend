@@ -81,7 +81,7 @@ export const ChatProvider = ({ children }) => {
     const connectWebSocket = useCallback(() => {
         if (!auth?.token) return;
         const websocket = new WebSocket(
-            `${import.meta.env.VITE_REACT_APP_WS_URL || 'ws://localhost:3000'}?token=${auth.token}`
+            `${import.meta.env.VITE_WS_URL || 'ws://localhost:3000'}?token=${auth.token}`
         );
 
         websocket.onopen = () => {
