@@ -1,31 +1,85 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import axios from 'axios';
 import { useAuthGlobally } from './AuthContext';
 
-const ChatContext = createContext();
+// Type for context value
+interface ChatContextType {
+    privateChats: Map<string, any>;
+    groupChats: Map<string, any>;
+    users: User[];
+    groups: Group[];
+    unreadCounts: Map<string, number>;
+    onlineUsers: Set<string>;
+    typingUsers: Map<string, string>;
+    sendPrivateMessage: (toId: string, content: string) => void;
+    sendGroupMessage: (groupId: string, content: string) => void;
+    createGroup: (name: string, members: string[]) => Promise<void>;
+    fetchPrivateChatHistory: (otherUserId: string) => Promise<void>;
+    fetchGroupChatHistory: (groupId: string) => Promise<void>;
+    sendTypingEvent: (chatId: string, chatType: string) => void;
+}
 
-export const ChatProvider = ({ children }) => {
-    const [auth] = useAuthGlobally();
-    const [ws, setWs] = useState(null);
-    const [privateChats, setPrivateChats] = useState(new Map());
-    const [groupChats, setGroupChats] = useState(new Map());
-    const [unreadCounts, setUnreadCounts] = useState(new Map());
-    const [users, setUsers] = useState([]);
-    const [groups, setGroups] = useState([]);
-    const [onlineUsers, setOnlineUsers] = useState(new Set());
-    const [typingUsers, setTypingUsers] = useState(new Map()); // Map to track typing users per chat
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+// Add interfaces for our types
+interface User {
+    _id: string;
+    name: string;
+    role: 'admin' | 'superadmin';
+    superAdminPhoto?: string;
+}
+
+interface Group {
+    _id: string;
+    name: string;
+    members: string[];
+}
+
+interface Message {
+    _id: string;
+    from: {
+        _id: string;
+        name: string;
+        superAdminPhoto?: string;
+    };
+    content: string;
+    read: boolean;
+    timestamp: string;
+}
+
+interface AdminData {
+    _id: string;
+    name: string;
+    [key: string]: any;
+}
+
+export const ChatProvider = ({ children }: { children: ReactNode }) => {
+    const [auth] = useAuthGlobally() ?? [null];
+    if (!auth || !auth.user) throw new Error('Auth context not found');
+
+    // Now we can safely use auth.user with non-null assertion
+    const user = auth.user;
+
+    const [ws, setWs] = useState<globalThis.WebSocket | null>(null);
+    const [privateChats, setPrivateChats] = useState<Map<string, any>>(new Map());
+    const [groupChats, setGroupChats] = useState<Map<string, any>>(new Map());
+    const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(new Map());
+    const [users, setUsers] = useState<User[]>([]);
+    const [groups, setGroups] = useState<Group[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+    const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
 
     const api = axios.create({
         baseURL: import.meta.env.VITE_REACT_APP_URL,
         headers: { Authorization: `Bearer ${auth?.token}` },
     });
 
-    const updateUnreadCount = useCallback((chatId, messages) => {
+    const updateUnreadCount = useCallback((chatId: string, messages: Message[]) => {
         const unreadCount = messages.filter(
-            msg => !msg.read && msg.from._id !== auth?.user?.id
+            msg => !msg.read && msg.from._id !== user.id
         ).length;
         setUnreadCounts(prev => new Map(prev).set(chatId, unreadCount > 0 ? unreadCount : 0));
-    }, [auth?.user?.id]);
+    }, [user.id, auth?.token]);
 
     const fetchInitialData = useCallback(async () => {
         if (!auth?.token) return;
@@ -36,8 +90,8 @@ export const ChatProvider = ({ children }) => {
                 api.get('/api/v1/chat/group/list'),
             ]);
             setUsers([
-                ...(adminsRes.data.admins || []).map(admin => ({ ...admin, role: 'admin' })),
-                ...(superAdminsRes.data.superAdmins || []).map(superAdmin => ({ ...superAdmin, role: 'superadmin' })),
+                ...(adminsRes.data.admins || []).map((admin: AdminData) => ({ ...admin, role: 'admin' })),
+                ...(superAdminsRes.data.superAdmins || []).map((superAdmin: AdminData) => ({ ...superAdmin, role: 'superadmin' })),
             ]);
             setGroups(groupsRes.data.groups || []);
         } catch (err) {
@@ -45,12 +99,12 @@ export const ChatProvider = ({ children }) => {
         }
     }, [auth?.token]);
 
-    const fetchPrivateChatHistory = useCallback(async (otherUserId) => {
+    const fetchPrivateChatHistory = useCallback(async (otherUserId: string) => {
         if (!auth?.token) return;
         try {
             const response = await api.post('/api/v1/chat/history/private', { otherUserId });
             const messages = response.data.messages || [];
-            const chatKey = [auth.user.id, otherUserId].sort().join('-');
+            const chatKey = [user.id, otherUserId].sort().join('-');
             setPrivateChats(prev => {
                 const updated = new Map(prev);
                 updated.set(chatKey, messages);
@@ -60,9 +114,9 @@ export const ChatProvider = ({ children }) => {
         } catch (err) {
             console.error('Failed to fetch private chat history:', err);
         }
-    }, [auth?.token, auth?.user?.id, updateUnreadCount]);
+    }, [user.id, auth?.token, updateUnreadCount]);
 
-    const fetchGroupChatHistory = useCallback(async (groupId) => {
+    const fetchGroupChatHistory = useCallback(async (groupId: string) => {
         if (!auth?.token) return;
         try {
             const response = await api.post('/api/v1/chat/history/group', { groupId });
@@ -76,7 +130,7 @@ export const ChatProvider = ({ children }) => {
         } catch (err) {
             console.error('Failed to fetch group chat history:', err);
         }
-    }, [auth?.token, auth?.user?.id, updateUnreadCount]);
+    }, [user.id, auth?.token, updateUnreadCount]);
 
     const connectWebSocket = useCallback(() => {
         if (!auth?.token) return;
@@ -87,7 +141,7 @@ export const ChatProvider = ({ children }) => {
         websocket.onopen = () => {
             console.log('WebSocket connected');
             setWs(websocket);
-            websocket.send(JSON.stringify({ type: 'USER_ONLINE', userId: auth.user.id }));
+            websocket.send(JSON.stringify({ type: 'USER_ONLINE', userId: user.id }));
         };
 
         websocket.onmessage = (event) => {
@@ -95,11 +149,11 @@ export const ChatProvider = ({ children }) => {
                 const data = JSON.parse(event.data);
                 switch (data.type) {
                     case 'PRIVATE_MESSAGE': {
-                        const key = [auth.user.id, data.message.from._id].sort().join('-');
+                        const key = [user.id, data.message.from._id].sort().join('-');
                         setPrivateChats(prev => {
                             const updated = new Map(prev);
                             const messages = updated.get(key) || [];
-                            if (!messages.some(m => m._id === data.message._id)) {
+                            if (!messages.some((m: Message) => m._id === data.message._id)) {
                                 updated.set(key, [...messages, data.message]);
                                 updateUnreadCount(key, [...messages, data.message]);
                             }
@@ -111,7 +165,7 @@ export const ChatProvider = ({ children }) => {
                         setGroupChats(prev => {
                             const updated = new Map(prev);
                             const messages = updated.get(data.groupId) || [];
-                            if (!messages.some(m => m._id === data.message._id)) {
+                            if (!messages.some((m: Message) => m._id === data.message._id)) {
                                 updated.set(data.groupId, [...messages, data.message]);
                                 updateUnreadCount(data.groupId, [...messages, data.message]);
                             }
@@ -175,7 +229,7 @@ export const ChatProvider = ({ children }) => {
             websocket.close();
             setTypingUsers(new Map()); // Clear typing state on disconnect
         };
-    }, [auth?.token, auth?.user?.id, updateUnreadCount]);
+    }, [user.id, auth?.token]);
 
     useEffect(() => {
         fetchInitialData();
@@ -183,7 +237,7 @@ export const ChatProvider = ({ children }) => {
         return cleanup;
     }, [fetchInitialData, connectWebSocket]);
 
-    const sendPrivateMessage = (toId, content) => {
+    const sendPrivateMessage = (toId: string, content: string) => {
         if (!ws || ws.readyState !== WebSocket.OPEN) {
             console.error('WebSocket not connected');
             return;
@@ -192,16 +246,16 @@ export const ChatProvider = ({ children }) => {
         const tempMessage = {
             _id: `temp-${Date.now()}`,
             from: {
-                _id: auth.user.id,
-                name: auth.user.name,
-                superAdminPhoto: auth.user.superAdminPhoto || null,
+                _id: user.id,
+                name: user.name,
+                superAdminPhoto: user.superAdminPhoto || null,
             },
             content,
             timestamp: new Date().toISOString(),
             read: true,
         };
 
-        const chatKey = [auth.user.id, toId].sort().join('-');
+        const chatKey = [user.id, toId].sort().join('-');
         setPrivateChats(prev => {
             const updated = new Map(prev);
             const existingMessages = updated.get(chatKey) || [];
@@ -212,7 +266,7 @@ export const ChatProvider = ({ children }) => {
         ws.send(JSON.stringify({ type: 'PRIVATE_MESSAGE', toUserId: toId, content }));
     };
 
-    const sendGroupMessage = (groupId, content) => {
+    const sendGroupMessage = (groupId: string, content: string) => {
         if (!ws || ws.readyState !== WebSocket.OPEN) {
             console.error('WebSocket not connected');
             return;
@@ -221,9 +275,9 @@ export const ChatProvider = ({ children }) => {
         const tempMessage = {
             _id: `temp-${Date.now()}`,
             from: {
-                _id: auth.user.id,
-                name: auth.user.name,
-                superAdminPhoto: auth.user.superAdminPhoto || null,
+                _id: user.id,
+                name: user.name,
+                superAdminPhoto: user.superAdminPhoto || null,
             },
             content,
             timestamp: new Date().toISOString(),
@@ -240,7 +294,7 @@ export const ChatProvider = ({ children }) => {
         ws.send(JSON.stringify({ type: 'GROUP_MESSAGE', groupId, content }));
     };
 
-    const createGroup = async (name, members) => {
+    const createGroup = async (name: string, members: string[]) => {
         try {
             const response = await api.post('/api/v1/chat/group/create', { name, members });
             setGroups(prev => [...prev, response.data.group]);
@@ -250,12 +304,12 @@ export const ChatProvider = ({ children }) => {
         }
     };
 
-    const sendTypingEvent = (chatId, chatType) => {
+    const sendTypingEvent = (chatId: string, chatType: string) => {
         if (!ws || ws.readyState !== WebSocket.OPEN) {
             console.error('WebSocket not connected');
             return;
         }
-        ws.send(JSON.stringify({ type: 'TYPING', chatId, chatType, userId: auth.user.id }));
+        ws.send(JSON.stringify({ type: 'TYPING', chatId, chatType, userId: user.id }));
     };
 
     const value = {
