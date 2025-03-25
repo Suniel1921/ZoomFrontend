@@ -9,11 +9,17 @@ export const ChatProvider = ({ children }) => {
     const [ws, setWs] = useState(null);
     const [privateChats, setPrivateChats] = useState(new Map());
     const [groupChats, setGroupChats] = useState(new Map());
+
+    //new
+    const [clientChats, setClientChats] = useState(new Map());
+
+
     const [unreadCounts, setUnreadCounts] = useState(new Map());
     const [users, setUsers] = useState([]);
     const [groups, setGroups] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     const [typingUsers, setTypingUsers] = useState(new Map()); // Map to track typing users per chat
+    const [clients, setClients] = useState([])
 
     const api = axios.create({
         baseURL: import.meta.env.VITE_REACT_APP_URL,
@@ -30,15 +36,21 @@ export const ChatProvider = ({ children }) => {
     const fetchInitialData = useCallback(async () => {
         if (!auth?.token) return;
         try {
-            const [adminsRes, superAdminsRes, groupsRes] = await Promise.all([
+            const [adminsRes, superAdminsRes, groupsRes, clientsRes] = await Promise.all([
                 api.get('/api/v1/admin/getAllAdmin'),
                 api.get('/api/v1/superAdmin/getAllSuperAdmins'),
                 api.get('/api/v1/chat/group/list'),
+                api.get('/api/v1/client/getClient')
             ]);
+
             setUsers([
                 ...(adminsRes.data.admins || []).map(admin => ({ ...admin, role: 'admin' })),
                 ...(superAdminsRes.data.superAdmins || []).map(superAdmin => ({ ...superAdmin, role: 'superadmin' })),
             ]);
+
+            //client
+            setClients(clientsRes.data)
+
             setGroups(groupsRes.data.groups || []);
         } catch (err) {
             console.error('Failed to fetch initial data:', err);
@@ -61,6 +73,26 @@ export const ChatProvider = ({ children }) => {
             console.error('Failed to fetch private chat history:', err);
         }
     }, [auth?.token, auth?.user?.id, updateUnreadCount]);
+
+
+    //newly add it  client  chat
+    const fetchClientChatHistory = useCallback(async (clientId) => {
+        if (!auth?.token) return;
+        try {
+            const response = await api.post('/api/v1/chat/history/client', { clientId });
+            const messages = response.data.messages || [];
+            // console.log(messages)
+            setClientChats(prev => {
+                const updated = new Map(prev);
+                updated.set(clientId, messages);
+                updateUnreadCount(clientId, messages);
+                return updated;
+            });
+        } catch (err) {
+            console.error('Failed to fetch private chat history:', err);
+        }
+    }, [auth?.token, auth?.user?.id, updateUnreadCount]);
+
 
     const fetchGroupChatHistory = useCallback(async (groupId) => {
         if (!auth?.token) return;
@@ -102,6 +134,18 @@ export const ChatProvider = ({ children }) => {
                             if (!messages.some(m => m._id === data.message._id)) {
                                 updated.set(key, [...messages, data.message]);
                                 updateUnreadCount(key, [...messages, data.message]);
+                            }
+                            return updated;
+                        });
+                        break;
+                    }
+                    case 'CLIENT_MESSAGE': {
+                        setClientChats(prev => {
+                            const updated = new Map(prev);
+                            const messages = updated.get(data.clientId) || [];
+                            if (!messages.some(m => m._id === data.message._id)) {
+                                updated.set(data.clientId, [...messages, data.message]);
+                                updateUnreadCount(data.clientId, [...messages, data.message]);
                             }
                             return updated;
                         });
@@ -212,6 +256,38 @@ export const ChatProvider = ({ children }) => {
         ws.send(JSON.stringify({ type: 'PRIVATE_MESSAGE', toUserId: toId, content }));
     };
 
+
+    //new
+    const sendClientMessage = (toId, content) => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            console.error('WebSocket not connected');
+            return;
+        }
+
+        const tempMessage = {
+            _id: `temp-${Date.now()}`,
+            from: {
+                _id: auth.user.id,
+                name: auth.user.name,
+                superAdminPhoto: auth.user.superAdminPhoto || null,
+            },
+            content,
+            timestamp: new Date().toISOString(),
+            read: true,
+        };
+
+        // const chatKey = [auth.user.id, toId].sort().join('-');
+        setClientChats(prev => {
+            const updated = new Map(prev);
+            const existingMessages = updated.get(toId) || [];
+            updated.set(toId, [...existingMessages, tempMessage]);
+            return updated;
+        });
+
+        ws.send(JSON.stringify({ type: 'CLIENT_MESSAGE', clientId: toId, content , adminThatReplied: auth.user.id}));
+    };
+
+
     const sendGroupMessage = (groupId, content) => {
         if (!ws || ws.readyState !== WebSocket.OPEN) {
             console.error('WebSocket not connected');
@@ -260,16 +336,22 @@ export const ChatProvider = ({ children }) => {
 
     const value = {
         privateChats,
+        clientChats,   //new
         groupChats,
         users,
+        clients,   //newly add it
         groups,
         unreadCounts,
         onlineUsers,
         typingUsers,
         sendPrivateMessage,
+        sendClientMessage,   //new
+
         sendGroupMessage,
         createGroup,
         fetchPrivateChatHistory,
+        fetchClientChatHistory,  //newly add it
+
         fetchGroupChatHistory,
         sendTypingEvent,
     };
