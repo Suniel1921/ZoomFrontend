@@ -471,9 +471,9 @@ export default function AccountsPage() {
     return name.split(" ").map((word) => word[0]).join("").toUpperCase();
   }, []);
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
+  // if (isLoading) {
+  //   return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  // }
 
   return (
     <div className="space-y-6 p-4">
