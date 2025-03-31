@@ -76,7 +76,7 @@ export default function BackupRestoreSettings() {
     }, 400); // Update every 400ms for a smooth, visible progression
 
     try {
-      const response = await axios.get(`${API_URL}/api/v1/backup/backup`, {
+      const response = await axios.get(`${API_URL}/api/v1/backup//ackup-data`, {
         responseType: 'blob',
         timeout: 30000,
       });
