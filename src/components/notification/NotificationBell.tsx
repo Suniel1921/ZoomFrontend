@@ -94,7 +94,8 @@ export default function NotificationBell() {
       return;
     }
 
-    const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:3000'}?token=${auth.token}`;
+    const wsUrl = `${import.meta.env.WS_URL || 'ws://localhost:3000'}?token=${auth.token}`;
+    // const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:3000'}?token=${auth.token}`;
     const websocket = new WebSocket(wsUrl);
 
     websocket.onopen = () => {

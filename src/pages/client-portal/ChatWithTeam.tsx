@@ -44,7 +44,7 @@ const ChatWithTeam: React.FC<ChatWithTeamProps> = ({ onClose }) => {
 
     const connectWebSocket = useCallback(() => {
         if (!auth?.token || retryCount >= 5) return;
-        const websocket = new WebSocket(`${import.meta.env.VITE_WS_URL || 'ws://localhost:3000'}?token=${auth.token}`);
+        const websocket = new WebSocket(`${import.meta.env.WS_URL || 'ws://localhost:3000'}?token=${auth.token}`);
 
         websocket.onopen = () => {
             console.log('WebSocket connected:', auth.user.id);
@@ -107,42 +107,42 @@ const ChatWithTeam: React.FC<ChatWithTeamProps> = ({ onClose }) => {
                     </div>
                 </div>
                 <button onClick={onClose} className="text-white hover:text-gray-200"><X className="h-5 w-5" /></button>
-                </div>
-                <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-                    {messages.map(msg => (
-                        <div key={msg._id} className={`mb-4 flex ${msg.from._id === auth.user.id ? 'justify-end' : 'justify-start'}`}>
-                            <div className="flex flex-col">
-                                {msg.from._id !== auth.user.id && (
-                                    <div className="flex items-center mb-1">
-                                        <img src={msg.from.profilePhoto || '/default-avatar.png'} alt={msg.from.name} className="w-6 h-6 rounded-full mr-2" />
-                                        <div className="text-xs text-gray-500">{msg.from.name}</div>
-                                    </div>
-                                )}
-                                <div className={`max-w-[80%] p-3 rounded-lg ${msg.from._id === auth.user.id ? 'bg-purple-100 text-gray-800' : 'bg-white text-gray-800 shadow-sm'}`}>
-                                    <p>{msg.content}</p>
-                                    <p className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            </div>
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+                {messages.map(msg => (
+                    <div key={msg._id} className={`mb-4 flex ${msg.from._id === auth.user.id ? 'justify-end' : 'justify-start'}`}>
+                        <div className="flex flex-col">
+                            {msg.from._id !== auth.user.id && (
+                                <div className="flex items-center mb-1">
+                                    <img src={msg.from.profilePhoto || '/default-avatar.png'} alt={msg.from.name} className="w-6 h-6 rounded-full mr-2" />
+                                    <div className="text-xs text-gray-500">{msg.from.name}</div>
                                 </div>
-                                {msg.from._id === auth.user.id && (
-                                    <div className="flex items-center justify-end mt-1">
-                                        <div className="text-xs text-gray-500 mr-2">{msg.from.name}</div>
-                                        <img src={msg.from.profilePhoto || '/default-avatar.png'} alt={msg.from.name} className="w-6 h-6 rounded-full" />
-                                    </div>
-                                )}
+                            )}
+                            <div className={`max-w-[80%] p-3 rounded-lg ${msg.from._id === auth.user.id ? 'bg-purple-100 text-gray-800' : 'bg-white text-gray-800 shadow-sm'}`}>
+                                <p>{msg.content}</p>
+                                <p className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
+                            {msg.from._id === auth.user.id && (
+                                <div className="flex items-center justify-end mt-1">
+                                    <div className="text-xs text-gray-500 mr-2">{msg.from.name}</div>
+                                    <img src={msg.from.profilePhoto || '/default-avatar.png'} alt={msg.from.name} className="w-6 h-6 rounded-full" />
+                                </div>
+                            )}
                         </div>
-                    ))}
-                </div>
-                <div className="p-4 border-t border-gray-200">
-                    <div className="flex items-center gap-2">
-                        <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyUp={(e) => e.key === 'Enter' && handleSendMessage()}
-                            placeholder="Message..." className="flex-1 px-4 py-2 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#fcda00] text-sm" />
-                        <button className="text-gray-500 hover:text-[#fcda00]"><Smile className="h-5 w-5" /></button>
-                        <button className="text-gray-500 hover:text-[#fcda00]"><Paperclip className="h-5 w-5" /></button>
-                        <button onClick={handleSendMessage} className="bg-[#fcda00] text-white rounded-full p-2 hover:bg-yellow-300"><Send className="h-5 w-5" /></button>
                     </div>
+                ))}
+            </div>
+            <div className="p-4 border-t border-gray-200">
+                <div className="flex items-center gap-2">
+                    <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyUp={(e) => e.key === 'Enter' && handleSendMessage()}
+                        placeholder="Message..." className="flex-1 px-4 py-2 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#fcda00] text-sm" />
+                    <button className="text-gray-500 hover:text-[#fcda00]"><Smile className="h-5 w-5" /></button>
+                    <button className="text-gray-500 hover:text-[#fcda00]"><Paperclip className="h-5 w-5" /></button>
+                    <button onClick={handleSendMessage} className="bg-[#fcda00] text-white rounded-full p-2 hover:bg-yellow-300"><Send className="h-5 w-5" /></button>
                 </div>
             </div>
-        );
-    };
+        </div>
+    );
+};
 
-    export default ChatWithTeam;
+export default ChatWithTeam;
