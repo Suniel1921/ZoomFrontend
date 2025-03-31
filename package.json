@@ -62,7 +62,7 @@
     "recharts": "^2.12.2",
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.1",
-    "tailwind-merge": "^2.5.5",
+    "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.4",
     "use-sound": "^5.0.0",

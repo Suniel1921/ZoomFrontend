@@ -67,7 +67,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       aria-label="Tasks Overview Statistics"
     />
     <StatsCard
-      label="Upcoming Appointments"
+      label="Appointments"
       value={appointments.length}
       icon={Calendar}
       trend="up"
@@ -80,7 +80,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
         { label: "Daily Average", value: Math.round(appointments.length / 7), status: "active" },
         { label: "This Week", value: appointments.length, status: "total" },
       ]}
-      aria-label="Upcoming Appointments Statistics"
+      aria-label="Appointments Statistics"
     />
     <StatsCard
       label="Service Requests"
