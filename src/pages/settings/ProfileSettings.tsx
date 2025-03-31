@@ -132,7 +132,7 @@ export default function ProfileSettings() {
             Profile Photo
           </label>
           <ImageUpload
-            currentImage={profilePhoto || "https://via.placeholder.com/150"} // Fallback image if no profile photo
+            currentImage={profilePhoto}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
           />
