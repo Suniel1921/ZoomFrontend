@@ -10,7 +10,7 @@ import ServiceRequestsList from "./components/ServiceRequestsList";
 import { WelcomeSection } from "./WelcomeSection";
 import { StatsSection } from "./StatsSection";
 import { NotificationManager } from "../../components/notification/NotificationManage";
-import RecentActivity from "./RecentActivity"; 
+import RecentActivity from "./RecentActivity";
 import { History } from "lucide-react";
 
 interface TaskAlert {
@@ -84,7 +84,7 @@ const DashboardHome: React.FC = () => {
   const [showAlerts, setShowAlerts] = useState(false);
   const [notifications, setNotifications] = useState<TaskAlert[]>([]);
   const [notifiedKeys, setNotifiedKeys] = useState<Set<string>>(new Set());
-  const [showRecentActivity, setShowRecentActivity] = useState(false); 
+  const [showRecentActivity, setShowRecentActivity] = useState(false);
 
   const motivationalQuotes = [
     "Success is the sum of small efforts, repeated day in and day out.",
@@ -345,7 +345,7 @@ const DashboardHome: React.FC = () => {
 
   const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-  const lastMonthActiveClients = useMemo(
+  const previousMonthActiveClients = useMemo(
     () =>
       activeClients.filter((client) => {
         const clientDate = new Date(client.createdAt);
@@ -357,14 +357,16 @@ const DashboardHome: React.FC = () => {
     [activeClients, lastMonth, lastMonthYear]
   );
 
-  const monthlyGrowthRateValue =
-    lastMonthActiveClients.length > 0
-      ? (((thisMonthActiveClients.length - lastMonthActiveClients.length) /
-          lastMonthActiveClients.length) *
-          100).toFixed(1)
-      : thisMonthActiveClients.length > 0
-      ? "100"
-      : "0";
+  const monthlyGrowthRateValue = useMemo(() => {
+    if (previousMonthActiveClients.length === 0) {
+      return thisMonthActiveClients.length > 0 ? "100" : "0";
+    }
+    return (
+      ((thisMonthActiveClients.length - previousMonthActiveClients.length) /
+        previousMonthActiveClients.length) * 100
+    ).toFixed(1);
+  }, [thisMonthActiveClients, previousMonthActiveClients]);
+
   const monthlyGrowthRate = Math.abs(Number(monthlyGrowthRateValue));
   const clientTrend = Number(monthlyGrowthRateValue) >= 0 ? "up" : "down";
 
@@ -538,11 +540,13 @@ const DashboardHome: React.FC = () => {
     );
   }
 
+  console.log("This Month Active Clients:", thisMonthActiveClients.length, thisMonthActiveClients);
+  console.log("Previous Month Active Clients:", previousMonthActiveClients.length, previousMonthActiveClients);
+
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen relative">
-      {/* Header with Admin Activity button in the right corner for superadmin */}
       <div className="flex justify-between items-center mb-4">
-        <div></div> {/* Placeholder for left side alignment */}
+        <div></div>
         {auth.user.role === "superadmin" && (
           <button
             onClick={() => setShowRecentActivity(true)}
@@ -571,6 +575,7 @@ const DashboardHome: React.FC = () => {
         clientTrend={clientTrend}
         monthlyGrowthRate={monthlyGrowthRate}
         thisMonthActiveClients={thisMonthActiveClients}
+        previousMonthActiveClients={previousMonthActiveClients} // Added this prop
         ongoingTasks={ongoingTasks}
         taskStatusData={taskStatusData}
         taskCompletionRate={taskCompletionRate}
@@ -595,7 +600,6 @@ const DashboardHome: React.FC = () => {
         onDismiss={handleNotificationDismiss}
       />
 
-      {/* Render the RecentActivity Modal only for superadmin */}
       {auth.user.role === "superadmin" && (
         <RecentActivity
           isOpen={showRecentActivity}
@@ -613,3 +617,5 @@ export default function DashboardHomeWithBoundary() {
     </ErrorBoundary>
   );
 }
+
+

@@ -1,4 +1,3 @@
-
 // components/dashboard/StatsSection.tsx
 import React from 'react';
 import StatsCard from '../reports/components/StatsCard';
@@ -11,6 +10,7 @@ interface StatsSectionProps {
   clientTrend: string;
   monthlyGrowthRate: number;
   thisMonthActiveClients: any[];
+  previousMonthActiveClients: any[];
   ongoingTasks: { tasks: TaskWithModel[]; completedCount: number; cancelledCount: number };
   taskStatusData: any[];
   taskCompletionRate: string;
@@ -27,13 +27,14 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   clientTrend,
   monthlyGrowthRate,
   thisMonthActiveClients,
+  previousMonthActiveClients,
   ongoingTasks,
   taskStatusData,
   taskCompletionRate,
   appointments,
   appointmentChartData,
   serviceRequested,
-  serviceRequestData
+  serviceRequestData,
 }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
     <StatsCard
@@ -47,7 +48,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       bgColor="#fcda00"
       subStats={[
         { label: "This Month", value: thisMonthActiveClients.length, status: "active" },
-        { label: "Total Clients", value: totalClients, status: "total" },
+        { label: "Previous Month", value: previousMonthActiveClients.length, status: "total" },
       ]}
       aria-label="Active Clients Statistics"
     />
@@ -55,7 +56,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       label="Tasks Overview"
       value={ongoingTasks.tasks.length}
       icon={Clock}
-      trend="up"
+      trend={ongoingTasks.completedCount > ongoingTasks.cancelledCount ? "up" : "down"}
       trendValue={`${taskCompletionRate}%`}
       chartType="pie"
       chartData={taskStatusData}
@@ -70,14 +71,14 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       label="Appointments"
       value={appointments.length}
       icon={Calendar}
-      trend="up"
-      trendValue={`${((appointments.length / 7) * 100).toFixed(1)}%`}
+      trend={appointments.length > 0 ? "up" : "down"}
+      trendValue={`${appointments.length > 0 ? ((appointments.length / 7) * 100).toFixed(1) : "0"}%`}
       chartType="bar"
       chartData={appointmentChartData}
       bgColor="#FCDA00"
       chartColor="#FCDA00"
       subStats={[
-        { label: "Daily Average", value: Math.round(appointments.length / 7), status: "active" },
+        { label: "Daily Average", value: Math.round(appointments.length / 7) || 0, status: "active" },
         { label: "This Week", value: appointments.length, status: "total" },
       ]}
       aria-label="Appointments Statistics"
@@ -86,7 +87,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       label="Service Requests"
       value={serviceRequested.length}
       icon={FileText}
-      trend="up"
+      trend={serviceRequestData.stats.completed > serviceRequestData.stats.pending ? "up" : "down"}
       trendValue={`${serviceRequestData.stats.completionRate}%`}
       chartType="graph"
       chartData={serviceRequestData.timelineData}
