@@ -5,89 +5,46 @@ import { useAuthGlobally } from '../context/AuthContext';
 import { useChat } from '../context/ChatWithTeamContext';
 
 interface SelectedChat {
-  type: 'private' | 'group' | 'client' | null;
+  type: 'private' | 'client' | null;
   id: string | null;
 }
 
 const Chat: React.FC = () => {
-  const { privateChats, groupChats, clientChats, users, clients, groups, unreadCounts, onlineUsers, typingUsers,
-    sendPrivateMessage, sendGroupMessage, sendClientMessage, createGroup, fetchPrivateChatHistory,
-    fetchGroupChatHistory, fetchClientChatHistory, sendTypingEvent } = useChat();
+  const { privateChats, clientChats, users, clients, unreadCounts, onlineUsers, typingUsers,
+    sendPrivateMessage, sendClientMessage, fetchPrivateChatHistory, fetchClientChatHistory, sendTypingEvent } = useChat();
   const [auth] = useAuthGlobally();
   const [selectedChat, setSelectedChat] = useState<SelectedChat>({ type: null, id: null });
   const [message, setMessage] = useState('');
-  const [showGroupCreator, setShowGroupCreator] = useState(false);
-  const [groupName, setGroupName] = useState('');
-  const [groupMembers, setGroupMembers] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'admin' | 'client'>('admin');
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const chatWindowRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  const handleScroll = useCallback(() => {
-    const chatWindow = chatWindowRef.current;
-    if (!chatWindow) return;
-    const isAtBottom = chatWindow.scrollHeight - chatWindow.scrollTop <= chatWindow.clientHeight + 50;
-    if (isAtBottom) scrollToBottom();
-  }, [scrollToBottom]);
-
-  useEffect(() => {
-    const chatWindow = chatWindowRef.current;
-    chatWindow?.addEventListener('scroll', handleScroll);
-    return () => chatWindow?.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
-
   useEffect(() => {
     if (!selectedChat.id) return;
     const fetchChat = async () => {
-      try {
-        if (selectedChat.type === 'private') await fetchPrivateChatHistory(selectedChat.id!);
-        else if (selectedChat.type === 'group') await fetchGroupChatHistory(selectedChat.id!);
-        else if (selectedChat.type === 'client') await fetchClientChatHistory(selectedChat.id!);
-        scrollToBottom();
-      } catch (err) {
-        console.error('Error fetching chat history:', err);
-      }
+      if (selectedChat.type === 'private') await fetchPrivateChatHistory(selectedChat.id!);
+      else if (selectedChat.type === 'client') await fetchClientChatHistory(selectedChat.id!);
+      scrollToBottom();
     };
     fetchChat();
-  }, [selectedChat, fetchPrivateChatHistory, fetchGroupChatHistory, fetchClientChatHistory, scrollToBottom]);
+  }, [selectedChat, fetchPrivateChatHistory, fetchClientChatHistory, scrollToBottom]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [privateChats, groupChats, clientChats, selectedChat, scrollToBottom]);
+  }, [privateChats, clientChats, selectedChat, scrollToBottom]);
 
   const handleSend = useCallback(() => {
     if (!message.trim() || !selectedChat.id) return;
-    try {
-      if (selectedChat.type === 'private') sendPrivateMessage(selectedChat.id, message);
-      else if (selectedChat.type === 'group') sendGroupMessage(selectedChat.id, message);
-      else if (selectedChat.type === 'client') sendClientMessage(selectedChat.id, message);
-      setMessage('');
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setError('Failed to send message');
-    }
-  }, [message, selectedChat, sendPrivateMessage, sendGroupMessage, sendClientMessage]);
-
-  const handleCreateGroup = async () => {
-    if (!groupName.trim()) return setError('Group name is required');
-    try {
-      await createGroup(groupName, groupMembers);
-      setShowGroupCreator(false);
-      setGroupName('');
-      setGroupMembers([]);
-      setError(null);
-    } catch (err) {
-      setError('Failed to create group');
-    }
-  };
+    if (selectedChat.type === 'private') sendPrivateMessage(selectedChat.id, message);
+    else if (selectedChat.type === 'client') sendClientMessage(selectedChat.id, message);
+    setMessage('');
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+  }, [message, selectedChat, sendPrivateMessage, sendClientMessage]);
 
   const handleTyping = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -104,18 +61,17 @@ const Chat: React.FC = () => {
   }, [selectedChat, auth.user.id, sendTypingEvent]);
 
   const filteredUsers = users.filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const filteredGroups = groups.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredClients = clients.filter(client => client.fullName?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const chatKey = selectedChat.type === 'private' 
     ? [auth.user.id, selectedChat.id!].sort().join('-') 
     : selectedChat.id!;
-  const currentMessages = selectedChat.type === 'private' ? privateChats.get(chatKey) || [] :
-    selectedChat.type === 'group' ? groupChats.get(chatKey) || [] : 
-    clientChats.get(chatKey) || [];
-  const selectedData = selectedChat.type === 'private' ? users.find(u => u._id === selectedChat.id) :
-    selectedChat.type === 'group' ? groups.find(g => g._id === selectedChat.id) : 
-    clients.find(c => c._id === selectedChat.id);
+  const currentMessages = selectedChat.type === 'private' 
+    ? privateChats.get(chatKey) || [] 
+    : clientChats.get(chatKey) || [];
+  const selectedData = selectedChat.type === 'private' 
+    ? users.find(u => u._id === selectedChat.id) 
+    : clients.find(c => c._id === selectedChat.id);
   const isTyping = typingUsers.has(`${selectedChat.type}-${chatKey}`) && 
     typingUsers.get(`${selectedChat.type}-${chatKey}`) !== auth.user.id;
 
@@ -148,88 +104,56 @@ const Chat: React.FC = () => {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          {activeTab === 'admin' && (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Direct Messages</h3>
-                <button 
-                  onClick={() => setShowGroupCreator(true)} 
-                  className="p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <UserPlus size={20} />
-                </button>
+          {activeTab === 'admin' && filteredUsers.map(user => (
+            <div 
+              key={user._id} 
+              onClick={() => setSelectedChat({ type: 'private', id: user._id })}
+              className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer ${selectedChat.type === 'private' && selectedChat.id === user._id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+            >
+              {user.profilePhoto ? (
+                <img src={user.profilePhoto} alt={user.name} className="w-10 h-10 rounded-full" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="ml-3 flex-1">
+                <div className="font-medium">{user.name}</div>
+                <div className="text-sm text-gray-500">
+                  {user.role === 'superadmin' ? 'Super Admin' : 'Admin'}
+                  {onlineUsers.has(user._id) ? 
+                    <span className="ml-1 text-green-500">• Online</span> : 
+                    <span className="ml-1 text-gray-400">• Offline</span>}
+                </div>
               </div>
-              {filteredUsers.map(user => (
-                <div 
-                  key={user._id} 
-                  onClick={() => setSelectedChat({ type: 'private', id: user._id })}
-                  className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer ${selectedChat.type === 'private' && selectedChat.id === user._id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-                >
-                  <img 
-                    src={user.superAdminPhoto || '/default-avatar.png'} 
-                    alt={user.name} 
-                    className="w-10 h-10 rounded-full" 
-                  />
-                  <div className="ml-3 flex-1">
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {user.role === 'superadmin' ? 'Super Admin' : 'Admin'}
-                      {onlineUsers.has(user._id) ? 
-                        <span className="ml-1 text-green-500">• Online</span> : 
-                        <span className="ml-1 text-gray-400">• Offline</span>}
-                    </div>
-                  </div>
-                  {unreadCounts.get([auth.user.id, user._id].sort().join('-')) > 0 && (
-                    <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
-                      {unreadCounts.get([auth.user.id, user._id].sort().join('-'))}
-                    </span>
-                  )}
+              {unreadCounts.get([auth.user.id, user._id].sort().join('-')) > 0 && (
+                <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
+                  {unreadCounts.get([auth.user.id, user._id].sort().join('-'))}
+                </span>
+              )}
+            </div>
+          ))}
+          {activeTab === 'client' && filteredClients.map(client => (
+            <div 
+              key={client._id} 
+              onClick={() => setSelectedChat({ type: 'client', id: client._id })}
+              className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer ${selectedChat.type === 'client' && selectedChat.id === client._id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+            >
+              {client.profilePhoto ? (
+                <img src={client.profilePhoto} alt={client.fullName} className="w-10 h-10 rounded-full" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                  {client.fullName?.charAt(0).toUpperCase() || 'C'}
                 </div>
-              ))}
-              <h3 className="text-lg font-semibold mt-6 mb-4">Groups</h3>
-              {filteredGroups.map(group => (
-                <div 
-                  key={group._id} 
-                  onClick={() => setSelectedChat({ type: 'group', id: group._id })}
-                  className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer ${selectedChat.type === 'group' && selectedChat.id === group._id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    {group.name.charAt(0)}
-                  </div>
-                  <div className="ml-3 flex-1 font-medium">{group.name}</div>
-                  {unreadCounts.get(group._id) > 0 && (
-                    <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
-                      {unreadCounts.get(group._id)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </>
-          )}
-          {activeTab === 'client' && (
-            <>
-              <h3 className="text-lg font-semibold mb-4">Clients</h3>
-              {filteredClients.map(client => (
-                <div 
-                  key={client._id} 
-                  onClick={() => setSelectedChat({ type: 'client', id: client._id })}
-                  className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer ${selectedChat.type === 'client' && selectedChat.id === client._id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-                >
-                  <img 
-                    src={client.profilePhoto || '/default-avatar.png'} 
-                    alt={client.fullName} 
-                    className="w-10 h-10 rounded-full" 
-                  />
-                  <div className="ml-3 flex-1 font-medium">{client.fullName}</div>
-                  {unreadCounts.get(client._id) > 0 && (
-                    <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
-                      {unreadCounts.get(client._id)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </>
-          )}
+              )}
+              <div className="ml-3 flex-1 font-medium">{client.fullName}</div>
+              {unreadCounts.get(client._id) > 0 && (
+                <span className="bg-blue-500 text-white rounded-full px-2 text-xs">
+                  {unreadCounts.get(client._id)}
+                </span>
+              )}
+            </div>
+          ))}
         </div>
       </div>
       <div className="flex-1 flex flex-col bg-gray-50 ml-64 h-screen">
@@ -238,11 +162,13 @@ const Chat: React.FC = () => {
             <div className="fixed top-0 mt-14 left-[256px] right-0 p-4 border-b border-gray-200 flex items-center bg-white z-20">
               {selectedData && (
                 <>
-                  <img 
-                    src={selectedData.superAdminPhoto || selectedData.profilePhoto || '/default-avatar.png'} 
-                    alt={selectedData.name || selectedData.fullName} 
-                    className="w-10 h-10 rounded-full" 
-                  />
+                  {selectedData.profilePhoto ? (
+                    <img src={selectedData.profilePhoto} alt={selectedData.name || selectedData.fullName} className="w-10 h-10 rounded-full" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                      {(selectedData.name || selectedData.fullName)?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  )}
                   <div className="ml-3">
                     <div className="font-medium">{selectedData.name || selectedData.fullName}</div>
                     {selectedChat.type === 'private' && (
@@ -253,17 +179,12 @@ const Chat: React.FC = () => {
                           <span className="ml-1 text-gray-400">• Offline</span>}
                       </div>
                     )}
-                    {selectedChat.type === 'client' && currentMessages.some(msg => msg.adminThatReplied) && (
-                      <div className="text-sm text-gray-500">
-                        Assigned: {users.find(u => u._id === currentMessages.find(msg => msg.adminThatReplied)?.adminThatReplied)?.name}
-                      </div>
-                    )}
+                    {isTyping && <div className="ml-4 text-gray-500">Typing...</div>}
                   </div>
-                  {isTyping && <div className="ml-4 text-gray-500">Typing...</div>}
                 </>
               )}
             </div>
-            <div ref={chatWindowRef} className="flex-1 overflow-y-auto p-4 pt-24 pb-20">
+            <div className="flex-1 overflow-y-auto p-4 pt-24 pb-20">
               {currentMessages.map(msg => (
                 <div 
                   key={msg._id} 
@@ -271,11 +192,13 @@ const Chat: React.FC = () => {
                 >
                   {msg.from._id !== auth.user.id && (
                     <div className="flex items-center mb-1">
-                      <img 
-                        src={msg.from.superAdminPhoto || msg.from.profilePhoto || '/default-avatar.png'} 
-                        alt={msg.from.name} 
-                        className="w-6 h-6 rounded-full mr-2" 
-                      />
+                      {msg.from.profilePhoto ? (
+                        <img src={msg.from.profilePhoto} alt={msg.from.name} className="w-6 h-6 rounded-full mr-2" />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs mr-2">
+                          {msg.from.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="text-xs text-gray-500">{msg.from.name}</div>
                     </div>
                   )}
@@ -319,66 +242,6 @@ const Chat: React.FC = () => {
           </div>
         )}
       </div>
-      {showGroupCreator && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Create New Group</h3>
-              <button 
-                onClick={() => setShowGroupCreator(false)} 
-                className="p-1 hover:bg-gray-100 rounded-full"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <input 
-              type="text" 
-              value={groupName} 
-              onChange={(e) => setGroupName(e.target.value)} 
-              placeholder="Group Name"
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 mb-4" 
-            />
-            <div className="mb-4">
-              <div className="font-medium mb-2">Select Members</div>
-              <div className="max-h-48 overflow-y-auto">
-                {users.map(user => (
-                  <label 
-                    key={user._id} 
-                    className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
-                  >
-                    <input 
-                      type="checkbox" 
-                      checked={groupMembers.includes(user._id)}
-                      onChange={(e) => setGroupMembers(prev => 
-                        e.target.checked ? [...prev, user._id] : prev.filter(id => id !== user._id)
-                      )} 
-                      className="mr-3" 
-                    />
-                    <img 
-                      src={user.superAdminPhoto || '/default-avatar.png'} 
-                      alt={user.name} 
-                      className="w-8 h-8 rounded-full mr-2" 
-                    />
-                    <div>
-                      <div className="font-medium">{user.name}</div>
-                      <div className="text-sm text-gray-500">
-                        {user.role === 'superadmin' ? 'Super Admin' : 'Admin'}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-            {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-            <button 
-              onClick={handleCreateGroup} 
-              className="w-full py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-            >
-              Create Group
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

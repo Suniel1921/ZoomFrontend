@@ -17,7 +17,6 @@ interface Message {
   from: {
     _id: string;
     name: string;
-    superAdminPhoto?: string | null;
     profilePhoto?: string | null;
   };
   content: string;
@@ -26,28 +25,17 @@ interface Message {
   adminThatReplied?: string | null;
 }
 
-interface Group {
-  _id: string;
-  name: string;
-  lastUpdated: string;
-}
-
 interface ChatContextType {
   privateChats: Map<string, Message[]>;
-  groupChats: Map<string, Message[]>;
   clientChats: Map<string, Message[]>;
   users: User[];
   clients: User[];
-  groups: Group[];
   unreadCounts: Map<string, number>;
   onlineUsers: Set<string>;
   typingUsers: Map<string, string>;
   sendPrivateMessage: (toId: string, content: string) => void;
-  sendGroupMessage: (groupId: string, content: string) => void;
   sendClientMessage: (clientId: string, content: string) => void;
-  createGroup: (name: string, members: string[]) => Promise<void>;
   fetchPrivateChatHistory: (otherUserId: string) => Promise<void>;
-  fetchGroupChatHistory: (groupId: string) => Promise<void>;
   fetchClientChatHistory: (clientId: string) => Promise<void>;
   sendTypingEvent: (chatId: string, chatType: string) => void;
 }
@@ -58,12 +46,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [auth] = useAuthGlobally();
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [privateChats, setPrivateChats] = useState<Map<string, Message[]>>(new Map());
-  const [groupChats, setGroupChats] = useState<Map<string, Message[]>>(new Map());
   const [clientChats, setClientChats] = useState<Map<string, Message[]>>(new Map());
   const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(new Map());
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<User[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
 
@@ -81,10 +67,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchInitialData = useCallback(async () => {
     if (!auth?.token) return;
     try {
-      const [adminsRes, superAdminsRes, groupsRes, clientsRes] = await Promise.all([
+      const [adminsRes, superAdminsRes, clientsRes] = await Promise.all([
         api.get('/api/v1/admin/getAllAdmin'),
         api.get('/api/v1/superAdmin/getAllSuperAdmins'),
-        api.get('/api/v1/chat/group/list'),
         api.get('/api/v1/client/getClient')
       ]);
 
@@ -93,7 +78,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...(superAdminsRes.data.superAdmins || []).map((superAdmin: User) => ({ ...superAdmin, role: 'superadmin' as const }))
       ]);
       setClients(clientsRes.data.clients || []);
-      setGroups(groupsRes.data.groups || []);
     } catch (err) {
       console.error('Failed to fetch initial data:', err);
     }
@@ -113,22 +97,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (err) {
       console.error('Failed to fetch private chat history:', err);
-    }
-  }, [auth?.token, auth?.user?.id, updateUnreadCount]);
-
-  const fetchGroupChatHistory = useCallback(async (groupId: string) => {
-    if (!auth?.token) return;
-    try {
-      const response = await api.post('/api/v1/chat/history/group', { groupId });
-      const messages: Message[] = response.data.messages || [];
-      setGroupChats(prev => {
-        const updated = new Map(prev);
-        updated.set(groupId, messages);
-        updateUnreadCount(groupId, messages);
-        return updated;
-      });
-    } catch (err) {
-      console.error('Failed to fetch group chat history:', err);
     }
   }, [auth?.token, auth?.user?.id, updateUnreadCount]);
 
@@ -178,18 +146,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             break;
           }
-          case 'GROUP_MESSAGE': {
-            setGroupChats(prev => {
-              const updated = new Map(prev);
-              const messages = updated.get(data.groupId) || [];
-              if (!messages.some(m => m._id === data.message._id)) {
-                updated.set(data.groupId, [...messages, data.message]);
-                updateUnreadCount(data.groupId, [...messages, data.message]);
-              }
-              return updated;
-            });
-            break;
-          }
           case 'CLIENT_MESSAGE': {
             setClientChats(prev => {
               const updated = new Map(prev);
@@ -198,23 +154,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 updated.set(data.clientId, [...messages, data.message]);
                 updateUnreadCount(data.clientId, [...messages, data.message]);
               }
-              return updated;
-            });
-            break;
-          }
-          case 'GROUP_CREATED': {
-            setGroups(prev => [...prev, data.group]);
-            setGroupChats(prev => new Map(prev).set(data.group._id, []));
-            break;
-          }
-          case 'USER_ONLINE': {
-            setOnlineUsers(prev => new Set(prev).add(data.userId));
-            break;
-          }
-          case 'USER_OFFLINE': {
-            setOnlineUsers(prev => {
-              const updated = new Set(prev);
-              updated.delete(data.userId);
               return updated;
             });
             break;
@@ -259,7 +198,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     const tempMessage: Message = {
       _id: `temp-${Date.now()}`,
-      from: { _id: auth.user.id, name: auth.user.name, superAdminPhoto: auth.user.superAdminPhoto || null },
+      from: { _id: auth.user.id, name: auth.user.name, profilePhoto: auth.user.profilePhoto || null },
       content,
       timestamp: new Date().toISOString(),
       read: true
@@ -269,25 +208,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ws.send(JSON.stringify({ type: 'PRIVATE_MESSAGE', toUserId: toId, content }));
   };
 
-  const sendGroupMessage = (groupId: string, content: string) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    const tempMessage: Message = {
-      _id: `temp-${Date.now()}`,
-      from: { _id: auth.user.id, name: auth.user.name, superAdminPhoto: auth.user.superAdminPhoto || null },
-      content,
-      timestamp: new Date().toISOString(),
-      read: true
-    };
-    setGroupChats(prev => new Map(prev).set(groupId, [...(prev.get(groupId) || []), tempMessage]));
-    ws.send(JSON.stringify({ type: 'GROUP_MESSAGE', groupId, content }));
-  };
-
   const sendClientMessage = (clientId: string, content: string) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     const tempMessage: Message = {
       _id: `temp-${Date.now()}`,
       from: { _id: auth.user.id, name: auth.user.name || auth.user.fullName, 
-        superAdminPhoto: auth.user.superAdminPhoto || auth.user.profilePhoto || null },
+        profilePhoto: auth.user.profilePhoto || auth.user.superAdminPhoto || null },
       content,
       timestamp: new Date().toISOString(),
       read: true,
@@ -302,16 +228,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
-  const createGroup = async (name: string, members: string[]) => {
-    try {
-      const response = await api.post('/api/v1/chat/group/create', { name, members });
-      setGroups(prev => [...prev, response.data.group]);
-    } catch (err) {
-      console.error('Failed to create group:', err);
-      throw err;
-    }
-  };
-
   const sendTypingEvent = (chatId: string, chatType: string) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     ws.send(JSON.stringify({ type: 'TYPING', chatId, chatType, userId: auth.user.id }));
@@ -319,20 +235,15 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value: ChatContextType = {
     privateChats,
-    groupChats,
     clientChats,
     users,
     clients,
-    groups,
     unreadCounts,
     onlineUsers,
     typingUsers,
     sendPrivateMessage,
-    sendGroupMessage,
     sendClientMessage,
-    createGroup,
     fetchPrivateChatHistory,
-    fetchGroupChatHistory,
     fetchClientChatHistory,
     sendTypingEvent
   };
