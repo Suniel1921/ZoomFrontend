@@ -1,5 +1,3 @@
-
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -70,26 +68,37 @@ export default function EditAppointmentModal({
   });
 
 
+  
+
+
   const onSubmit = async (data: any) => {
     const payload = {
       mode,
       ...data,
       date: data.date.toISOString(),
     };
-
+  
     try {
-      const response = await fetch(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/updateAppointment/${appointment._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,  
-        },
-        body: JSON.stringify(payload),
-      });
-     
-
-
+      const storedData = localStorage.getItem('token');
+      const parsedData = JSON.parse(storedData);
+      const token = parsedData.token; 
+      console.log('Token:', token); 
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/updateAppointment/${appointment._id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`, // Send only the token string
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+  
       const result = await response.json();
+      console.log('Response:', result); // Debug: Check server response
+  
       if (result.success) {
         toast(`${mode === 'edit' ? 'Appointment updated' : 'Appointment rescheduled'} successfully`);
         onClose();
@@ -214,3 +223,5 @@ export default function EditAppointmentModal({
     </div>
   );
 }
+
+

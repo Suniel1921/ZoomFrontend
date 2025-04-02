@@ -6,7 +6,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import SearchableSelect from "../../components/SearchableSelect";
-import { useStore } from "../../store";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -25,6 +24,7 @@ type AppointmentFormData = {
   isRecurring: boolean;
   recurringFrequency?: "weekly" | "monthly";
   recurringEndDate?: Date;
+  handledBy: string; // Changed to string for name instead of ID
 };
 
 interface AddAppointmentModalProps {
@@ -52,6 +52,7 @@ export default function AddAppointmentModal({
   fetchAppointments,
 }: AddAppointmentModalProps) {
   const [clients, setClients] = useState<any[]>([]);
+  const [handlers, setHandlers] = useState<{ id: string; name: string }[]>([]);
 
   const {
     register,
@@ -85,19 +86,45 @@ export default function AddAppointmentModal({
   const recurringFrequency = watch("recurringFrequency");
   const recurringEndDate = watch("recurringEndDate");
 
+  // Common styles for form elements
+  const selectStyles = "w-full rounded-md border border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow h-10 px-3";
+  const labelStyles = "block text-sm font-medium text-gray-700 mb-1";
+  const errorStyles = "text-sm text-red-600 mt-1";
 
-  //get all client
+
+  
+  useEffect(() => {
+    const fetchHandlers = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
+        );
+        setHandlers(response.data.admins.map((admin: any) => ({
+          id: admin._id,
+          name: admin.name,
+        })));
+      } catch (error: any) {
+        console.error("Failed to fetch handlers:", error);
+        toast.error(error.response?.data?.message || "Failed to fetch handlers");
+      }
+    };
+
+    if (isOpen) {
+      fetchHandlers();
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       axios
         .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`)
         .then((response) => {
           const clientsData = response?.data?.clients;
-          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]); // Always treat as array, even if single client
+          setClients(Array.isArray(clientsData) ? clientsData : [clientsData]);
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);
-          setClients([]); // Set clients to an empty array in case of error
+          setClients([]);
         });
     }
   }, [isOpen]);
@@ -109,6 +136,9 @@ export default function AddAppointmentModal({
 
     const client = clients.find((c) => c._id === data.clientId);
     if (!client) return;
+    
+    // Find the handler object based on the selected name
+    const handler = handlers.find((h) => h.name === data.handledBy);
 
     const appointmentData = {
       ...data,
@@ -116,13 +146,12 @@ export default function AddAppointmentModal({
       email: client.email,
       phone: client.phone,
       status: "Scheduled",
+      handledBy: data.handledBy, // This will now be the name
     };
 
     try {
       const response = await axios.post(
-        `${
-          import.meta.env.VITE_REACT_APP_URL
-        }/api/v1/appointment/createAppointment`,
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/createAppointment`,
         {
           ...appointmentData,
           date: data.date.toISOString(),
@@ -245,7 +274,6 @@ export default function AddAppointmentModal({
                   {...register("time")}
                   className="block w-full"
                 />
-                {/* <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" /> */}
               </div>
             </div>
 
@@ -342,6 +370,24 @@ export default function AddAppointmentModal({
                 </select>
               </div>
             )}
+
+            <div className="space-y-1">
+              <label className={labelStyles}>Handled By *</label>
+              <select
+                {...register("handledBy", { required: "Handler is required" })}
+                className={selectStyles}
+              >
+                <option value="">Select handler</option>
+                {handlers.map((handler) => (
+                  <option key={handler.id} value={handler.name}>
+                    {handler.name}
+                  </option>
+                ))}
+              </select>
+              {errors.handledBy && (
+                <p className={errorStyles}>{errors.handledBy.message}</p>
+              )}
+            </div>
 
             <div className="mt-4 flex items-center">
               <input
