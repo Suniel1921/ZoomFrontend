@@ -70,15 +70,6 @@ export default function AppointmentPage() {
       </div>
     );
   }
-
-
-
-
-
-
-
-
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -136,6 +127,3 @@ export default function AppointmentPage() {
     </div>
   );
 }
-
-
-

@@ -122,7 +122,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <SearchIcon className="h-6 w-6" />
             </button>
-            <NotificationBell/>
+            {/* <NotificationBell/> */}
             <button
               onClick={() => setShowNotes(!showNotes)}
               className="header-icon-button"
