@@ -14,6 +14,27 @@ interface ChatListProps {
   onlineUsers: Set<string>;
   selectedChat: { type: "private" | "client" | null; id: string | null };
   setSelectedChat: (chat: { type: "private" | "client" | null; id: string | null }) => void;
+  unreadCounts: Map<string, number>;
+}
+
+interface User {
+  _id: string;
+  name: string;
+  profilePhoto?: string;
+  superAdminPhoto?: string;
+}
+
+interface Client {
+  _id: string;
+  fullName?: string;
+  profilePhoto?: string;
+}
+
+interface Message {
+  _id: string;
+  from: { _id: string; name: string; profilePhoto?: string };
+  content: string;
+  timestamp: string;
 }
 
 const ChatList: React.FC<ChatListProps> = ({
@@ -28,6 +49,7 @@ const ChatList: React.FC<ChatListProps> = ({
   onlineUsers,
   selectedChat,
   setSelectedChat,
+  unreadCounts,
 }) => {
   return (
     <div className="w-[320px] bg-white border-r border-gray-200 flex flex-col">
@@ -40,7 +62,6 @@ const ChatList: React.FC<ChatListProps> = ({
           className="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-800 border-none focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
-
       <div className="flex-1 overflow-y-auto">
         <div className="p-4">
           <h2 className="text-lg font-semibold mb-3">{activeTab === "inbox" ? "Team" : "Clients"}</h2>
@@ -49,7 +70,8 @@ const ChatList: React.FC<ChatListProps> = ({
               filteredUsers.map((user) => {
                 const chatId = [auth.user.id, user._id].sort().join("-");
                 const lastMessage = privateChats.get(chatId)?.slice(-1)[0];
-                const messageCount = privateChats.get(chatId)?.length || 0;
+                const messageCount = unreadCounts.get(chatId) || 0;
+                const photo = user.profilePhoto || user.superAdminPhoto;
 
                 return (
                   <div
@@ -63,8 +85,8 @@ const ChatList: React.FC<ChatListProps> = ({
                     )}
                   >
                     <div className="relative">
-                      {user.profilePhoto ? (
-                        <img src={user.profilePhoto} alt={user.name} className="w-12 h-12 rounded-full object-cover" />
+                      {photo ? (
+                        <img src={photo} alt={user.name} className="w-12 h-12 rounded-full object-cover" />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-lg font-semibold text-blue-600">
                           {user.name ? user.name.charAt(0).toUpperCase() : "U"}
@@ -97,11 +119,10 @@ const ChatList: React.FC<ChatListProps> = ({
                   </div>
                 );
               })}
-
             {activeTab === "clients" &&
               filteredClients.map((client) => {
                 const lastMessage = clientChats.get(client._id)?.slice(-1)[0];
-                const messageCount = clientChats.get(client._id)?.length || 0;
+                const messageCount = unreadCounts.get(client._id) || 0;
 
                 return (
                   <div
@@ -147,7 +168,6 @@ const ChatList: React.FC<ChatListProps> = ({
           </div>
         </div>
       </div>
-
       <div className="p-4 border-t border-gray-200">
         <button className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center justify-center">
           <Plus size={18} className="mr-2" />

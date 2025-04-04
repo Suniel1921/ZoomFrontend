@@ -7,15 +7,15 @@ interface ChatInputProps {
   handleTyping: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSend: () => void;
   inputRef: React.RefObject<HTMLInputElement>;
-  replyTo: string | null;
-  setReplyTo: (messageId: string | null) => void;
+  replyTo?: string | null; // Optional prop for replying
+  setReplyTo?: (messageId: string | null) => void; // Optional prop for setting reply
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ message, handleTyping, handleSend, inputRef, replyTo, setReplyTo }) => {
   return (
     <div className="p-4 border-t border-gray-200 bg-white">
       <div className="flex flex-col">
-        {replyTo && (
+        {replyTo && setReplyTo && (
           <div className="flex items-center justify-between mb-2 text-sm text-gray-500">
             <span>Replying to a message</span>
             <button onClick={() => setReplyTo(null)} className="text-blue-500 hover:underline">

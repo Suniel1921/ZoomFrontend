@@ -14,8 +14,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ auth, activeTab, setActiveTab
     <div className="w-[80px] bg-white border-r border-gray-200 flex-shrink-0 flex flex-col items-center py-4">
       <div className="mb-8">
         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-          {auth.user.profilePhoto ? (
-            <img src={auth.user.profilePhoto} alt="Profile" className="w-full h-full rounded-full object-cover" />
+          {auth.user.profilePhoto || auth.user.superAdminPhoto ? (
+            <img
+              src={auth.user.profilePhoto || auth.user.superAdminPhoto}
+              alt="Profile"
+              className="w-full h-full rounded-full object-cover"
+            />
           ) : (
             <span className="text-lg font-semibold text-gray-600">
               {auth.user.name ? auth.user.name.charAt(0) : "U"}
@@ -23,7 +27,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ auth, activeTab, setActiveTab
           )}
         </div>
       </div>
-
       <div className="flex flex-col items-center space-y-6 flex-1">
         <button
           className={cn(
@@ -41,7 +44,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ auth, activeTab, setActiveTab
             )}
           </div>
         </button>
-
         <button
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center",
@@ -52,7 +54,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ auth, activeTab, setActiveTab
           <User size={22} />
         </button>
       </div>
-
       <div className="mt-auto">
         <button className="w-12 h-12 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100">
           <Settings size={22} />

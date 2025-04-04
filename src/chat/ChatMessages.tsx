@@ -8,6 +8,14 @@ interface ChatMessagesProps {
   chatEndRef: React.RefObject<HTMLDivElement>;
 }
 
+interface Message {
+  _id: string;
+  from: { _id: string; name: string; profilePhoto?: string };
+  content: string;
+  timestamp: string;
+  read?: boolean;
+}
+
 const ChatMessages: React.FC<ChatMessagesProps> = ({ auth, currentMessages, isTyping, chatEndRef }) => {
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
@@ -45,7 +53,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ auth, currentMessages, isTy
                           })}
                     </div>
                   )}
-
                   {isOwnMessage ? (
                     <div className="mb-6">
                       <div className="bg-blue-500 text-white p-3 rounded-lg shadow-sm inline-block max-w-md ml-auto">
@@ -67,7 +74,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ auth, currentMessages, isTy
                           <img src={msg.from.profilePhoto} alt="Profile" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mr-3" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold text-blue-600">
-                            {msg.from.name ? msg.from.name.charAt(0).toUpperCase() : "U"}
+                            {msg.from.name.charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div className="flex-1">
