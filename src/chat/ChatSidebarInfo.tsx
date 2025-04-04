@@ -35,13 +35,14 @@ const ProfilePhotoModal: React.FC<{ photo: string; isOpen: boolean; onClose: () 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300" onClick={onClose}>
       <div
-        className="relative bg-white rounded-lg p-4 max-w-md w-full"
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+        className="relative bg-white rounded-lg p-4 max-w-md w-full transform transition-all duration-300 scale-95 opacity-0"
+        style={{ ...(isOpen && { scale: '1', opacity: '1' }) }}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
-          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
           onClick={onClose}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,16 +81,16 @@ const ChatSidebarInfo: React.FC<ChatSidebarInfoProps> = ({ selectedData, selecte
             <img
               src={photo}
               alt="Profile"
-              className="w-16 h-16 rounded-full object-cover mb-2 cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-16 h-16 rounded-full object-cover mb-2 cursor-pointer hover:opacity-80 transition-all duration-200 hover:scale-105"
               onClick={handlePhotoClick}
             />
           ) : (
             <div
               className={`w-16 h-16 rounded-full ${
-                selectedChat.type === "private" ? "bg-blue-100" : "bg-purple-100"
+                selectedChat.type === "private" ? "bg-[#fcda00]/20" : "bg-purple-100"
               } flex items-center justify-center text-2xl font-semibold ${
-                selectedChat.type === "private" ? "text-blue-600" : "text-purple-600"
-              } mb-2`}
+                selectedChat.type === "private" ? "text-[#fcda00]" : "text-purple-600"
+              } mb-2 transition-all duration-200 hover:scale-105 cursor-pointer`}
             >
               {name.charAt(0).toUpperCase()}
             </div>
@@ -107,21 +108,21 @@ const ChatSidebarInfo: React.FC<ChatSidebarInfoProps> = ({ selectedData, selecte
           )}
         </div>
         <div className="px-4 py-2 flex justify-around border-b border-gray-200">
-          <button className="flex flex-col items-center text-gray-600 hover:text-blue-500">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1">
-              <Bell size={18} />
+          <button className="flex flex-col items-center text-gray-600 hover:text-[#fcda00] transition-all duration-200 group">
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1 group-hover:bg-[#fcda00]/20 transition-all duration-200">
+              <Bell size={18} className="transition-transform duration-200 group-hover:scale-110" />
             </div>
             <span className="text-xs">Notification</span>
           </button>
-          <button className="flex flex-col items-center text-gray-600 hover:text-blue-500">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1">
-              <Download size={18} />
+          <button className="flex flex-col items-center text-gray-600 hover:text-[#fcda00] transition-all duration-200 group">
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1 group-hover:bg-[#fcda00]/20 transition-all duration-200">
+              <Download size={18} className="transition-transform duration-200 group-hover:scale-110" />
             </div>
             <span className="text-xs">Pin Chat</span>
           </button>
-          <button className="flex flex-col items-center text-gray-600 hover:text-blue-500">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1">
-              <Settings size={18} />
+          <button className="flex flex-col items-center text-gray-600 hover:text-[#fcda00] transition-all duration-200 group">
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1 group-hover:bg-[#fcda00]/20 transition-all duration-200">
+              <Settings size={18} className="transition-transform duration-200 group-hover:scale-110" />
             </div>
             <span className="text-xs">Setting</span>
           </button>

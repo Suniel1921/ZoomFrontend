@@ -34,7 +34,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ selectedData, selectedChat, onl
         {photo ? (
           <img src={photo} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-lg font-semibold text-blue-600">
+          <div className="w-10 h-10 rounded-full bg-[#fcda00]/20 flex items-center justify-center text-lg font-semibold text-[#fcda00]">
             {name.charAt(0).toUpperCase()}
           </div>
         )}

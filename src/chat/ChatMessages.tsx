@@ -55,9 +55,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ auth, currentMessages, isTy
                   )}
                   {isOwnMessage ? (
                     <div className="mb-6">
-                      <div className="bg-blue-500 text-white p-3 rounded-lg shadow-sm inline-block max-w-md ml-auto">
+                      <div className="bg-[#fcda00]/20 text-black p-3 rounded-lg shadow-sm inline-block max-w-md ml-auto">
                         <p>{msg.content}</p>
-                        <div className="flex items-center justify-end mt-1 text-xs text-blue-100">
+                        <div className="flex items-center justify-end mt-1 text-xs text-black">
                           {formattedTime}
                           {msg.read && (
                             <span className="ml-1">
@@ -73,7 +73,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ auth, currentMessages, isTy
                         {msg.from.profilePhoto ? (
                           <img src={msg.from.profilePhoto} alt="Profile" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mr-3" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold text-blue-600">
+                          <div className="w-8 h-8 rounded-full bg-[#fcda00]/20 flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold text-[#fcda00]">
                             {msg.from.name.charAt(0).toUpperCase()}
                           </div>
                         )}

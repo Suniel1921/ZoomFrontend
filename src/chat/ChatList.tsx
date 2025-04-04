@@ -59,7 +59,7 @@ const ChatList: React.FC<ChatListProps> = ({
           placeholder={activeTab === "inbox" ? "Search team..." : "Search clients..."}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-800 border-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-800 border-none focus:outline-none focus:ring-1 focus:ring-[#fcda00]"
         />
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -80,7 +80,7 @@ const ChatList: React.FC<ChatListProps> = ({
                     className={cn(
                       "flex items-center p-3 rounded-xl cursor-pointer",
                       selectedChat.type === "private" && selectedChat.id === user._id
-                        ? "bg-blue-50 border-l-4 border-blue-500"
+                        ? "bg-[#fcda00]/10 border-l-4 border-[#fcda00]"
                         : "hover:bg-gray-50"
                     )}
                   >
@@ -88,7 +88,7 @@ const ChatList: React.FC<ChatListProps> = ({
                       {photo ? (
                         <img src={photo} alt={user.name} className="w-12 h-12 rounded-full object-cover" />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-lg font-semibold text-blue-600">
+                        <div className="w-12 h-12 rounded-full bg-[#fcda00]/20 flex items-center justify-center text-lg font-semibold text-[#fcda00]">
                           {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                         </div>
                       )}
@@ -98,7 +98,9 @@ const ChatList: React.FC<ChatListProps> = ({
                     </div>
                     <div className="ml-3 flex-1 overflow-hidden">
                       <div className="flex justify-between items-start">
-                        <span className="font-medium truncate">{user.name || "Unknown User"}</span>
+                        <span className="font-medium truncate" style={{ color: "#232323" }}>
+                          {user.name || "Unknown User"}
+                        </span>
                         <span className="text-xs text-gray-500">
                           {lastMessage?.timestamp
                             ? new Date(lastMessage.timestamp).toLocaleDateString() === new Date().toLocaleDateString()
@@ -112,7 +114,7 @@ const ChatList: React.FC<ChatListProps> = ({
                       </div>
                     </div>
                     {messageCount > 0 && (
-                      <span className="ml-2 bg-blue-500 text-white rounded-full h-5 min-w-5 flex items-center justify-center px-1.5 text-xs">
+                      <span className="ml-2 bg-[#fcda00] text-black rounded-full h-5 min-w-5 flex items-center justify-center px-1.5 text-xs">
                         {messageCount}
                       </span>
                     )}
@@ -131,14 +133,14 @@ const ChatList: React.FC<ChatListProps> = ({
                     className={cn(
                       "flex items-center p-3 rounded-xl cursor-pointer",
                       selectedChat.type === "client" && selectedChat.id === client._id
-                        ? "bg-blue-50 border-l-4 border-blue-500"
+                        ? "bg-[#fcda00]/10 border-l-4 border-[#fcda00]"
                         : "hover:bg-gray-50"
                     )}
                   >
                     {client.profilePhoto ? (
                       <img src={client.profilePhoto} alt={client.fullName} className="w-12 h-12 rounded-full object-cover" />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-lg font-semibold text-purple-600">
+                      <div className="w-12 h-12 rounded-full bg-[#fcda00]/20 flex items-center justify-center text-lg font-semibold text-[#fcda00]">
                         {client.fullName ? client.fullName.charAt(0).toUpperCase() : "C"}
                       </div>
                     )}
@@ -158,7 +160,7 @@ const ChatList: React.FC<ChatListProps> = ({
                       </div>
                     </div>
                     {messageCount > 0 && (
-                      <span className="ml-2 bg-blue-500 text-white rounded-full h-5 min-w-5 flex items-center justify-center px-1.5 text-xs">
+                      <span className="ml-2 bg-[#fcda00] text-black rounded-full h-5 min-w-5 flex items-center justify-center px-1.5 text-xs">
                         {messageCount}
                       </span>
                     )}
@@ -169,7 +171,7 @@ const ChatList: React.FC<ChatListProps> = ({
         </div>
       </div>
       <div className="p-4 border-t border-gray-200">
-        <button className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center justify-center">
+        <button className="w-full py-2 bg-[#fcda00] hover:bg-[#fcda00]/90 text-black rounded-lg font-medium flex items-center justify-center">
           <Plus size={18} className="mr-2" />
           Create New Group
         </button>

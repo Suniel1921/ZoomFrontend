@@ -18,7 +18,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ message, handleTyping, handleSend
         {replyTo && setReplyTo && (
           <div className="flex items-center justify-between mb-2 text-sm text-gray-500">
             <span>Replying to a message</span>
-            <button onClick={() => setReplyTo(null)} className="text-blue-500 hover:underline">
+            <button onClick={() => setReplyTo(null)} className="text-[#fcda00] hover:underline">
               Cancel
             </button>
           </div>
@@ -39,14 +39,14 @@ const ChatInput: React.FC<ChatInputProps> = ({ message, handleTyping, handleSend
             onChange={handleTyping}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-800 border-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-800 border-none focus:outline-none focus:ring-1 focus:ring-[#fcda00]"
           />
           <button
             onClick={handleSend}
             disabled={!message.trim()}
             className={cn(
               "ml-3 p-2 rounded-full",
-              message.trim() ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-gray-200 text-gray-400"
+              message.trim() ? "bg-[#fcda00] text-white hover:bg-[#fcda00]/80" : "bg-gray-200 text-gray-400"
             )}
           >
             <Send size={20} />

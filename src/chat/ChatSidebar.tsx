@@ -31,14 +31,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ auth, activeTab, setActiveTab
         <button
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center",
-            activeTab === "inbox" ? "bg-blue-100 text-blue-600" : "text-gray-500 hover:bg-gray-100"
+            activeTab === "inbox" ? "bg-[#fcda00]/20  text-[#fcda00]" : "text-gray-500 hover:bg-gray-100"
           )}
           onClick={() => setActiveTab("inbox")}
         >
           <div className="relative">
             <Users size={22} />
             {unreadCounts.size > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-xs flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full text-white text-xs flex items-center justify-center">
                 {Array.from(unreadCounts.values()).reduce((a: number, b: number) => a + b, 0)}
               </span>
             )}
@@ -47,7 +47,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ auth, activeTab, setActiveTab
         <button
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center",
-            activeTab === "clients" ? "bg-blue-100 text-blue-600" : "text-gray-500 hover:bg-gray-100"
+            activeTab === "clients" ? "bg-[#fcda00]/20  text-[#fcda00]" : "text-gray-500 hover:bg-gray-100"
           )}
           onClick={() => setActiveTab("clients")}
         >
