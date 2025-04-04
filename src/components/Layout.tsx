@@ -25,6 +25,7 @@ import {
   ChefHat,
   BarChartBigIcon,
   AppWindow,
+  MessageCircleCode,
 } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 import NotesPanel from './notes/NotesPanel';
@@ -57,7 +58,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
         { icon: Megaphone , label: 'Campaign', path: '/dashboard/campaign' },
         { icon: AppWindow, label: 'Manage App', path: '/dashboard/manage-app' },
-        { icon: BarChartBigIcon, label: 'Chat', path: '/dashboard/chat' },
+        { icon: MessageCircleCode, label: 'Chat', path: '/dashboard/chat' },
       ]
       : [
         { icon: Users, label: 'Clients', path: '/dashboard/clients' },
@@ -72,7 +73,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: PhoneCall, label: 'Call Logs', path: '/dashboard/call-logs' },
         { icon: AppWindow, label: 'Manage App', path: '/dashboard/manage-app' },
           // { icon: BarChartBigIcon, label: 'Chat With Us', path: '/dashboard/chat-with-us' },--for mobile
-          { icon: BarChartBigIcon, label: 'Chat', path: '/dashboard/chat' },
+          { icon: MessageCircleCode, label: 'Chat', path: '/dashboard/chat' },
         ]),
   ];
 
