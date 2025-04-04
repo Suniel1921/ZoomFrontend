@@ -59,6 +59,7 @@ const Chat: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"inbox" | "clients">("inbox");
   const [showSidebar, setShowSidebar] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const chatEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,11 +68,33 @@ const Chat: React.FC = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  // Fetch initial data and manage loading state
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setIsLoading(true);
+        // Simulate fetching initial data (users, clients, chats)
+        // In a real app, this would be an API call
+        await Promise.all([
+          // Add your actual data fetching logic here if needed
+          new Promise((resolve) => setTimeout(resolve, 1000)), // Simulated delay
+        ]);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
+
   useEffect(() => {
     if (!selectedChat.id || !auth?.user?.id) return;
 
     const fetchChat = async () => {
       try {
+        setIsLoading(true); // Set loading when fetching chat history
         if (selectedChat.type === "private") {
           await fetchPrivateChatHistory(selectedChat.id);
           const chatId = [auth.user.id, selectedChat.id].sort().join("-");
@@ -83,6 +106,8 @@ const Chat: React.FC = () => {
         scrollToBottom();
       } catch (error) {
         console.error("Error fetching chat:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchChat();
@@ -173,6 +198,7 @@ const Chat: React.FC = () => {
         selectedChat={selectedChat}
         setSelectedChat={setSelectedChat}
         unreadCounts={unreadCounts}
+        isLoading={isLoading} // Pass isLoading to ChatList
       />
       <div className="flex-1 flex flex-col h-screen">
         {selectedChat.id ? (
